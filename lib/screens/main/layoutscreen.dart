@@ -38,7 +38,11 @@ class _LayoutscreenState extends State<LayoutScreen> {
               Expanded(
                 // default flex = 1
                 // and it takes 1/6 part of the screen
-                child: SideMenu(enableAction: widget.enableAction,onCallback: (id){widget.onCallback!(id);},),
+                child: Material(
+                  elevation: 8,
+                  shadowColor: Colors.black.withValues(alpha: 0.5),
+                  child: SideMenu(enableAction: widget.enableAction,onCallback: (id){widget.onCallback!(id);},),
+                ),
               ),
             Flexible(
               // It takes 5/6 part of the screen

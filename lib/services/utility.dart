@@ -1,21 +1,12 @@
-import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:jiffy/jiffy.dart';
-
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import '../localization/app_translations.dart';
 import '../models/dynamicfield.dart';
-
-import 'api_service.dart';
 class UtilityService{
-  dynamic? frontFile = null;
-  dynamic? backFile = null;
+  dynamic frontFile;
+  dynamic backFile;
 
 
   static const LinearGradient linearGradient =  LinearGradient(
@@ -34,11 +25,9 @@ class UtilityService{
   final whitespaceRE = RegExp(r"(?! )\s+| \s+");
   final _emailMaskRegExp = RegExp('^(.)(.*?)([^@]?)(?=@[^@]+\$)');
   String maskEmail(String? input,bool? showMask, [int minFill = 4, String fillChar = '*']) {
-    minFill ??= 4;
-    fillChar ??= '*';
     if(input != null){
       if(showMask!){
-        return input!.replaceFirstMapped(_emailMaskRegExp, (m) {
+        return input.replaceFirstMapped(_emailMaskRegExp, (m) {
           var start = m.group(1);
           var middle = fillChar * max(minFill, m.group(2)!.length);
           var end = m.groupCount >= 3 ? m.group(3) : start;
@@ -73,8 +62,8 @@ class UtilityService{
   String maskPhoneNo(String? input,bool? showMask){
     if(input != null){
       if(showMask!){
-        var lastdigit = input!.length-3;
-        return "*****"+input!.substring(lastdigit,input!.length);
+        var lastdigit = input.length-3;
+        return "*****"+input.substring(lastdigit,input.length);
       }else{
         return input;
       }
@@ -84,9 +73,6 @@ class UtilityService{
   }
 
   bool isNumeric(String s) {
-    if(s == null) {
-      return false;
-    }
     if(s.isEmpty) {
       return false;
     }
@@ -147,35 +133,35 @@ class UtilityService{
     element.rules!.forEach((validatefield) {
       switch (validatefield.name) {
         case "required":
-        //fieldvalidators.add(RequiredValidator(errorText: validatefield.errorMsg! ?? ""));
+        //fieldvalidators.add(RequiredValidator(errorText: validatefield.errorMsg!));
           fieldvalidators.add(FormBuilderValidators.required(
-              errorText: validatefield.errorMsg! ?? ""));
+              errorText: validatefield.errorMsg!));
           break;
         case "minlength":
           fieldvalidators.add(FormBuilderValidators.minLength(
               int.parse(validatefield.script!),
-              errorText: validatefield.errorMsg! ?? ""));
-          //fieldvalidators.add(MinLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg! ?? ""));
+              errorText: validatefield.errorMsg!));
+          //fieldvalidators.add(MinLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg!));
           break;
         case "maxlength":
         //fieldvalidators.a
           fieldvalidators.add(FormBuilderValidators.maxLength(
               int.parse(validatefield.script!),
-              errorText: validatefield.errorMsg! ?? ""));
-          //fieldvalidators.add(MaxLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg! ?? ""));
+              errorText: validatefield.errorMsg!));
+          //fieldvalidators.add(MaxLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg!));
           break;
         case "min":
           fieldvalidators.add(FormBuilderValidators.min(
               int.parse(validatefield.script!),
-              errorText: validatefield.errorMsg! ?? ""));
-          //fieldvalidators.add(MinLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg! ?? ""));
+              errorText: validatefield.errorMsg!));
+          //fieldvalidators.add(MinLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg!));
           break;
         case "max":
         //fieldvalidators.a
           fieldvalidators.add(FormBuilderValidators.max(
               int.parse(validatefield.script!),
-              errorText: validatefield.errorMsg! ?? ""));
-          //fieldvalidators.add(MaxLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg! ?? ""));
+              errorText: validatefield.errorMsg!));
+          //fieldvalidators.add(MaxLengthValidator(int.parse(validatefield.script!),errorText: validatefield.errorMsg!));
           break;
         case "email":
 

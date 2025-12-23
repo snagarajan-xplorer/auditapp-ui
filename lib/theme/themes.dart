@@ -29,7 +29,7 @@ class AppThemeData {
   ThemeData light() {
     final themeData = ThemeData(
       useMaterial3: false,
-      pageTransitionsTheme:  PageTransitionsTheme(
+      pageTransitionsTheme: PageTransitionsTheme(
         builders: {
           TargetPlatform.android: NoTransitionsBuilder(),
           TargetPlatform.iOS: NoTransitionsBuilder(),
@@ -43,15 +43,12 @@ class AppThemeData {
         foregroundColor: Colors.white,
       ),
       canvasColor: Colors.white,
-        elevatedButtonTheme: ElevatedButtonThemeData(
+      elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF0376d8),
-            textStyle: TextStyle(color: Colors.white),
-            padding: EdgeInsets.only(top:4,bottom:4 )
-          )
-        ),
-
-      iconTheme:IconThemeData(color: Colors.grey.shade400) ,
+              backgroundColor: Color(0xFF0376d8),
+              textStyle: TextStyle(color: Colors.white),
+              padding: EdgeInsets.only(top: 4, bottom: 4))),
+      iconTheme: IconThemeData(color: Colors.grey.shade400),
       scaffoldBackgroundColor: kScreenBackgroundColor,
       drawerTheme: const DrawerThemeData(backgroundColor: Color(0xFF002651)),
       colorScheme: const ColorScheme(
@@ -67,7 +64,7 @@ class AppThemeData {
         surface: Colors.white,
         onSurface: Colors.black,
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         margin: EdgeInsets.zero,
       ),
     );
@@ -113,7 +110,6 @@ class AppThemeData {
     );
 
     return themeData.copyWith(
-
       extensions: [
         AppButtonTheme.fromAppColorScheme(appColorScheme),
         appColorScheme,
@@ -125,31 +121,32 @@ class AppThemeData {
 
   ThemeData dark() {
     final themeData = ThemeData.dark(useMaterial3: false).copyWith(
-      drawerTheme: const DrawerThemeData(backgroundColor: Color(0xFF343A40)),
-      canvasColor: secondaryColor,
-      scaffoldBackgroundColor: bgColor,
-      iconTheme:IconThemeData(color: Colors.white) ,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: Colors.blue,
-      ),
-      textTheme: GoogleFonts.poppinsTextTheme().copyWith(
-          bodySmall: TextStyle(fontSize: 13,fontWeight: FontWeight.w400,color: Colors.white),
-          bodyMedium: TextStyle(fontSize: 15,fontWeight: FontWeight.w600,color: Colors.white),
-          bodyLarge: TextStyle(fontSize: 12,fontWeight: FontWeight.w900,color: Colors.white)
-      ),
-      appBarTheme: const AppBarTheme(
+        drawerTheme: const DrawerThemeData(backgroundColor: Color(0xFF343A40)),
+        canvasColor: secondaryColor,
+        scaffoldBackgroundColor: bgColor,
         iconTheme: IconThemeData(color: Colors.white),
-        backgroundColor: kPrimaryColor,
-        foregroundColor: Colors.white,
-      ),
-      cardTheme: const CardTheme(
-        margin: EdgeInsets.zero,
-      ),
-      textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(
-        backgroundColor: Colors.red
-      ))
-
-    );
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+        ),
+        textTheme: GoogleFonts.poppinsTextTheme().copyWith(
+            bodySmall: TextStyle(
+                fontSize: 13, fontWeight: FontWeight.w400, color: Colors.white),
+            bodyMedium: TextStyle(
+                fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+            bodyLarge: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                color: Colors.white)),
+        appBarTheme: const AppBarTheme(
+          iconTheme: IconThemeData(color: Colors.white),
+          backgroundColor: kPrimaryColor,
+          foregroundColor: Colors.white,
+        ),
+        cardTheme: const CardThemeData(
+          margin: EdgeInsets.zero,
+        ),
+        textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(backgroundColor: Colors.red)));
 
     final appColorScheme = AppColorScheme(
       primary: kPrimaryColor,
@@ -197,7 +194,6 @@ class AppThemeData {
         appColorScheme,
         appSidebarTheme,
         AppDataTableTheme.fromTheme(themeData),
-
       ],
     );
   }
