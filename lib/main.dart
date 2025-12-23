@@ -8,6 +8,7 @@ import 'package:audit_app/screens/auditinfoscreen.dart';
 import 'package:audit_app/screens/auditlistscreen.dart';
 import 'package:audit_app/screens/changepassword_screen.dart';
 import 'package:audit_app/screens/questionscreen.dart';
+
 import 'package:audit_app/screens/templatelistscreen.dart';
 import 'package:audit_app/screens/templatescreenedit.dart';
 import 'package:audit_app/screens/userscreen.dart';
@@ -36,8 +37,9 @@ import 'controllers/usercontroller.dart';
 import 'localization/app_translations_delegate.dart';
 import 'localization/application.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:url_launcher_web/url_launcher_web.dart';
 
+import 'package:audit_app/screens/scheduledauditscreen.dart';
+import 'package:audit_app/screens/allindiastatewisescreen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -87,6 +89,8 @@ class _MainAppState extends State<MainApp> {
                 GetPage(name: "/templateedit", page:()=>TemplateEditScreen()),
                 GetPage(name: "/templatelist", page:()=>Templatelistscreen()),
                 GetPage(name: "/addtemplate", page:()=>AddTemplateScreen()),
+                GetPage(name: "/scheduledaudit", page:()=>ScheduledAuditScreen()),
+                GetPage(name: "/all-india-state-activity", page: ()=>AllIndiaStateWiseScreen()),
                 GetPage(name: "/", page:()=>Splashscreen()),
               ],
             //   routes: <String, WidgetBuilder>{

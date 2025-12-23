@@ -1,182 +1,285 @@
 import 'package:flutter/cupertino.dart';
 
 import '../../../controllers/usercontroller.dart';
-import '../../../theme/themes.dart';
-import './../../../controllers/menu_app_controller.dart';
 import './../../../responsive.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import '../../../constants.dart';
 
-class Header extends StatelessWidget {
+class Header extends StatefulWidget {
   final VoidCallback callback;
   final bool? showBackbutton;
   final VoidCallback? backEvent;
   final String? previousScreenName;
   const Header({
-    Key? key, required this.callback, this.showBackbutton=false, this.previousScreenName="", this.backEvent,
+    Key? key,
+    required this.callback,
+    this.showBackbutton = false,
+    this.previousScreenName = "",
+    this.backEvent,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (!Responsive.isDesktop(context))
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IconButton(
-                icon: Icon(Icons.menu),
-                onPressed: (){
-                  print("Click Menu");
-                  callback();},
-              ),
-              Visibility(
-                  visible: showBackbutton!,
-                  child: IconButton(onPressed: (){
-                    if(backEvent != null){
-                      backEvent!();
-                    }else{
-                      Navigator.of(context).pop();
-                    }
-
-                  }, icon: Icon(CupertinoIcons.back))
-              ),
-            ],
-          ),
-        if (Responsive.isDesktop(context))
-            Visibility(
-              visible: showBackbutton!,
-                child: IconButton(onPressed: (){
-                  if(backEvent != null){
-                    backEvent!();
-                  }else{
-                    Navigator.of(context).pop();
-                  }
-                }, icon: Icon(CupertinoIcons.back))
-            ),
-        if (Responsive.isDesktop(context) && showBackbutton!)
-          InkWell(
-            onTap: (){
-              if(backEvent != null){
-                backEvent!();
-              }else{
-                Navigator.of(context).pop();
-              }
-            },
-            child: Container(
-                padding: EdgeInsets.only(top: 7),
-                child: Text(previousScreenName!,style: Theme.of(context).textTheme.titleMedium,)),
-          ),
-
-        Flexible(
-          flex: 1,
-            child: Container()
-        ),
-        ProfileCard()
-      ],
-    );
-  }
+  State<Header> createState() => _HeaderState();
 }
 
-class ProfileCard extends StatelessWidget {
-   ProfileCard({
-    Key? key,
-  }) : super(key: key);
-  UserController usercontroller = Get.put(UserController());
+class _HeaderState extends State<Header> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(left: defaultPadding),
       padding: EdgeInsets.symmetric(
         horizontal: defaultPadding,
         vertical: defaultPadding / 2,
       ),
       decoration: BoxDecoration(
-        color: Theme.of(context).canvasColor,
-        borderRadius: const BorderRadius.all(Radius.circular(10)),
-        border: Border.all(color: Colors.white10),
+        color: Colors.white,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade300, width: 1),
+        ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Padding(
-            padding:
-            const EdgeInsets.symmetric(horizontal: defaultPadding / 2),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+          // Left side - Menu button (mobile) and Brand Dropdown
+          Expanded(
+            child: Row(
               children: [
-                Text(usercontroller.userData.name! ?? ""),
-                Text(usercontroller.userData.rolename! ?? "",style: TextStyle(fontSize: smallFontSize),)
+                if (!Responsive.isDesktop(context))
+                  IconButton(
+                    icon: Icon(Icons.menu, color: Colors.black),
+                    onPressed: () {
+                      print("Click Menu");
+                      widget.callback();
+                    },
+                  ),
+                if (Responsive.isDesktop(context) && widget.showBackbutton!)
+                  IconButton(
+                    onPressed: () {
+                      if (widget.backEvent != null) {
+                        widget.backEvent!();
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    icon: Icon(CupertinoIcons.back),
+                  ),
+                if (Responsive.isDesktop(context) && widget.showBackbutton!)
+                  InkWell(
+                    onTap: () {
+                      if (widget.backEvent != null) {
+                        widget.backEvent!();
+                      } else {
+                        Navigator.of(context).pop();
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.only(top: 7),
+                      child: Text(
+                        widget.previousScreenName!,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                  ),
+                if (!widget.showBackbutton!)
+                  Flexible(
+                    child: Container(
+                      margin: EdgeInsets.only(left: 50),
+                      constraints: BoxConstraints(maxWidth: 500),
+                      child: BrandDropdown(),
+                    ),
+                  ),
               ],
             ),
           ),
-          usercontroller.userData.image == null ? Container(
-            width: 30,
-            height: 30,
-            child: Center(
-              child: Text(usercontroller.userData.name.toString().toUpperCase().substring(0,2),style: TextStyle(
-                color: Colors.white,
-                fontSize: paragraphFontSize
-              ),),
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(15.0)),
-              color: kPrimaryColor,
-
-            ),
-          ):Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(15.0)),
-              border: Border.all(color: Colors.grey,width: 1),
-              image: DecorationImage(
-                  image: NetworkImage(IMG_URL+usercontroller.userData.image!),
-                fit: BoxFit.fill
-              )
-
-            ),
-          ),
-          //if (!Responsive.isMobile(context))
-
+          // Right side - Profile Card
+          Container(
+            margin: EdgeInsets.only(right: 36),
+            child: ProfileCard(),
+          )
         ],
       ),
     );
   }
 }
 
-class SearchField extends StatelessWidget {
-  const SearchField({
+class BrandDropdown extends StatefulWidget {
+  const BrandDropdown({Key? key}) : super(key: key);
+
+  @override
+  State<BrandDropdown> createState() => _BrandDropdownState();
+}
+
+class _BrandDropdownState extends State<BrandDropdown> {
+  UserController usercontroller = Get.put(UserController());
+  List<dynamic> clientArr = [];
+  String selectedClientId = "";
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadClients();
+  }
+
+  Future<void> loadClients() async {
+    if (menuAccessRole.indexOf(usercontroller.userData.role!) != -1) {
+      usercontroller.getClientList(
+        context,
+        data: {
+          "role": usercontroller.userData.role,
+          "client_id": usercontroller.userData.clientid
+        },
+        callback: (res) {
+          setState(() {
+            clientArr = res;
+            if (clientArr.isNotEmpty) {
+              selectedClientId = clientArr[0]["clientid"].toString();
+              usercontroller.selectedClientId = selectedClientId;
+            }
+            isLoading = false;
+          });
+        },
+      );
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (menuAccessRole.indexOf(usercontroller.userData.role!) == -1) {
+      return Container();
+    }
+
+    if (isLoading) {
+      return Text(
+        "Loading...",
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF505050),
+        ),
+      );
+    }
+
+    if (clientArr.isEmpty) {
+      return SizedBox();
+    }
+
+    return DropdownButtonFormField<String>(
+      value: selectedClientId,
+      decoration: InputDecoration(
+        contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+      ),
+      items: clientArr.map<DropdownMenuItem<String>>((client) {
+        return DropdownMenuItem<String>(
+          value: client["clientid"].toString(),
+          child: Text(
+            client["clientname"].toString(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF505050),
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          selectedClientId = value!;
+          usercontroller.selectedClientId = value;
+        });
+      },
+      icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade700, size: 24),
+      isExpanded: true,
+      isDense: false,
+    );
+  }
+}
+
+class ProfileCard extends StatelessWidget {
+  const ProfileCard({
     Key? key,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      decoration: InputDecoration(
-        hintText: "Search",
-        fillColor: Theme.of(context).canvasColor,
-        filled: true,
-        border: OutlineInputBorder(
-          borderSide: BorderSide.none,
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-        ),
-        suffixIcon: InkWell(
-          onTap: () {},
-          child: Container(
-            padding: EdgeInsets.all(defaultPadding * 0.75),
-            margin: EdgeInsets.symmetric(horizontal: defaultPadding / 2),
-            decoration: BoxDecoration(
-              color: primaryColor,
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
-            ),
-            child: SvgPicture.asset("assets/icons/Search.svg"),
+    final UserController usercontroller = Get.put(UserController());
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: defaultPadding / 2,
+        vertical: defaultPadding / 4,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Company name and role
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                usercontroller.userData.name ?? "",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 1),
+              Text(
+                usercontroller.userData.rolename ?? "",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w100,
+                  color: Color(0xFF898989),
+                ),
+              ),
+            ],
           ),
-        ),
+          SizedBox(width: 12),
+          // Profile image
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(21.0)),
+              color: Colors.red,
+            ),
+            child: usercontroller.userData.image == null
+                ? Center(
+                    child: Text(
+                      usercontroller.userData.name
+                          .toString()
+                          .toUpperCase()
+                          .substring(0, 2),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(21.0),
+                    child: Image.network(
+                      IMG_URL + usercontroller.userData.image!,
+                      fit: BoxFit.cover,
+                      width: 40,
+                      height: 40,
+                    ),
+                  ),
+          ),
+        ],
       ),
     );
   }

@@ -26,41 +26,42 @@ class PageContainerComp extends StatelessWidget {
       children: [
         Container(
 
-          padding: const EdgeInsets.only(left: defaultPadding,right: defaultPadding,top: defaultPadding),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Visibility(
-                visible: showTitle!,
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              Container(
-                height: buttonHeight,
-                child: Row(
-                  children: [
-                    header ?? Container(),
-                    Visibility(
-                      visible: showButton!,
-                      child:  ButtonComp(label: buttonName!,width:200,height: buttonHeight, onPressed:(){
-                        callback!();
-                      }),
-                    )
-                  ],
-                ),
-              ),
-
-            ],
-          ),
+          // padding: const EdgeInsets.only(left: defaultPadding,right: defaultPadding,top: defaultPadding),
+          // child: Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Visibility(
+          //       visible: showTitle!,
+          //       child: Text(
+          //         title,
+          //         style: Theme.of(context).textTheme.titleLarge,
+          //       ),
+          //     ),
+          //     Container(
+          //       height: buttonHeight,
+          //       child: Row(
+          //         children: [
+          //           header ?? Container(),
+          //           Visibility(
+          //             visible: showButton!,
+          //             child:  ButtonComp(label: buttonName!,width:200,height: buttonHeight, onPressed:(){
+          //               callback!();
+          //             }),
+          //           )
+          //         ],
+          //       ),
+          //     ),
+          //
+          //   ],
+          // ),
         ),
-        SizedBox(height: 10,),
         Flexible(
           flex: 12,
-            child: Padding(
+            child: Container(
+              margin: EdgeInsets.only(left: 46, right: 36),
+              child: Padding(
                 padding: EdgeInsets.all(padding!),
-              child: BoxContainer(
+                child: BoxContainer(
                   width:double.infinity,
                   height: double.infinity,
                   isBGTransparent: isBGTransparent,
@@ -69,6 +70,7 @@ class PageContainerComp extends StatelessWidget {
 
                     child: child,
                   ):child
+                ),
               ),
             )
         )

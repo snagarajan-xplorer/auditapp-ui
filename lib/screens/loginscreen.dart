@@ -192,19 +192,15 @@ class _LoginscreenState extends State<Loginscreen> {
                             if(Responsive.isDesktop(context)){
                               if(usercontroller.userData.changepass == "N"){
                                 Get.offNamed("/changepassword/"+usercontroller.userData.mvalue.toString()!);
-                                //Navigator.popAndPushNamed(context, "/changepassword");
                               }else{
-                                //Get.offNamed("/dashboard");
-                                Navigator.popAndPushNamed(context, "/dashboard");
+                                Get.offNamed("/dashboard");
                               }
                             }else if(Responsive.isMobile(context)){
                               if(["CL","JrA"].indexOf(usercontroller.userData.role!) != -1){
                                 if(usercontroller.userData.changepass == "N"){
                                   Get.offNamed("/changepassword/"+usercontroller.userData.mvalue.toString()!);
-                                  //Navigator.popAndPushNamed(context, "/changepassword");
                                 }else{
-                                  //Get.offNamed("/dashboard");
-                                  Navigator.popAndPushNamed(context, "/dashboard");
+                                  Get.offNamed("/dashboard");
                                 }
                               }else{
                                 APIService(context).showWindowAlert(title: "",desc: AppTranslations.of(context)!.text("key_message_21"),callback: (){});

@@ -76,14 +76,37 @@ const double kDialogWidth = 460.0;
 
 const double kFieldWidth = 800.0;
 const buttonHeight = 40.0;
+
+// ============================================================================
+// API CONFIGURATION
+// ============================================================================
+// IMPORTANT: Make sure your backend server is running before using local URLs
+//
+// For LOCAL DEVELOPMENT:
+// - Uncomment the 127.0.0.1:8000 URLs below
+// - Start your backend server on port 8000
+// - If using Docker: use 'host.docker.internal' instead of '127.0.0.1'
+//
+// For PRODUCTION:
+// - Uncomment one of the production URLs (demo.webtekie.in or auditondgo.com)
+// - Ensure CORS is properly configured on the backend
+// ============================================================================
+
 //https://audit.webtekie.in/public/api/login
+
+// LOCAL DEVELOPMENT (requires backend running on port 8000)
 // const API_URL = "http://127.0.0.1:8000/api/";
 // const IMG_URL = "http://127.0.0.1:8000/storage/";
 
-const API_URL = "https://demo.webtekie.in/restapi/public/api/";
-const IMG_URL = "https://demo.webtekie.in/restapi/public/storage/";
+// DEMO SERVER
+// const API_URL = "https://demo.webtekie.in/restapi/public/api/";
+// const IMG_URL = "https://demo.webtekie.in/restapi/public/storage/";
 
+// CURRENTLY ACTIVE (LOCAL - REQUIRES BACKEND RUNNING!)
+const API_URL = "http://127.0.0.1:8000/api/";
+const IMG_URL = "http://127.0.0.1:8000/storage/";
 
+// PRODUCTION SERVER
 // const API_URL = "https://auditondgo.com/restapi/public/api/";
 // const IMG_URL = "https://auditondgo.com/restapi/public/storage/";
 

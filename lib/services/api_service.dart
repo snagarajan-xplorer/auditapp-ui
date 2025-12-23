@@ -403,7 +403,19 @@ class APIService {
       if (loader) {
         OverlayLoadingProgress.stop();
       }
+      showToastMgs("Request timeout. Please try again.");
       rethrow;
+    } on http.ClientException catch (e) {
+      if (loader) {
+        OverlayLoadingProgress.stop();
+      }
+      showToastMgs("Cannot connect to server. Please check if backend is running on port 8000.");
+      print("ClientException: ${e.message} - ${e.uri}");
+      dynamic mapdata = {};
+      mapdata["type"] = "error";
+      mapdata["status"] = 0;
+      mapdata["message"] = "Connection refused. Backend server not reachable.";
+      return jsonEncode(mapdata);
     } on SocketException catch (_) {
       if (loader) {
         OverlayLoadingProgress.stop();
