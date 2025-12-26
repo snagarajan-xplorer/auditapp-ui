@@ -213,7 +213,7 @@ class _SideMenuState extends State<SideMenu> {
                                 usercontroller.getAllIndiaStateWiseAudit(
                                     context,
                                     data: map, callback: (res) {
-                                  Get.toNamed("/all-india-state-activity");
+                                  Get.toNamed("/all-india-google-map");
                                 });
                               } else {
                                 widget.onCallback!(5);
@@ -268,7 +268,7 @@ class _SideMenuState extends State<SideMenu> {
                           press: () {
                             if (widget.enableAction!) {
                               usercontroller.selectedIndex = 7;
-                              Navigator.pushNamed(context, "/user",
+                              Navigator.pushNamed(context, "/all-india-google-map",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
                                       mapData: {}));
