@@ -9,21 +9,30 @@ import 'main/layoutscreen.dart';
 import 'package:flutter_map/flutter_map.dart';
 import '../constants.dart';
 
-class AllIndiaStateWiseScreen extends StatefulWidget {
-  const AllIndiaStateWiseScreen({super.key});
+class RedReportScreen extends StatefulWidget {
+  const RedReportScreen({super.key});
 
   @override
-  State<AllIndiaStateWiseScreen> createState() =>
-      _AllIndiaStateWiseScreenState();
+  State<RedReportScreen> createState() => _RedReportScreenState();
 }
 
-class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
+class _RedReportScreenState extends State<RedReportScreen>
     with SingleTickerProviderStateMixin {
   String selectedYear = "2025";
   String selectedFinancialYear = "FY2025-26";
+  String selectedZone = "All Zones";
 
   // Dynamic financial years from API
   List<Map<String, dynamic>> financialYears = [];
+  List<String> zones = [
+    "All Zones",
+    "North",
+    "South",
+    "East",
+    "West",
+    "Central",
+    "North-East"
+  ];
   bool isLoadingYears = true;
 
   // Map and data variables
@@ -34,6 +43,7 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
   LatLng currentCenter = LatLng(22.9734, 78.6569);
   List<Polygon> polygons = [];
   Map<String, dynamic> stateDataMap = {};
+  List<Marker> redMarkers = [];
 
   UserController usercontroller = Get.put(UserController());
 
@@ -126,16 +136,19 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
 
   Future<void> loadStateWiseData() async {
     String yearValue = selectedFinancialYear;
+    String zoneValue = selectedZone;
 
     var map = {
       "year": yearValue,
+      "zone": zoneValue,
       "userid": usercontroller.userData.userId,
       "role": usercontroller.userData.role
     };
 
-    usercontroller.getAllIndiaStateWiseAudit(context, data: map,
+    usercontroller.getZoneWiseNCAudit(context, data: map,
         callback: (data) async {
       stateDataMap = {};
+      List<Marker> tempMarkers = [];
 
       if (data is List) {
         for (var item in data) {
@@ -149,7 +162,8 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
             dynamic scoreValue = item["score"] ??
                 item["risk_score"] ??
                 item["riskScore"] ??
-                item["compliance_score"];
+                item["compliance_score"] ??
+                item["nc_score"];
 
             int score = -1;
             if (scoreValue != null) {
@@ -163,10 +177,93 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
             }
 
             stateDataMap[stateName] = {"score": score, "data": item};
+
+            // Extract coordinates from response
+            if (item.containsKey("latitude") && item.containsKey("longitude")) {
+              try {
+                double lat = double.parse(item["latitude"].toString());
+                double lng = double.parse(item["longitude"].toString());
+
+                tempMarkers.add(
+                  Marker(
+                    point: LatLng(lat, lng),
+                    width: 30,
+                    height: 30,
+                    child: Icon(
+                      Icons.location_on,
+                      color: Colors.red,
+                      size: 30,
+                    ),
+                  ),
+                );
+              } catch (e) {
+                print("Error parsing coordinates: $e");
+              }
+            } else if (item.containsKey("lat") && item.containsKey("lng")) {
+              try {
+                double lat = double.parse(item["lat"].toString());
+                double lng = double.parse(item["lng"].toString());
+
+                tempMarkers.add(
+                  Marker(
+                    point: LatLng(lat, lng),
+                    width: 30,
+                    height: 30,
+                    child: Icon(
+                      Icons.location_on,
+                      color: Colors.red,
+                      size: 30,
+                    ),
+                  ),
+                );
+              } catch (e) {
+                print("Error parsing coordinates: $e");
+              }
+            } else if (item.containsKey("coordinates")) {
+              try {
+                var coords = item["coordinates"];
+                if (coords is Map) {
+                  double lat = double.parse(coords["latitude"].toString());
+                  double lng = double.parse(coords["longitude"].toString());
+
+                  tempMarkers.add(
+                    Marker(
+                      point: LatLng(lat, lng),
+                      width: 30,
+                      height: 30,
+                      child: Icon(
+                        Icons.location_on,
+                        color: Colors.red,
+                        size: 30,
+                      ),
+                    ),
+                  );
+                } else if (coords is List && coords.length >= 2) {
+                  double lat = double.parse(coords[0].toString());
+                  double lng = double.parse(coords[1].toString());
+
+                  tempMarkers.add(
+                    Marker(
+                      point: LatLng(lat, lng),
+                      width: 30,
+                      height: 30,
+                      child: Icon(
+                        Icons.location_on,
+                        color: Colors.red,
+                        size: 30,
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                print("Error parsing coordinates: $e");
+              }
+            }
           }
         }
       }
 
+      redMarkers = tempMarkers;
       await newloadGeoJson();
 
       if (mounted) {
@@ -323,7 +420,7 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Heatmap – All India (State wise)",
+                    "Red Report – All India (State wise)",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
@@ -342,10 +439,16 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
                           color: Color(0xFF898989),
                         ),
                       ),
-                      // Financial Year Dropdown
-                      isLoadingYears
-                          ? CircularProgressIndicator()
-                          : _buildFinancialYearDropdown(),
+                      // Dropdowns
+                      Row(
+                        children: [
+                          _buildZoneDropdown(),
+                          SizedBox(width: 12),
+                          isLoadingYears
+                              ? CircularProgressIndicator()
+                              : _buildFinancialYearDropdown(),
+                        ],
+                      ),
                     ],
                   ),
                 ],
@@ -386,6 +489,10 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
                             if (polygons.isNotEmpty)
                               PolygonLayer(
                                 polygons: polygons,
+                              ),
+                            if (redMarkers.isNotEmpty)
+                              MarkerLayer(
+                                markers: redMarkers,
                               ),
                           ],
                         ),
@@ -677,6 +784,42 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildZoneDropdown() {
+    return Container(
+      height: 40,
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Color(0xFFC9C9C9)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<String>(
+        value: selectedZone,
+        underline: SizedBox(),
+        icon: Icon(Icons.arrow_drop_down, size: 20, color: Color(0xFF505050)),
+        style: TextStyle(
+          fontSize: 14,
+          color: Color(0xFF505050),
+        ),
+        items: zones.map((String zone) {
+          return DropdownMenuItem<String>(
+            value: zone,
+            child: Text(zone),
+          );
+        }).toList(),
+        onChanged: (String? newValue) async {
+          if (mounted && newValue != null) {
+            setState(() {
+              selectedZone = newValue;
+            });
+            // Load state data with new zone
+            await loadStateWiseData();
+          }
+        },
+      ),
     );
   }
 }

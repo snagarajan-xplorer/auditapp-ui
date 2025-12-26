@@ -97,22 +97,28 @@ class APIService {
     );
   }
   loaderShow() {
-    OverlayLoadingProgress.start(context,
-        barrierDismissible: false,
-        widget: Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10.0), color: bgColor),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Lottie.asset('assets/animation/loader.json',
-                  width: 80, height: 80),
-            ],
-          ),
-        ));
+    // Check if widget is mounted and build is complete
+    try {
+      OverlayLoadingProgress.start(context,
+          barrierDismissible: false,
+          widget: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10.0), color: bgColor),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Lottie.asset('assets/animation/loader.json',
+                    width: 80, height: 80),
+              ],
+            ),
+          ));
+    } catch (e) {
+      // Silently fail if overlay cannot be shown (e.g., during build)
+      print("Warning: Cannot show loader overlay: $e");
+    }
   }
 
   loaderHide() {
@@ -199,13 +205,47 @@ class APIService {
         //return response.body;
       }
 
+    } on TimeoutException catch (e) {
+      if (loader) {
+        OverlayLoadingProgress.stop();
+      }
+      showToastMgs("Request timeout. Please try again.");
+      dynamic mapdata = {};
+      mapdata["type"] = "error";
+      mapdata["status"] = 0;
+      mapdata["message"] = "Request timeout";
+      return jsonEncode(mapdata);
+    } on http.ClientException catch (e) {
+      if (loader) {
+        OverlayLoadingProgress.stop();
+      }
+      showToastMgs("Cannot connect to server. Please check if backend is running on port 8000.");
+      print("ClientException: ${e.message} - ${e.uri}");
+      dynamic mapdata = {};
+      mapdata["type"] = "error";
+      mapdata["status"] = 0;
+      mapdata["message"] = "Connection refused. Backend server not reachable.";
+      return jsonEncode(mapdata);
     } on SocketException catch (_) {
       if (loader) {
         OverlayLoadingProgress.stop();
       }
       showToastMgs("Please check your internet");
-      //Toast.show("Please check your internet", duration: Toast.lengthLong, gravity:  Toast.center);
-      rethrow;
+      dynamic mapdata = {};
+      mapdata["type"] = "error";
+      mapdata["status"] = 0;
+      mapdata["message"] = "Network error";
+      return jsonEncode(mapdata);
+    } catch (e) {
+      if (loader) {
+        OverlayLoadingProgress.stop();
+      }
+      showToastMgs("An error occurred: ${e.toString()}");
+      dynamic mapdata = {};
+      mapdata["type"] = "error";
+      mapdata["status"] = 0;
+      mapdata["message"] = e.toString();
+      return jsonEncode(mapdata);
     }
   }
 

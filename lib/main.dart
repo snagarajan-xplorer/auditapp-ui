@@ -40,6 +40,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:audit_app/screens/scheduledauditscreen.dart';
 import 'package:audit_app/screens/allindiastatewisescreen.dart';
+import 'package:audit_app/screens/allindiastatewisegooglemapscreen.dart';
+import 'package:audit_app/screens/redreportscreen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -50,6 +52,7 @@ void main() {
   Get.put(UserController());
   runApp(MainApp());
 }
+
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
@@ -62,72 +65,76 @@ class _MainAppState extends State<MainApp> {
   final LanguageModel model = new LanguageModel();
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-
-
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<LanguageModel>(
-      create: (context)=>model,
-      child: Consumer<LanguageModel>(
-          builder: (context,provider,child){
-            return GetMaterialApp(
-              navigatorKey: navigatorKey,
-              getPages: [
-                GetPage(name: "/changepassword/:token", page:()=>ChangepasswordScreen()),
-                GetPage(name: "/login", page:()=>Loginscreen()),
-                GetPage(name: "/dashboard", page:()=>DashboardScreen()),
-                GetPage(name: "/user", page:()=>UserScreen()),
-                GetPage(name: "/client", page:()=>UserScreen()),
-                GetPage(name: "/question", page:()=>UserScreen()),
-                GetPage(name: "/auditdetails", page:()=>AuditDetails()),
-                GetPage(name: "/addquestion", page:()=>Questionscreen()),
-                GetPage(name: "/auditcategorylist", page:()=>AuditCategoryScreen()),
-                GetPage(name: "/auditlist", page:()=>Auditlistscreen()),
-                GetPage(name: "/addaudit", page:()=>AddAuditScreen()),
-                GetPage(name: "/adddata", page:()=>AddDataScreen()),
-                GetPage(name: "/auditinfo", page:()=>AuditInfoScreen()),
-                GetPage(name: "/templateedit", page:()=>TemplateEditScreen()),
-                GetPage(name: "/templatelist", page:()=>Templatelistscreen()),
-                GetPage(name: "/addtemplate", page:()=>AddTemplateScreen()),
-                GetPage(name: "/scheduledaudit", page:()=>ScheduledAuditScreen()),
-                GetPage(name: "/all-india-state-activity", page: ()=>AllIndiaStateWiseScreen()),
-                GetPage(name: "/", page:()=>Splashscreen()),
-              ],
-            //   routes: <String, WidgetBuilder>{
-            //     "/login": (context) => Loginscreen(),
-            //     "/dashboard": (context) => DashboardScreen(),
-            //     "/user": (context) => UserScreen(),
-            //     "/client": (context) => UserScreen(),
-            //     "/question": (context) => UserScreen(),
-            //     "/auditdetails": (context) => AuditDetails(),
-            //     "/addquestion": (context) => Questionscreen(),
-            //     "/auditcategorylist": (context) => AuditCategoryScreen(),
-            //     "/auditlist": (context) => Auditlistscreen(),
-            //     "/addaudit": (context) => AddAuditScreen(),
-            //     "/adddata": (context) => AddDataScreen(),
-            //     // "/changepassword": (context) => ChangepasswordScreen(),
-            //   },
-              debugShowCheckedModeBanner: false,
-              initialRoute: "/",
-              title: 'Audit App',
-              defaultTransition: Transition.noTransition,
-              themeMode: provider.themeMode,
-              darkTheme: AppThemeData.instance.dark(),
-              theme: AppThemeData.instance.light(),
-              locale: model.appLocal,
-              localizationsDelegates: [
-                AppTranslationsDelegate(),
-                //provides localised strings
-                GlobalCupertinoLocalizations.delegate,
-                GlobalMaterialLocalizations.delegate,
-                GlobalWidgetsLocalizations.delegate
-              ],
-              supportedLocales: application.supportedLocales(),
-
-            );
-          }
-      ),
+      create: (context) => model,
+      child: Consumer<LanguageModel>(builder: (context, provider, child) {
+        return GetMaterialApp(
+          navigatorKey: navigatorKey,
+          getPages: [
+            GetPage(
+                name: "/changepassword/:token",
+                page: () => ChangepasswordScreen()),
+            GetPage(name: "/login", page: () => Loginscreen()),
+            GetPage(name: "/dashboard", page: () => DashboardScreen()),
+            GetPage(name: "/user", page: () => UserScreen()),
+            GetPage(name: "/client", page: () => UserScreen()),
+            GetPage(name: "/question", page: () => UserScreen()),
+            GetPage(name: "/auditdetails", page: () => AuditDetails()),
+            GetPage(name: "/addquestion", page: () => Questionscreen()),
+            GetPage(
+                name: "/auditcategorylist", page: () => AuditCategoryScreen()),
+            GetPage(name: "/auditlist", page: () => Auditlistscreen()),
+            GetPage(name: "/addaudit", page: () => AddAuditScreen()),
+            GetPage(name: "/adddata", page: () => AddDataScreen()),
+            GetPage(name: "/auditinfo", page: () => AuditInfoScreen()),
+            GetPage(name: "/templateedit", page: () => TemplateEditScreen()),
+            GetPage(name: "/templatelist", page: () => Templatelistscreen()),
+            GetPage(name: "/addtemplate", page: () => AddTemplateScreen()),
+            GetPage(
+                name: "/scheduledaudit", page: () => ScheduledAuditScreen()),
+            GetPage(
+                name: "/all-india-state-activity",
+                page: () => AllIndiaStateWiseScreen()),
+            GetPage(
+                name: "/all-india-google-map",
+                page: () => AllIndiaStateWiseGoogleMapScreen()),
+            GetPage(name: "/red-report", page: () => RedReportScreen()),
+            GetPage(name: "/", page: () => Splashscreen()),
+          ],
+          //   routes: <String, WidgetBuilder>{
+          //     "/login": (context) => Loginscreen(),
+          //     "/dashboard": (context) => DashboardScreen(),
+          //     "/user": (context) => UserScreen(),
+          //     "/client": (context) => UserScreen(),
+          //     "/question": (context) => UserScreen(),
+          //     "/auditdetails": (context) => AuditDetails(),
+          //     "/addquestion": (context) => Questionscreen(),
+          //     "/auditcategorylist": (context) => AuditCategoryScreen(),
+          //     "/auditlist": (context) => Auditlistscreen(),
+          //     "/addaudit": (context) => AddAuditScreen(),
+          //     "/adddata": (context) => AddDataScreen(),
+          //     // "/changepassword": (context) => ChangepasswordScreen(),
+          //   },
+          debugShowCheckedModeBanner: false,
+          initialRoute: "/",
+          title: 'Audit App',
+          defaultTransition: Transition.noTransition,
+          themeMode: provider.themeMode,
+          darkTheme: AppThemeData.instance.dark(),
+          theme: AppThemeData.instance.light(),
+          locale: model.appLocal,
+          localizationsDelegates: [
+            AppTranslationsDelegate(),
+            //provides localised strings
+            GlobalCupertinoLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate
+          ],
+          supportedLocales: application.supportedLocales(),
+        );
+      }),
     );
   }
 }
-

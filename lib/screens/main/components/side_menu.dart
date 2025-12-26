@@ -1,13 +1,8 @@
 import 'package:audit_app/constants.dart';
-import 'package:audit_app/controllers/menu_app_controller.dart';
-import 'package:audit_app/localization/app_translations.dart';
-import 'package:audit_app/services/api_service.dart';
 import '../../../controllers/usercontroller.dart';
 import '../../../models/screenarguments.dart';
-import './../../../providers/languagemodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 
 class SideMenu extends StatefulWidget {
@@ -24,13 +19,24 @@ class _SideMenuState extends State<SideMenu> {
 
   @override
   Widget build(BuildContext context) {
+    int selectedIndex = usercontroller.selectedIndex;
+
+    // Dynamically determine which sections should be expanded based on selected index
+    bool isAuditStatusExpanded = [0, 1, 2].contains(selectedIndex);
+    bool isActivityWiseExpanded = [3, 4].contains(selectedIndex);
+    bool isMapWiseExpanded = [5, 6].contains(selectedIndex);
+    bool isHeatMapExpanded = isActivityWiseExpanded || isMapWiseExpanded;
+    bool isReportsExpanded = [7, 8, 9].contains(selectedIndex);
+    bool isSettingsExpanded = [10, 11, 12].contains(selectedIndex);
+    bool isAuditExpanded = [13, 14].contains(selectedIndex);
+
     return Drawer(
       child: Container(
         decoration: BoxDecoration(
           color: Color(0xFF505050),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Color.fromRGBO(0, 0, 0, 0.1),
               blurRadius: 10,
               offset: Offset(2, 0),
             ),
@@ -50,7 +56,7 @@ class _SideMenuState extends State<SideMenu> {
                 children: [
                   // Audit Status Section
                   ExpansionTile(
-                    initiallyExpanded: true,
+                    initiallyExpanded: isAuditStatusExpanded,
                     title: Text(
                       "Audit Status",
                       style: TextStyle(
@@ -111,8 +117,9 @@ class _SideMenuState extends State<SideMenu> {
                     ],
                   ),
 
-                  // Activity-Wise Section
+                  // Heat Map Section
                   ExpansionTile(
+                    initiallyExpanded: isHeatMapExpanded,
                     title: Text(
                       "Heat Map",
                       style: TextStyle(
@@ -127,6 +134,7 @@ class _SideMenuState extends State<SideMenu> {
                     collapsedBackgroundColor: Color(0xFF505050),
                     children: [
                       ExpansionTile(
+                        initiallyExpanded: isActivityWiseExpanded,
                         title: Text(
                           "Activity-Wise",
                           style: TextStyle(
@@ -169,6 +177,7 @@ class _SideMenuState extends State<SideMenu> {
                         ],
                       ),
                       ExpansionTile(
+                        initiallyExpanded: isMapWiseExpanded,
                         title: Text(
                           "Map-Wise",
                           style: TextStyle(
@@ -189,7 +198,23 @@ class _SideMenuState extends State<SideMenu> {
                             press: () {
                               if (widget.enableAction!) {
                                 usercontroller.selectedIndex = 5;
-                                Navigator.pushNamed(context, "/all-india-state-activity");
+
+                                // Prepare a basic payload — use the current year and user info
+                                var map = {
+                                  "year": DateTime.now().year.toString(),
+                                  "userid": usercontroller.userData.userId,
+                                  "role": usercontroller.userData.role
+                                };
+
+                                // Close the drawer manually first so it doesn't auto-close unexpectedly
+                                Navigator.pop(context);
+
+                                // Call the API and navigate when the data is ready
+                                usercontroller.getAllIndiaStateWiseAudit(
+                                    context,
+                                    data: map, callback: (res) {
+                                  Get.toNamed("/all-india-state-activity");
+                                });
                               } else {
                                 widget.onCallback!(5);
                               }
@@ -202,7 +227,12 @@ class _SideMenuState extends State<SideMenu> {
                             press: () {
                               if (widget.enableAction!) {
                                 usercontroller.selectedIndex = 6;
-                                Navigator.pushNamed(context, "/dashboard");
+
+                                // Close the drawer manually first
+                                Navigator.pop(context);
+
+                                // Navigate to Red Report screen directly
+                                Get.toNamed("/red-report");
                               } else {
                                 widget.onCallback!(6);
                               }
@@ -214,6 +244,7 @@ class _SideMenuState extends State<SideMenu> {
                   ),
                   // Reports Section
                   ExpansionTile(
+                    initiallyExpanded: isReportsExpanded,
                     title: Text(
                       "Reports",
                       style: TextStyle(
@@ -281,6 +312,7 @@ class _SideMenuState extends State<SideMenu> {
 
                   // Settings Section
                   ExpansionTile(
+                    initiallyExpanded: isSettingsExpanded,
                     title: Text(
                       "Settings",
                       style: TextStyle(
@@ -356,6 +388,7 @@ class _SideMenuState extends State<SideMenu> {
 
                   // Audit Section
                   ExpansionTile(
+                    initiallyExpanded: isAuditExpanded,
                     title: Text(
                       "Audit",
                       style: TextStyle(
@@ -442,7 +475,7 @@ class _DrawerListTileState extends State<DrawerListTile> {
     return ListTile(
       selected: widget.id == widget.selectedIndex ? true : false,
       selectedColor: Color(0xFF505050),
-      selectedTileColor: Colors.blue.withOpacity(0.3),
+      selectedTileColor: Color.fromRGBO(33, 150, 243, 0.3),
       onTap: widget.press,
       horizontalTitleGap: 0.0,
       contentPadding:

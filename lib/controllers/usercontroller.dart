@@ -82,7 +82,9 @@ class UserController extends GetxController {
       defaultPolylineStroke: 1);
   loadInitData() async {
     String? str = await LocalStorage.getStringData("userdata");
-    userData = UserData.fromJson(jsonDecode(str!));
+    if (str != null && str.isNotEmpty) {
+      userData = UserData.fromJson(jsonDecode(str));
+    }
     String filename = "assets/json/states.json";
     if (kIsWeb) {
       filename = "json/states.json";
@@ -112,7 +114,7 @@ class UserController extends GetxController {
     APIService(context).postData("login", data, false).then((resvalue) async {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
-        print("ffdddd ${res}");
+        print("login response ${res}");
         if (!res.containsKey("type")) {
           await LocalStorage.setStringData("userdata", resvalue);
           userData = UserData.fromJson(res);
@@ -189,7 +191,7 @@ class UserController extends GetxController {
     APIService(context)
         .uploadFiles(filename, bytes, "upload", data)
         .then((resvalue) {
-      if (resvalue!.length != 5) {
+      if (resvalue != null && resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         callback(res);
       }
@@ -210,7 +212,7 @@ class UserController extends GetxController {
     )
         .then((resvalue) {
       print("resvalue ${resvalue}");
-      if (resvalue!.length != 5) {
+      if (resvalue != null && resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (res.containsKey("message")) {
           APIService(context).showToastMgs(res["message"]);
@@ -419,8 +421,11 @@ class UserController extends GetxController {
 
   void getClientList(context,
       {required Map<String, dynamic> data,
-      required Function(List<dynamic>) callback}) {
-    APIService(context).postData("getClientList", data, true).then((resvalue) {
+      required Function(List<dynamic>) callback,
+      bool loader = true}) {
+    APIService(context)
+        .postData("getClientList", data, true, loader: loader)
+        .then((resvalue) {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (!res.containsKey("type")) {
@@ -449,21 +454,15 @@ class UserController extends GetxController {
 
   void getPublisedFinancialYearList(context,
       {required Function(dynamic) callback}) {
-    print("=== getPublisedFinancialYearList API CALLED (GET) ===");
-
-    APIService(context).getData("getPublisedFinancialYearList", true).then((resvalue) {
-      print("=== Financial Years API Response Received ===");
-      print("Raw response: $resvalue");
-
+    APIService(context)
+        .getData("getPublisedFinancialYearList", true)
+        .then((resvalue) {
       if (resvalue.length != 5) {
         try {
           Map<String, dynamic> res = jsonDecode(resvalue);
-          print("Decoded response: $res");
 
           // Check for error type first
           if (res.containsKey("type") && res["type"] == "error") {
-            print("=== ERROR: API returned error ===");
-            print("Error: ${res["message"] ?? "Unknown error"}");
             // Return empty data to trigger fallback
             callback([]);
             return;
@@ -471,33 +470,19 @@ class UserController extends GetxController {
 
           // Handle success response with message and data
           if (res.containsKey("message") && res.containsKey("data")) {
-            print("=== API Success: ${res["message"]} ===");
-            print("=== Total Years: ${res["total_years"] ?? 0} ===");
-            print("=== Financial Years List: ${res["financial_years"]} ===");
-            print("=== Calling Callback with data ===");
-            print("Data: ${res["data"]}");
             callback(res["data"]);
           } else if (res.containsKey("data")) {
-            // Fallback if message is missing but data exists
-            print("=== Calling Callback with data (no message field) ===");
-            print("Data: ${res["data"]}");
             callback(res["data"]);
           } else {
-            print("=== ERROR: No 'data' key in response ===");
             callback([]);
           }
         } catch (e) {
-          print("=== ERROR Decoding JSON ===");
-          print("Error: $e");
           callback([]);
         }
       } else {
-        print("=== ERROR: Response length is 5 (likely error) ===");
         callback([]);
       }
     }).catchError((error) {
-      print("=== API Call Error ===");
-      print("Error: $error");
       callback([]);
     });
   }
@@ -505,23 +490,54 @@ class UserController extends GetxController {
   void getAllIndiaStateWiseAudit(context,
       {required Map<String, dynamic> data,
       required Function(dynamic) callback}) {
-    print("=== getAllIndiaStateWiseAudit API CALLED ===");
-    print("Request data: $data");
-
-    APIService(context).postData("getAllIndiaStateWiseAudit", data, true).then((resvalue) {
-      print("=== API Response Received ===");
-      print("Response length: ${resvalue.length}");
-      print("Raw response: $resvalue");
-
+    APIService(context)
+        .postData("getAllIndiaStateWiseAudit", data, true)
+        .then((resvalue) {
       if (resvalue.length != 5) {
         try {
           Map<String, dynamic> res = jsonDecode(resvalue);
 
           // Check if response has error type (including HTML errors)
           if (res.containsKey("type") && res["type"] == "error") {
-            print("⚠️ API Error: ${res['message'] ?? 'Unknown error'}");
-            print("💡 TIP: Make sure your backend server is running on http://127.0.0.1:8000");
-            print("💡 Or switch to test data mode to see the map without API");
+            // Call callback with empty array to trigger fallback
+            callback([]);
+            return;
+          }
+
+          // Handle success response
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              callback(res["data"]);
+            } else {
+              callback([]);
+            }
+          } else {
+            callback([]);
+          }
+        } catch (e) {
+          callback([]);
+        }
+      } else {
+        callback([]);
+      }
+    }).catchError((error) {
+      // Call callback with empty array to prevent infinite loading
+      callback([]);
+    });
+  }
+
+  void getZoneWiseNCAudit(context,
+      {required Map<String, dynamic> data,
+      required Function(dynamic) callback}) {
+    APIService(context)
+        .postData("getZoneWiseNCAudit", data, true)
+        .then((resvalue) {
+      if (resvalue.length != 5) {
+        try {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+
+          // Check if response has error type (including HTML errors)
+          if (res.containsKey("type") && res["type"] == "error") {
             // Call callback with empty array to trigger fallback
             callback([]);
             return;

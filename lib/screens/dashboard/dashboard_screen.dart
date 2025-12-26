@@ -156,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         loadedPolygons.add(
           Polygon(
             points: _convertCoords(geometry["coordinates"][0]),
-            color: Colors.white,
+            color: Color(0xFFD1D1D1), // Use Not Applicable gray instead of white
             borderStrokeWidth: 1.5,
             borderColor: Colors.grey,
           ),
@@ -166,7 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           loadedPolygons.add(
             Polygon(
               points: _convertCoords(polygon[0]),
-              color: Colors.white,
+              color: Color(0xFFD1D1D1), // Use Not Applicable gray instead of white
               borderStrokeWidth: 1.5,
               borderColor: Colors.transparent,
             ),

@@ -119,7 +119,9 @@ class _BrandDropdownState extends State<BrandDropdown> {
   @override
   void initState() {
     super.initState();
-    loadClients();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadClients();
+    });
   }
 
   Future<void> loadClients() async {
