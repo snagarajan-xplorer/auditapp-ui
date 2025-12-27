@@ -40,7 +40,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:audit_app/screens/scheduledauditscreen.dart';
 import 'package:audit_app/screens/allindiastatewisescreen.dart';
-import 'package:audit_app/screens/allindiastatewisegooglemapscreen.dart';
+import 'package:audit_app/screens/all_india_state_wise_audit.dart';
 import 'package:audit_app/screens/redreportscreen.dart';
 
 void main() {
@@ -98,8 +98,8 @@ class _MainAppState extends State<MainApp> {
                 name: "/all-india-state-activity",
                 page: () => AllIndiaStateWiseScreen()),
             GetPage(
-                name: "/all-india-google-map",
-                page: () => AllIndiaStateWiseGoogleMapScreen()),
+                name: "/all-india-state-wise-audit",
+                page: () => AllIndiaStateWiseAudit()),
             GetPage(name: "/red-report", page: () => RedReportScreen()),
             GetPage(name: "/", page: () => Splashscreen()),
           ],

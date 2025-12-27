@@ -9,17 +9,16 @@ import 'main/layoutscreen.dart';
 import '../constants.dart';
 import 'dart:ui' as ui;
 
-class AllIndiaStateWiseGoogleMapScreen extends StatefulWidget {
-  const AllIndiaStateWiseGoogleMapScreen({super.key});
+class AllIndiaStateWiseAudit extends StatefulWidget { //all-india-state-audit
+  const AllIndiaStateWiseAudit({super.key});
 
   @override
-  State<AllIndiaStateWiseGoogleMapScreen> createState() =>
-      _AllIndiaStateWiseGoogleMapScreenState();
+  State<AllIndiaStateWiseAudit> createState() =>
+      _AllIndiaStateWiseAuditState();
 }
 
-class _AllIndiaStateWiseGoogleMapScreenState
-    extends State<AllIndiaStateWiseGoogleMapScreen>
-    with SingleTickerProviderStateMixin {
+class _AllIndiaStateWiseAuditState
+    extends State<AllIndiaStateWiseAudit> {
   String selectedYear = "2025";
   String selectedFinancialYear = "FY2025-26";
 
@@ -28,7 +27,6 @@ class _AllIndiaStateWiseGoogleMapScreenState
   bool isLoadingYears = true;
 
   // Map and data variables
-  bool loadData = false;
   GoogleMapController? googleMapController;
   double currentZoom = 4.0;
   LatLng currentCenter = LatLng(22.9734, 78.6569);
@@ -52,7 +50,7 @@ class _AllIndiaStateWiseGoogleMapScreenState
     }
 
     await loadFinancialYears();
-    await newloadGeoJson();
+    // Load state-wise data first; it will render polygons after fetching
     await loadStateWiseData();
 
     if (mounted) {
@@ -126,7 +124,8 @@ class _AllIndiaStateWiseGoogleMapScreenState
   }
 
   Future<void> loadStateWiseData() async {
-    String yearValue = selectedFinancialYear;
+    // Use the numeric year value for API calls to avoid ambiguity
+    String yearValue = selectedYear;
 
     var map = {
       "year": yearValue,
@@ -191,9 +190,6 @@ class _AllIndiaStateWiseGoogleMapScreenState
       return Color(0xFFE8E8E8); // Light grey for states without data
     }
   }
-
-  // Region mapping helpers removed; polygons have no stroke now.
-
 
   String _normalizeStateName(String name) {
     String normalized = name.trim().toLowerCase();
@@ -265,8 +261,6 @@ class _AllIndiaStateWiseGoogleMapScreenState
         }
       }
 
-      // No borders inside states; fill only
-
       // Store state data for marker creation later
       if (!stateInfoMap.containsKey(stateName)) {
         stateInfoMap[stateName] = stateData;
@@ -285,7 +279,7 @@ class _AllIndiaStateWiseGoogleMapScreenState
             polygonId: PolygonId('polygon_$polygonIndex'),
             points: points,
             fillColor: fillColor,
-            strokeColor: fillColor,
+            strokeColor: Colors.grey,
             strokeWidth: 1,
           ),
         );
@@ -298,8 +292,8 @@ class _AllIndiaStateWiseGoogleMapScreenState
             Polygon(
               polygonId: PolygonId('polygon_$polygonIndex'),
               points: points,
-              fillColor: fillColor,
-              strokeColor: fillColor,
+              fillColor: fillColor, 
+              strokeColor: Colors.transparent,
               strokeWidth: 1,
             ),
           );
@@ -368,7 +362,7 @@ class _AllIndiaStateWiseGoogleMapScreenState
       text: text,
       style: const TextStyle(
         fontSize: 10.0,
-        color: Color(0xFFF54234),
+        color: Color(0xFF000000),
         fontWeight: FontWeight.w400,
         shadows: [
           Shadow(
@@ -441,7 +435,7 @@ class _AllIndiaStateWiseGoogleMapScreenState
       {
         "featureType": "water",
         "elementType": "geometry",
-        "stylers": [{"color": "#5CD7FF"}]
+        "stylers": [{"visibility": "off"}]
       },
       {
         "featureType": "administrative.locality",
@@ -482,7 +476,7 @@ class _AllIndiaStateWiseGoogleMapScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Heatmap – All India (State wise) - Google Maps",
+                    "Heatmap – All India (State wise)",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
@@ -526,7 +520,7 @@ class _AllIndiaStateWiseGoogleMapScreenState
                         elevation: 12,
                         shadowColor: Colors.black.withOpacity(0.25),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(0),
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: ClipRRect(
@@ -537,8 +531,9 @@ class _AllIndiaStateWiseGoogleMapScreenState
                                 width: double.infinity,
                                 height: 500,
                                 child: GoogleMap(
-                                  key: ValueKey('google_map_${polygons.length}_${markers.length}'),
-                                  onMapCreated: (GoogleMapController controller) {
+                                  key: ValueKey('google_map'),
+                                  onMapCreated:
+                                      (GoogleMapController controller) {
                                     googleMapController = controller;
                                     _setMapStyle(controller);
                                   },
@@ -551,8 +546,9 @@ class _AllIndiaStateWiseGoogleMapScreenState
                                   mapType: MapType.normal,
                                   myLocationButtonEnabled: false,
                                   zoomControlsEnabled: false,
+                                  zoomGesturesEnabled: true,
                                   minMaxZoomPreference:
-                                      MinMaxZoomPreference(4.0, 8.0),
+                                      MinMaxZoomPreference.unbounded,
                                   cameraTargetBounds: CameraTargetBounds(
                                     LatLngBounds(
                                       southwest: LatLng(6.4, 68.1),
@@ -706,14 +702,14 @@ class _AllIndiaStateWiseGoogleMapScreenState
   }
 
   void _zoomIn() {
-    double newZoom = (currentZoom + 1).clamp(1.0, 18.0);
+    double newZoom = (currentZoom + 1).clamp(1.0, 22.0);
     googleMapController?.animateCamera(
       CameraUpdate.zoomTo(newZoom),
     );
   }
 
   void _zoomOut() {
-    double newZoom = (currentZoom - 1).clamp(1.0, 18.0);
+    double newZoom = (currentZoom - 1).clamp(1.0, 22.0);
     googleMapController?.animateCamera(
       CameraUpdate.zoomTo(newZoom),
     );

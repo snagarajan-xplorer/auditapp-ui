@@ -213,7 +213,7 @@ class _SideMenuState extends State<SideMenu> {
                                 usercontroller.getAllIndiaStateWiseAudit(
                                     context,
                                     data: map, callback: (res) {
-                                  Get.toNamed("/all-india-google-map");
+                                  Get.toNamed("/all-india-state-wise-audit");
                                 });
                               } else {
                                 widget.onCallback!(5);

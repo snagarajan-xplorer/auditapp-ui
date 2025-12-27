@@ -36,7 +36,7 @@ class AppThemeData {
           TargetPlatform.windows: NoTransitionsBuilder(),
         },
       ),
-      textTheme: GoogleFonts.poppinsTextTheme().apply(bodyColor: bgColor),
+      textTheme: GoogleFonts.robotoTextTheme().apply(bodyColor: bgColor),
       appBarTheme: const AppBarTheme(
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: kPrimaryColor,
@@ -128,7 +128,7 @@ class AppThemeData {
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue,
         ),
-        textTheme: GoogleFonts.poppinsTextTheme().copyWith(
+        textTheme: GoogleFonts.robotoTextTheme().copyWith(
             bodySmall: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w400, color: Colors.white),
             bodyMedium: TextStyle(

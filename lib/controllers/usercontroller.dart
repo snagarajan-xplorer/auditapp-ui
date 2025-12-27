@@ -118,7 +118,7 @@ class UserController extends GetxController {
         if (!res.containsKey("type")) {
           await LocalStorage.setStringData("userdata", resvalue);
           userData = UserData.fromJson(res);
-          callback();
+          callback(); 
         } else {
           print(res["message"]);
           if (res.containsKey("message")) {
