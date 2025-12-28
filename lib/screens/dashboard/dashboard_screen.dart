@@ -65,10 +65,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<LatLng> indiaBoundary = [];
   final MapController mapController = MapController();
   List<Polygon> polygons = [];
+
+  // Financial years dropdown
+  List<Map<String, dynamic>> financialYears = [];
+  String selectedFinancialYear = "";
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
+    // Initialize financial years
+    final currentYear = DateTime.now().year;
+    financialYears = List.generate(5, (index) {
+      final y = currentYear - index;
+      final nextYearShort = (y + 1).toString().substring(2);
+      final fyValue = "FY$y-$nextYearShort";
+      return {"label": fyValue, "value": fyValue};
+    });
+    selectedFinancialYear = financialYears[0]["value"];
+    year = selectedFinancialYear; // Use FY format directly
+
     Future.delayed(Duration(milliseconds: 200)).then((onValue) async {
       newloadGeoJson();
       if (usercontroller.userData.role == null) {
@@ -112,37 +128,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  Future<void> _loadGeoJson() async {
-    final raw = await rootBundle.loadString('assets/json/india.geojson');
-    final data = json.decode(raw);
-
-    List<LatLng> allPoints = [];
-
-    for (var feature in data['features']) {
-      var geom = feature['geometry'];
-      if (geom['type'] == 'Polygon') {
-        for (var ring in geom['coordinates']) {
-          allPoints.addAll(ring.map((c) => LatLng(c[1], c[0])));
-        }
-      } else if (geom['type'] == 'MultiPolygon') {
-        for (var polygon in geom['coordinates']) {
-          for (var ring in polygon) {
-            allPoints.addAll(ring.map((c) => LatLng(c[1], c[0])));
-          }
-        }
-      }
-    }
-
-    setState(() {
-      indiaBoundary = allPoints;
-      mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(indiaBoundary),
-          padding: const EdgeInsets.all(20),
-        ),
-      );
-    });
-  }
 
   Future<void> newloadGeoJson() async {
     final data = await rootBundle.loadString('assets/json/india.geojson');
@@ -177,12 +162,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     setState(() {
       polygons = loadedPolygons;
-      mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints(indiaBoundary),
-          padding: const EdgeInsets.all(20),
-        ),
-      );
+      if (indiaBoundary.isNotEmpty) {
+        mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: LatLngBounds.fromPoints(indiaBoundary),
+            padding: const EdgeInsets.all(20),
+          ),
+        );
+      }
     });
   }
 
@@ -226,7 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         setState(() {});
         rows = [];
         String perStr = (100 / totalpercentage).toStringAsFixed(2);
-        double per = double.tryParse(perStr) ?? 1;
+        double.tryParse(perStr) ?? 1;
         reportList[0].children!.forEach((obj) {
           if (heading.indexOf(obj.key!) == -1) {
             heading.add(obj.key!);
@@ -274,8 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ];
           setState(() {});
-          Future.delayed(Duration(milliseconds: 400)).then((k) {
-            num k = 100 / totalpercentage;
+          Future.delayed(Duration(milliseconds: 400)).then((_) {
             showHeatmap = true;
             setState(() {});
           });
@@ -362,7 +348,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (per < 26) {
             element["isRed"] = true;
           }
-          print("score value ${scoredvalue} / ${totalvalue} = ${percentage}");
           Children child = Children(
               key: eleobj["heading"],
               scorevalue: scored,
@@ -396,8 +381,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (per < 26) {
               element["isRed"] = true;
             }
-            print(
-                "score value 222 ${scoredvalue} / ${totalvalue} = ${percentage}");
             if (child.length == 0) {
               Children child2 = Children(
                   key: eleobj["heading"],
@@ -420,7 +403,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } else {
         element["percentage"] = 0;
       }
-      print("colors ${scoredvalue2} ${totalvalue2} ${percentage2}");
       var m = ((scoredvalue2 / (totalvalue2 * 4)) * 100).round();
       String img = "assets/images/low.png";
       if (m! > 75 && m! < 99) {
@@ -446,8 +428,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   DataRow getRow(ReportObj obj) {
     List<DataCell> cell = [];
-    print(
-        "percentage------ ${obj.state} -- ${obj.score} -- ${obj.total} -- ${obj.percentage}");
     var m2 = (obj.score! / (obj.total! * 4) * 100).round();
     List<Map<String, dynamic>> color = usercontroller.scoreArr
         .where((ele) => ele["value"] == obj.percentage.toString())
@@ -482,13 +462,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     cell.add(col_02);
     cell.add(col_03);
     obj.children!.forEach((kobj) {
-      print(
-          "percentage222------ ${kobj.key} -- ${kobj.scorevalue} -- ${kobj.totalvalue} -- ${kobj.value}");
       List<Map<String, dynamic>> arr = usercontroller.scoreArr
           .where((ele) => ele["value"] == kobj.value.toString())
           .toList();
       var m = (kobj.scorevalue! / (kobj.totalvalue! * 4) * 100).round();
-      print("m value ${m}");
       Color color = UtilityService().getColorPercentage(m);
 
       if (arr.length != 0) {
@@ -502,7 +479,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         cell.add(col_04);
       }
     });
-    print("column len ${heading.length} / ${cell.length}");
     DataRow row = DataRow(cells: cell);
     return row;
   }
@@ -558,9 +534,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                         validator: FormBuilderValidators.compose([
                           FormBuilderValidators.required(
-                              errorText: AppTranslations.of(context)!
-                                      .text("key_error_01") ??
-                                  "")
+                              errorText: AppTranslations.of(context)!.text("key_error_01"))
                         ]),
                         decoration: InputDecoration(
                           label: RichText(
@@ -729,13 +703,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         SizedBox(height: 18),
-                        Text(
-                          "A clear view of where the audit execution stands.",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w100,
-                            color: Color(0xFF898989),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "A clear view of where the audit execution stands.",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w100,
+                                color: Color(0xFF898989),
+                              ),
+                            ),
+                            _buildFinancialYearDropdown(),
+                          ],
                         ),
                         SizedBox(height: 31),
 
@@ -757,7 +737,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Expanded(
                               child: _buildTopCard(
                                 "Scheduled",
-                                dataObj["complete"].toString(),
+                                dataObj["upcoming"].toString(),
                                 Color(0xFF67AC5B),
                               ),
                             ),
@@ -801,36 +781,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               _buildDivider(),
                               Expanded(
                                 child: _buildStatusCard(
-                                  "Published",
-                                  Color(0xFF2E77D0),
-                                  (dataObj["complete"] ~/ 2).toString(),
+                                    "Published",
+                                    Color(0xFF2E77D0),
+                                    (dataObj["complete"] ~/ 2).toString(),
                                   Colors.black
                                 ),
                               ),
                               _buildDivider(),
                               Expanded(
                                 child: _buildStatusCard(
-                                  "In Progress",
-                                  Color(0xFFF29500),
-                                  dataObj["incomplete"].toString(),
+                                    "In Progress",
+                                    Color(0xFFF29500),
+                                    dataObj["incomplete"].toString(),
+                                    Colors.black),
+                              ),
+                              _buildDivider(),
+                              Expanded(
+                                child: _buildStatusCard(
+                                    "Upcoming",
+                                   Color(0xFF9654CE),
+                                    dataObj["upcoming"].toString(),
                                   Colors.black
                                 ),
                               ),
                               _buildDivider(),
                               Expanded(
                                 child: _buildStatusCard(
-                                  "Upcoming",
-                                  Color(0xFF9654CE),
-                                  dataObj["upcoming"].toString(),
-                                  Colors.black
-                                ),
-                              ),
-                              _buildDivider(),
-                              Expanded(
-                                child: _buildStatusCard(
-                                  "Cancelled",
-                                  Color(0xFFDD0000),
-                                  dataObj["cancel"].toString(),
+                                    "Cancelled",
+                                    Color(0xFFDD0000),
+                                    dataObj["cancel"].toString(),
                                   Colors.black
                                 ),
                               ),
@@ -840,58 +819,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         SizedBox(height: defaultPadding * 2),
 
                         // Heat Map Section (if needed)
-                        if (showHeatmap) getHeatMapContainer(),
+                        // if (showHeatmap) getHeatMapContainer(),
                         if (showHeatmap) SizedBox(height: defaultPadding),
-                        if (showHeatmap)
-                          BoxContainer(
-                            width: double.infinity,
-                            height: 700,
-                            child: FlutterMap(
-                              mapController: mapController,
-                              options: MapOptions(
-                                initialCenter: LatLng(22.9734, 78.6569),
-                                initialZoom: 4,
-                                interactionOptions: const InteractionOptions(
-                                  flags: InteractiveFlag.all &
-                                      ~InteractiveFlag.rotate,
-                                ),
-                              ),
-                              children: [
-                                if (polygons.isNotEmpty)
-                                  PolygonLayer(
-                                    polygons: polygons,
-                                  ),
-                                MarkerLayer(
-                                  markers: allAuditList
-                                      .map<Marker>(
-                                        (_element) => Marker(
-                                          point: LatLng(
-                                              double.tryParse(
-                                                      _element["latitude"]) ??
-                                                  13.0827,
-                                              double.tryParse(
-                                                      _element["longitude"]) ??
-                                                  80.2707),
-                                          width: 35,
-                                          height: 35,
-                                          child: Tooltip(
-                                            message: _element["audit_no"] +
-                                                "(" +
-                                                _element["city"] +
-                                                ")",
-                                            child: Image(
-                                              image:
-                                                  AssetImage(_element["svg"]),
-                                              height: 40,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                                ),
-                              ],
-                            ),
-                          ),
+                        //if (showHeatmap) 
+                        // BoxContainer(
+                        //   width: double.infinity,
+                        //   height: 700,
+                        //   child: FlutterMap(
+                        //     mapController: mapController,
+                        //     options: MapOptions(
+                        //       initialCenter: LatLng(22.9734, 78.6569),
+                        //       initialZoom: 4, 
+                        //       interactionOptions: const InteractionOptions(
+                        //         flags: InteractiveFlag.all &
+                        //             ~InteractiveFlag.rotate,
+                        //       ),
+                        //     ),
+                        //     children: [
+                        //       if (polygons.isNotEmpty)
+                        //         PolygonLayer(
+                        //           polygons: polygons,
+                        //         ),
+                        //       MarkerLayer(
+                        //         markers: allAuditList
+                        //             .map<Marker>(
+                        //               (_element) => Marker(
+                        //                 point: LatLng(
+                        //                     double.tryParse(
+                        //                             _element["latitude"]) ??
+                        //                         13.0827,
+                        //                     double.tryParse(
+                        //                             _element["longitude"]) ??
+                        //                         80.2707),
+                        //                 width: 35,
+                        //                 height: 35,
+                        //                 child: Tooltip(
+                        //                   message: _element["audit_no"] +
+                        //                       "(" +
+                        //                       _element["city"] +
+                        //                       ")",
+                        //                   child: Image(
+                        //                     image:
+                        //                         AssetImage(_element["svg"]),
+                        //                     height: 40,
+                        //                   ),
+                        //                 ),
+                        //               ),
+                        //             )
+                        //             .toList(),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -948,6 +927,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStatusCard(String title, Color titleColor, String value, Color valueColor, {Color? bgColor, BorderRadius? borderRadius}) {
     return Container(
+      height: 152,
       padding: EdgeInsets.symmetric(vertical: 30, horizontal: 8),
       decoration: BoxDecoration(
         color: bgColor,
@@ -986,6 +966,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
       width: 1,
       height: 152,
       color: Colors.grey.shade300,
+    );
+  }
+
+  Widget _buildFinancialYearDropdown() {
+    if (financialYears.isEmpty) {
+      return SizedBox();
+    }
+
+    return Container(
+      height: 40,
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Color(0xFFC9C9C9)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: DropdownButton<String>(
+        value: selectedFinancialYear,
+        underline: SizedBox(),
+        icon: Icon(Icons.arrow_drop_down, size: 20, color: Color(0xFF505050)),
+        style: TextStyle(
+          fontSize: 14,
+          color: Color(0xFF505050),
+        ),
+        items: financialYears.map((Map<String, dynamic> item) {
+          return DropdownMenuItem<String>(
+            value: item["value"],
+            child: Text(item["label"]),
+          );
+        }).toList(),
+        onChanged: (String? newValue) async {
+          if (mounted && newValue != null) {
+            setState(() {
+              selectedFinancialYear = newValue;
+              year = newValue; // Use FY format directly
+            });
+            // Reload data with new year
+            await getClientReport(client_id);
+          }
+        },
+      ),
     );
   }
 }

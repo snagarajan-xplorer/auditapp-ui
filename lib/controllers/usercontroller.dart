@@ -543,13 +543,10 @@ class UserController extends GetxController {
             return;
           }
 
-          // Handle success response
+          // Handle success response - API returns the full response object directly
           if (!res.containsKey("type")) {
-            if (res.containsKey("data")) {
-              callback(res["data"]);
-            } else {
-              callback([]);
-            }
+            // Return the full response since it contains map_data directly
+            callback(res);
           } else {
             callback([]);
           }

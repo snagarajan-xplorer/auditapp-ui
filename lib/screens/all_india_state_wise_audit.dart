@@ -64,58 +64,20 @@ class _AllIndiaStateWiseAuditState
   }
 
   Future<void> loadFinancialYears() async {
-    bool apiResponseReceived = false;
-
-    usercontroller.getPublisedFinancialYearList(context, callback: (data) {
-      apiResponseReceived = true;
-
-      if (data is List && data.isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            financialYears = data.map((item) {
-              return {
-                "label": item["financial_year"] ??
-                    "FY${item["year"]}-${int.parse(item["year"]) + 1}",
-                "value": item["year"] ?? "",
-                "start_date": item["start_date"] ?? "",
-                "end_date": item["end_date"] ?? "",
-                "audit_count": item["audit_count"] ?? 0,
-              };
-            }).toList();
-
-            if (financialYears.isNotEmpty) {
-              selectedFinancialYear = financialYears[0]["label"];
-              selectedYear = financialYears[0]["value"];
-            }
-
-            isLoadingYears = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            financialYears = [
-              {"label": "FY2025-26", "value": "2025", "audit_count": 0},
-              {"label": "FY2024-25", "value": "2024", "audit_count": 0},
-              {"label": "FY2023-24", "value": "2023", "audit_count": 0},
-            ];
-            selectedFinancialYear = financialYears[0]["label"];
-            selectedYear = financialYears[0]["value"];
-            isLoadingYears = false;
-          });
-        }
-      }
+    // Hardcoded last 5 financial years
+    final currentYear = DateTime.now().year;
+    financialYears = List.generate(5, (index) {
+      final year = currentYear - index;
+      final nextYearShort = (year + 1).toString().substring(2);
+      final fyValue = "FY$year-$nextYearShort";
+      return {
+        "label": fyValue,
+        "value": fyValue,
+      };
     });
 
-    await Future.delayed(Duration(seconds: 3));
-
-    if (!apiResponseReceived && mounted) {
+    if (mounted) {
       setState(() {
-        financialYears = [
-          {"label": "FY2025-26", "value": "2025", "audit_count": 0},
-          {"label": "FY2024-25", "value": "2024", "audit_count": 0},
-          {"label": "FY2023-24", "value": "2023", "audit_count": 0},
-        ];
         selectedFinancialYear = financialYears[0]["label"];
         selectedYear = financialYears[0]["value"];
         isLoadingYears = false;
@@ -124,11 +86,11 @@ class _AllIndiaStateWiseAuditState
   }
 
   Future<void> loadStateWiseData() async {
-    // Use the numeric year value for API calls to avoid ambiguity
-    String yearValue = selectedYear;
+    // Pass financial year in FY format (e.g., FY2025-26)
+    final String fyValue = selectedYear; // already in FY format from dropdown
 
     var map = {
-      "year": yearValue,
+      "financial_year": fyValue,
       "userid": usercontroller.userData.userId,
       "role": usercontroller.userData.role
     };
@@ -292,7 +254,7 @@ class _AllIndiaStateWiseAuditState
             Polygon(
               polygonId: PolygonId('polygon_$polygonIndex'),
               points: points,
-              fillColor: fillColor, 
+              fillColor: fillColor,
               strokeColor: Colors.transparent,
               strokeWidth: 1,
             ),
@@ -535,7 +497,7 @@ class _AllIndiaStateWiseAuditState
                                   onMapCreated:
                                       (GoogleMapController controller) {
                                     googleMapController = controller;
-                                    _setMapStyle(controller);
+                                   // _setMapStyle(controller);
                                   },
                                   initialCameraPosition: CameraPosition(
                                     target: currentCenter,
@@ -835,11 +797,13 @@ class _AllIndiaStateWiseAuditState
                 // Find the selected item to get the year value
                 var selectedItem = financialYears.firstWhere(
                   (item) => item["label"] == newValue,
-                  orElse: () => {"label": newValue, "value": "2025"},
+                  // Label equals value (FYYYYY-YY); fallback uses the label itself
+                  orElse: () => {"label": newValue, "value": newValue},
                 );
 
                 setState(() {
                   selectedFinancialYear = newValue;
+                  // Ensure endpoint receives FY format (e.g., FY2025-26)
                   selectedYear = selectedItem["value"];
                 });
                 // Load state data with new year

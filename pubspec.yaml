@@ -64,7 +64,7 @@ dependencies:
   latlong2: ^0.9.0
   overlay_loading_progress: ^1.0.1
   google_maps_flutter: ^2.10.0
-  google_maps_flutter_web: ^0.5.10
+  google_maps_flutter_web: ^0.5.14+3
 
 dev_dependencies:
   flutter_test:

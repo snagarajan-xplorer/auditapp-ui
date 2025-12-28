@@ -200,8 +200,11 @@ class _SideMenuState extends State<SideMenu> {
                                 usercontroller.selectedIndex = 5;
 
                                 // Prepare a basic payload — use the current year and user info
+                                final y = DateTime.now().year;
+                                final fy = "FY$y-${(y + 1).toString().substring(2)}";
+                                
                                 var map = {
-                                  "year": DateTime.now().year.toString(),
+                                  "financial_year": fy,
                                   "userid": usercontroller.userData.userId,
                                   "role": usercontroller.userData.role
                                 };
@@ -268,7 +271,7 @@ class _SideMenuState extends State<SideMenu> {
                           press: () {
                             if (widget.enableAction!) {
                               usercontroller.selectedIndex = 7;
-                              Navigator.pushNamed(context, "/all-india-google-map",
+                              Navigator.pushNamed(context, "/dashboard",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
                                       mapData: {}));

@@ -125,10 +125,11 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
   }
 
   Future<void> loadStateWiseData() async {
-    String yearValue = selectedFinancialYear;
+    // Always use FY format for year
+    String fyValue = selectedFinancialYear; // already in FY format
 
     var map = {
-      "year": yearValue,
+      "financial_year": fyValue, // use correct key and format
       "userid": usercontroller.userData.userId,
       "role": usercontroller.userData.role
     };
