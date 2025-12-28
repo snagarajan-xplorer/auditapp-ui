@@ -10,10 +10,10 @@ import '../constants.dart';
 
 // Generates a large yellow circle BitmapDescriptor for Google Maps markers
 Future<BitmapDescriptor> _getYellowCircleMarkerIcon() async {
-  final int size = 20;
+  final int size = 22;
   final ui.PictureRecorder recorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(recorder);
-  final Paint paint = Paint()..color = Colors.yellow;
+  final Paint paint = Paint()..color = Color(0xFFF54234);
   final Paint border = Paint()
     ..color = Colors.white
     ..style = PaintingStyle.stroke
@@ -380,58 +380,61 @@ class _RedReportScreenState extends State<RedReportScreen>
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Stack(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 500,
-                                child: GoogleMap(
-                                  key: ValueKey('google_map'),
-                                  onMapCreated:
-                                      (GoogleMapController controller) {
-                                    mapController = controller;
-                                   // _setMapStyle(controller);
-                                  },
-                                  initialCameraPosition: CameraPosition(
-                                    target: currentCenter,
-                                    zoom: currentZoom,
-                                  ),
-                                  polygons: polygons,
-                                  markers: redMarkers,
-                                  mapType: MapType.normal,
-                                  myLocationButtonEnabled: false,
-                                  zoomControlsEnabled: false,
-                                  zoomGesturesEnabled: true,
-                                  minMaxZoomPreference:
-                                      MinMaxZoomPreference(4.0, 20.0),
-                                  cameraTargetBounds: CameraTargetBounds(
-                                    LatLngBounds(
-                                      southwest: LatLng(6.4, 68.1),
-                                      northeast: LatLng(35.5, 97.4),
+                          borderRadius: BorderRadius.zero,
+                          child: Container(
+                            color: Color(0xFFC9C9C9), 
+                            child: Stack(
+                              children: [
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 500,
+                                  child: GoogleMap(
+                                    key: ValueKey('google_map'),
+                                    onMapCreated:
+                                        (GoogleMapController controller) {
+                                      mapController = controller;
+                                     // _setMapStyle(controller);
+                                    },
+                                    initialCameraPosition: CameraPosition(
+                                      target: currentCenter,
+                                      zoom: currentZoom,
                                     ),
+                                    polygons: polygons,
+                                    markers: redMarkers,
+                                    mapType: MapType.normal,
+                                    myLocationButtonEnabled: false,
+                                    zoomControlsEnabled: false,
+                                    zoomGesturesEnabled: true,
+                                    minMaxZoomPreference:
+                                        MinMaxZoomPreference(4.0, 20.0),
+                                    cameraTargetBounds: CameraTargetBounds(
+                                      LatLngBounds(
+                                        southwest: LatLng(6.4, 68.1),
+                                        northeast: LatLng(35.5, 97.4),
+                                      ),
+                                    ),
+                                    mapToolbarEnabled: false,
+                                    compassEnabled: false,
+                                    trafficEnabled: false,
+                                    buildingsEnabled: false,
+                                    indoorViewEnabled: false,
+                                    onCameraMove: (CameraPosition position) {
+                                      setState(() {
+                                        currentZoom = position.zoom;
+                                        currentCenter = position.target;
+                                      });
+                                    },
                                   ),
-                                  mapToolbarEnabled: false,
-                                  compassEnabled: false,
-                                  trafficEnabled: false,
-                                  buildingsEnabled: false,
-                                  indoorViewEnabled: false,
-                                  onCameraMove: (CameraPosition position) {
-                                    setState(() {
-                                      currentZoom = position.zoom;
-                                      currentCenter = position.target;
-                                    });
-                                  },
                                 ),
-                              ),
 
-                              // Zoom controls (top-right)
-                              Positioned(
-                                right: 12,
-                                top: 12,
-                                child: _buildZoomControls(),
-                              ),
-                            ],
+                                // Zoom controls (top-right)
+                                Positioned(
+                                  right: 12,
+                                  top: 12,
+                                  child: _buildZoomControls(),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

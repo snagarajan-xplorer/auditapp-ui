@@ -1,4 +1,3 @@
-import 'package:audit_app/providers/user_data_provider.dart';
 import 'package:audit_app/screens/addauditscreen.dart';
 import 'package:audit_app/screens/adddata.dart';
 import 'package:audit_app/screens/addtemplatescreen.dart';
@@ -14,29 +13,25 @@ import 'package:audit_app/screens/templatescreenedit.dart';
 import 'package:audit_app/screens/userscreen.dart';
 import 'package:audit_app/theme/themes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:get/get_instance/src/bindings_interface.dart';
 import 'package:get/get_navigation/src/routes/get_route.dart';
 import 'package:get/get_navigation/src/routes/transitions_type.dart';
 import 'package:get/get.dart';
 
 import '../screens/dashboard/dashboard_screen.dart';
 import '../screens/loginscreen.dart';
+import '../screens/login_screen.dart';
 import '../screens/splashscreen.dart';
 import '../providers/languagemodel.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:url_strategy/url_strategy.dart';
 
-import './../constants.dart';
-import './../controllers/menu_app_controller.dart';
-import './../screens/main/layoutscreen.dart';
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/usercontroller.dart';
 import 'localization/app_translations_delegate.dart';
 import 'localization/application.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:audit_app/screens/scheduledauditscreen.dart';
 import 'package:audit_app/screens/allindiastatewisescreen.dart';
@@ -77,6 +72,7 @@ class _MainAppState extends State<MainApp> {
                 name: "/changepassword/:token",
                 page: () => ChangepasswordScreen()),
             GetPage(name: "/login", page: () => Loginscreen()),
+            GetPage(name: "/login-v2", page: () => LoginScreen()),
             GetPage(name: "/dashboard", page: () => DashboardScreen()),
             GetPage(name: "/user", page: () => UserScreen()),
             GetPage(name: "/client", page: () => UserScreen()),

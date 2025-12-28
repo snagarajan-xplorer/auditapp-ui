@@ -31,7 +31,7 @@ class _SplashscreenState extends State<Splashscreen>
       const Duration(seconds: 5),
       () {
         // Routemaster.of(context).push("/login");
-        Get.offNamed('/login');
+        Get.offNamed('/login-v2');
 
         //Navigator.popAndPushNamed(context, "/login");
         print("yes");
