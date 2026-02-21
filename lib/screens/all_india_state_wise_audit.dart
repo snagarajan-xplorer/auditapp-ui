@@ -272,21 +272,7 @@ class _AllIndiaStateWiseAuditState
 
       LatLng centroid = _calculateCentroid(allPoints);
 
-      String auditDate = "";
-      dynamic stateData = stateInfoMap[stateName];
-      if (stateData != null) {
-        auditDate = stateData["audit_date"] ??
-            stateData["date"] ??
-            stateData["last_audit_date"] ??
-            "";
-      }
-
-      String label = stateName;
-      if (auditDate.isNotEmpty) {
-        label += "\n$auditDate";
-      }
-
-      final BitmapDescriptor icon = await _createCustomMarkerBitmap(label);
+      final BitmapDescriptor icon = await _createCustomMarkerBitmap(stateName);
 
       loadedMarkers.add(
         Marker(

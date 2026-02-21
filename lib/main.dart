@@ -1,4 +1,5 @@
 import 'package:audit_app/screens/addauditscreen.dart';
+import 'package:audit_app/screens/createauditscreen.dart';
 import 'package:audit_app/screens/adddata.dart';
 import 'package:audit_app/screens/addtemplatescreen.dart';
 import 'package:audit_app/screens/auditcategoryscreen.dart';
@@ -34,9 +35,11 @@ import 'localization/app_translations_delegate.dart';
 import 'localization/application.dart';
 
 import 'package:audit_app/screens/scheduledauditscreen.dart';
+import 'package:audit_app/screens/unscheduledauditscreen.dart';
 import 'package:audit_app/screens/allindiastatewisescreen.dart';
 import 'package:audit_app/screens/all_india_state_wise_audit.dart';
 import 'package:audit_app/screens/red_report_audit.dart';
+import 'package:audit_app/screens/audit_list_v2_screen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -81,8 +84,9 @@ class _MainAppState extends State<MainApp> {
             GetPage(name: "/addquestion", page: () => Questionscreen()),
             GetPage(
                 name: "/auditcategorylist", page: () => AuditCategoryScreen()),
-            GetPage(name: "/auditlist", page: () => Auditlistscreen()),
+            GetPage(name: "/auditlist-v1", page: () => Auditlistscreen()),
             GetPage(name: "/addaudit", page: () => AddAuditScreen()),
+            GetPage(name: "/createaudit", page: () => CreateAuditScreen()),
             GetPage(name: "/adddata", page: () => AddDataScreen()),
             GetPage(name: "/auditinfo", page: () => AuditInfoScreen()),
             GetPage(name: "/templateedit", page: () => TemplateEditScreen()),
@@ -91,12 +95,16 @@ class _MainAppState extends State<MainApp> {
             GetPage(
                 name: "/scheduledaudit", page: () => ScheduledAuditScreen()),
             GetPage(
+                name: "/unscheduledaudit",
+                page: () => UnScheduledAuditScreen()),
+            GetPage(
                 name: "/all-india-state-activity",
                 page: () => AllIndiaStateWiseScreen()),
             GetPage(
                 name: "/all-india-state-wise-audit",
                 page: () => AllIndiaStateWiseAudit()),
             GetPage(name: "/red-report", page: () => RedReportScreen()),
+            GetPage(name: "/auditlist", page: () => AuditListV2Screen()),
             GetPage(name: "/", page: () => Splashscreen()),
           ],
           //   routes: <String, WidgetBuilder>{

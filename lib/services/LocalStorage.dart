@@ -27,4 +27,9 @@ class LocalStorage{
     return prefs.setString(name,obj);
   }
 
+  static Future<bool> clearData(String name) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.remove(name);
+  }
+
 }

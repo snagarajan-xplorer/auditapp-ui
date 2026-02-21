@@ -99,6 +99,7 @@ flutter:
     - assets/locale/
     - assets/animation/
     - assets/json/
+    - assets/json/mock/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

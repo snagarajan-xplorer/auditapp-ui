@@ -1,0 +1,12 @@
+{
+  "message": "Data fetched successfully",
+  "data": {
+    "complete": 12,
+    "incomplete": 5,
+    "upcoming": 8,
+    "cancel": 2,
+    "total": 27,
+    "scheduled": 10,
+    "unscheduled": 17
+  }
+}

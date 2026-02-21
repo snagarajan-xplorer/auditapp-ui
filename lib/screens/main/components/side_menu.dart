@@ -48,7 +48,7 @@ class _SideMenuState extends State<SideMenu> {
               margin: EdgeInsets.zero,
               decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.onSecondary),
-              child: Image.asset("assets/images/logo.png"),
+              child: Image.asset("assets/images/can_logo.png"),
             ),
             Expanded(
               child: ListView(
@@ -102,11 +102,11 @@ class _SideMenuState extends State<SideMenu> {
                       DrawerListTile(
                         id: 2,
                         selectedIndex: usercontroller.selectedIndex,
-                        title: "Un Scheduled",
+                        title: "Un-scheduled",
                         press: () {
                           if (widget.enableAction!) {
                             usercontroller.selectedIndex = 2;
-                            Navigator.pushNamed(context, "/auditlist",
+                            Navigator.pushNamed(context, "/unscheduledaudit",
                                 arguments: ScreenArgument(
                                     argument: ArgumentData.USER, mapData: {}));
                           } else {

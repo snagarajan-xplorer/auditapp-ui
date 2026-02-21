@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:async';
 import 'dart:convert';
 import 'package:audit_app/constants.dart';
+import 'package:flutter/services.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/LocalStorage.dart';
 import 'package:flutter/material.dart';
@@ -116,6 +116,8 @@ class UserController extends GetxController {
         Map<String, dynamic> res = jsonDecode(resvalue);
         print("login response ${res}");
         if (!res.containsKey("type")) {
+          // Clear any stale session from a previous user before saving new one
+          await LocalStorage.clearData("userdata");
           await LocalStorage.setStringData("userdata", resvalue);
           userData = UserData.fromJson(res);
           callback(); 
@@ -340,9 +342,243 @@ class UserController extends GetxController {
     });
   }
 
+  // ─── Financial-Year Helpers ────────────────────────────────────────────────
+
+  /// Parses a financial-year string (e.g. "FY2025-26" or "2025-26") and returns
+  /// the inclusive date range: Apr 1 of start-year → Mar 31 of end-year.
+  /// Returns null if the string cannot be parsed.
+  static Map<String, DateTime>? parseFyRange(String fy) {
+    final trimmed = fy.trim();
+    // Bare 4-digit end year (e.g. "2026") → Indian FY: Apr 2025 to Mar 2026
+    final bareYear = RegExp(r'^\d{4}$').firstMatch(trimmed);
+    if (bareYear != null) {
+      final endYear = int.parse(trimmed);
+      return {
+        'start': DateTime(endYear - 1, 4, 1),
+        'end':   DateTime(endYear,     3, 31, 23, 59, 59),
+      };
+    }
+    final m = RegExp(
+      r'^(?:FY)?(\d{4})-(\d{2,4})$',
+      caseSensitive: false,
+    ).firstMatch(trimmed);
+    if (m == null) return null;
+    final startYear = int.parse(m.group(1)!);
+    final endPart   = m.group(2)!;
+    final endYear   = endPart.length == 2
+        ? int.parse(startYear.toString().substring(0, 2) + endPart)
+        : int.parse(endPart);
+    return {
+      'start': DateTime(startYear, 4, 1),
+      'end':   DateTime(endYear,   3, 31, 23, 59, 59),
+    };
+  }
+
+  /// Parses a date string in "dd MMM yyyy" format (e.g. "05 Jan 2026").
+  /// Returns null if the string is null, "-", or unparseable.
+  static DateTime? parseDMMMYYYY(String? s) {
+    if (s == null || s.trim() == '-') return null;
+    const months = {
+      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4,  'may': 5,  'jun': 6,
+      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
+    };
+    final parts = s.trim().split(RegExp(r'\s+'));
+    if (parts.length != 3) return null;
+    final d = int.tryParse(parts[0]);
+    final mo = months[parts[1].toLowerCase()];
+    final y  = int.tryParse(parts[2]);
+    if (d == null || mo == null || y == null) return null;
+    return DateTime(y, mo, d);
+  }
+
+  /// Filters [items] to those whose [dateField] value ("dd MMM yyyy") falls
+  /// within the financial year described by [fy]. If [fy] cannot be parsed,
+  /// the original list is returned unchanged.
+  static List<dynamic> filterByFy(
+      List<dynamic> items, String fy, String dateField) {
+    final range = parseFyRange(fy);
+    if (range == null) return items;
+    final start = range['start']!;
+    final end   = range['end']!;
+    return items.where((e) {
+      final date = parseDMMMYYYY(e[dateField] as String?);
+      if (date == null) return true;
+      return !date.isBefore(start) && !date.isAfter(end);
+    }).toList();
+  }
+
+  // ─── Audit Normalisation ─────────────────────────────────────────────────────
+
+  Map<String, dynamic> _normalizeAuditStatusMap(String s) {
+    const map = {
+      'P':  {'label': 'Published',   'color': 'green'},
+      'IP': {'label': 'Inprogress',   'color': 'orange'},
+      'PG': {'label': 'Inprogress',   'color': 'orange'},
+      'C':  {'label': 'Review',       'color': 'pink'},
+      'S':  {'label': 'Upcoming',     'color': 'purple'},
+      'CL': {'label': 'Cancelled',    'color': 'red'},
+    };
+    return Map<String, dynamic>.from(map[s] ?? {'label': s, 'color': 'grey'});
+  }
+
+  String _formatAuditDate(dynamic raw) {
+    if (raw == null) return '-';
+    try {
+      final dt = DateTime.parse(raw.toString());
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return '${dt.day.toString().padLeft(2,'0')} ${months[dt.month - 1]} ${dt.year}';
+    } catch (_) {
+      return raw.toString();
+    }
+  }
+
+  Map<String, dynamic> _normalizeAuditItem(Map<String, dynamic> item) {
+    final statusRaw = item['status'];
+    final statusObj = (statusRaw is Map)
+        ? Map<String, dynamic>.from(statusRaw)
+        : _normalizeAuditStatusMap(statusRaw?.toString() ?? '');
+    return {
+      'audit_id':         item['audit_no'] ?? item['audit_id'] ?? ('AD-' + (item['id']?.toString() ?? '')),
+      'audit_name':       item['audit_name'] ?? item['auditname'] ?? '-',
+      'sched_date':       _formatAuditDate(item['sched_date'] ?? item['start_date']),
+      'start_date':       _formatAuditDate(item['start_date']),
+      'end_date':         _formatAuditDate(item['end_date']),
+      'zone':             item['zone'] ?? '-',
+      'state':            item['state'] ?? '-',
+      'city':             item['city'] ?? '-',
+      'location':         item['location'] ?? item['branch'] ?? '-',
+      'type_of_location': item['type_of_location'] ?? '-',
+      'auditor':          item['auditor'] ?? item['auditorname'] ?? '-',
+      'status':           statusObj,
+    };
+  }
+
+  Future<void> getUnScheduledAuditDetails(context,
+      {required Map<String, dynamic> data,
+      required Function(List<dynamic>, int) callback}) async {
+    if (env == 'local') {
+      final String mockString = await rootBundle
+          .loadString('assets/json/mock/get-unscheduled-audit.mock.json');
+      final mockData = json.decode(mockString);
+      final List<dynamic> list = List<dynamic>.from(mockData['data'] ?? []);
+      callback(list, list.length);
+      return;
+    }
+    APIService(context).postData("getUnScheduledAuditDetails", data, true).then((resvalue) {
+      try {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              final List<dynamic> list = List<dynamic>.from(res["data"]);
+              callback(list, list.length);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint("getUnScheduledAuditDetails error: $e");
+      }
+      callback([], 0);
+    });
+  }
+
+  Future<void> saveUnScheduledAudit(context,
+      {required Map<String, dynamic> data,
+      required Function(bool) callback}) async {
+    APIService(context).postData("saveUnScheduledAudit", data, true).then((resvalue) {
+      try {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          callback(!res.containsKey("type"));
+          return;
+        }
+      } catch (e) {
+        debugPrint("saveUnScheduledAudit error: $e");
+      }
+      callback(false);
+    });
+  }
+
+  Future<void> deleteUnScheduledAudit(context,
+      {required Map<String, dynamic> data,
+      required Function(bool) callback}) async {
+    APIService(context).postData("deleteUnScheduledAudit", data, true).then((resvalue) {
+      try {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          callback(!res.containsKey("type"));
+          return;
+        }
+      } catch (e) {
+        debugPrint("deleteUnScheduledAudit error: $e");
+      }
+      callback(false);
+    });
+  }
+
+  Future<void> getScheduledAuditDetails(context,
+      {required Map<String, dynamic> data,
+      required Function(List<dynamic>, int) callback}) async {
+    if (env == 'local') {
+      final String mockString = await rootBundle.loadString('assets/json/mock/get-audit-list.mock.json');
+      final mockData = json.decode(mockString);
+      final raw = (mockData["data"] as List? ?? []);
+      final filtered = filterByFy(raw, (data["year"] ?? "") as String, "start_date");
+      final list = filtered
+          .map((e) => _normalizeAuditItem(Map<String, dynamic>.from(e)))
+          .toList();
+      callback(list, list.length);
+      return;
+    }
+    APIService(context).postData("getScheduledAuditDetails", data, true).then((resvalue) {
+      try {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              final List<dynamic> list = (res["data"] as List)
+                  .map((e) => _normalizeAuditItem(Map<String, dynamic>.from(e)))
+                  .toList();
+              callback(list, list.length);
+              return;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint("getScheduledAuditDetails error: $e");
+      }
+      // Error or empty — return empty list so UI can stop loading
+      callback([], 0);
+    });
+  }
+
   void getAuditList(context,
       {required Map<String, dynamic> data,
       required Function(List<dynamic>) callback}) {
+    if (env == 'local') {
+      rootBundle.loadString('assets/json/mock/get-auditlist.mock.json').then((mockString) {
+        final mockData = json.decode(mockString);
+        final List<dynamic> raw = mockData["data"] as List? ?? [];
+        // Filter by year range to match backend behaviour
+        final yearStr = (data["year"] ?? "").toString();
+        final filtered = _filterByYear(raw, yearStr, "start_date");
+        // Filter by month if not "All"
+        final monthStr = (data["month"] ?? "All").toString();
+        final monthFiltered = monthStr == "All"
+            ? filtered
+            : filtered.where((e) {
+                try {
+                  final dt = DateTime.parse(e["start_date"].toString());
+                  return dt.month.toString() == monthStr;
+                } catch (_) {
+                  return true;
+                }
+              }).toList();
+        callback(monthFiltered);
+      });
+      return;
+    }
     APIService(context).postData("getAuditList", data, true).then((resvalue) {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
@@ -353,6 +589,24 @@ class UserController extends GetxController {
         }
       }
     });
+  }
+
+  /// Filter mock data by year range (April to March financial year).
+  /// [yearStr] is the end year of the FY, e.g. "2026" for FY2025-26.
+  static List<dynamic> _filterByYear(List<dynamic> items, String yearStr, String dateField) {
+    if (yearStr.isEmpty) return items;
+    final endYear = int.tryParse(yearStr);
+    if (endYear == null) return items;
+    final start = DateTime(endYear - 1, 4, 1);  // April 1 of start year
+    final end = DateTime(endYear, 3, 31);        // March 31 of end year
+    return items.where((e) {
+      try {
+        final dt = DateTime.parse(e[dateField].toString());
+        return !dt.isBefore(start) && !dt.isAfter(end);
+      } catch (_) {
+        return true;
+      }
+    }).toList();
   }
 
   void getClientUserList(context,
@@ -409,47 +663,65 @@ class UserController extends GetxController {
 
   void logout(context,
       {required Map<String, dynamic> data, required VoidCallback callback}) {
-    APIService(context).postData("logout", data, true).then((resvalue) {
+    APIService(context).postData("logout", data, true).then((resvalue) async {
+      // Always clear local session regardless of API response
+      await LocalStorage.clearData("userdata");
+      userData = UserData();
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (!res.containsKey("type")) {
           callback();
+          return;
         }
       }
+      callback();
     });
   }
 
-  void getClientList(context,
+  Future<void> getClientList(context,
       {required Map<String, dynamic> data,
       required Function(List<dynamic>) callback,
-      bool loader = true}) {
-    APIService(context)
-        .postData("getClientList", data, true, loader: loader)
-        .then((resvalue) {
-      if (resvalue.length != 5) {
-        Map<String, dynamic> res = jsonDecode(resvalue);
-        if (!res.containsKey("type")) {
-          if (res.containsKey("data")) {
-            callback(res["data"]);
+      bool loader = true}) async {
+    if (env == 'local') {
+      final String mockString = await rootBundle.loadString('assets/json/mock/get-client-list.mock.json');
+      final mockData = json.decode(mockString);
+      callback(mockData["data"]);
+    } else {
+      APIService(context)
+          .postData("getClientList", data, true, loader: loader)
+          .then((resvalue) {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              callback(res["data"]);
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
-  void getClientHeatReport(context,
+  Future<void> getClientHeatReport(context,
       {required Map<String, dynamic> data,
-      required Function(dynamic) callback}) {
-    APIService(context).postData("getAuditReport", data, true).then((resvalue) {
-      if (resvalue.length != 5) {
-        Map<String, dynamic> res = jsonDecode(resvalue);
-        if (!res.containsKey("type")) {
-          if (res.containsKey("data")) {
-            callback(res["data"]);
+      required Function(dynamic) callback}) async {
+    if (env == 'local') {
+      // Load mock data from assets/json/mock/get-audit-report.mock.json
+      final String mockString = await rootBundle.loadString('assets/json/mock/get-audit-report.mock.json');
+      final mockData = json.decode(mockString);
+      callback(mockData["data"]);
+    } else {
+      APIService(context).postData("getAuditReport", data, true).then((resvalue) {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              callback(res["data"]);
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   void getPublisedFinancialYearList(context,
@@ -489,7 +761,13 @@ class UserController extends GetxController {
 
   void getAllIndiaStateWiseAudit(context,
       {required Map<String, dynamic> data,
-      required Function(dynamic) callback}) {
+      required Function(dynamic) callback}) async {
+    if (env == 'local') {
+      final String mockString = await rootBundle.loadString('assets/json/mock/get-all-india-state-wise-audit.mock.json');
+      final mockData = json.decode(mockString);
+      callback(mockData["data"]);
+      return;
+    }
     APIService(context)
         .postData("getAllIndiaStateWiseAudit", data, true)
         .then((resvalue) {
@@ -528,7 +806,13 @@ class UserController extends GetxController {
 
   void getZoneWiseNCAudit(context,
       {required Map<String, dynamic> data,
-      required Function(dynamic) callback}) {
+      required Function(dynamic) callback}) async {
+    if (env == 'local') {
+      final String mockString = await rootBundle.loadString('assets/json/mock/get-zone-wise-nc-audit.mock.json');
+      final mockData = json.decode(mockString);
+      callback(mockData);
+      return;
+    }
     APIService(context)
         .postData("getZoneWiseNCAudit", data, true)
         .then((resvalue) {
@@ -562,21 +846,27 @@ class UserController extends GetxController {
     });
   }
 
-  void getAuditCount(context,
+  Future<void> getAuditCount(context,
       {required Map<String, dynamic> data,
-      required Function(dynamic) callback}) {
-    APIService(context)
-        .postData("getAuditSummary", data, true)
-        .then((resvalue) {
-      if (resvalue.length != 5) {
-        Map<String, dynamic> res = jsonDecode(resvalue);
-        if (!res.containsKey("type")) {
-          if (res.containsKey("data")) {
-            callback(res["data"]);
+      required Function(dynamic) callback}) async {
+    if (env == 'local') {
+      final String mockString = await rootBundle.loadString('assets/json/mock/get-audit-summary.mock.json');
+      final mockData = json.decode(mockString);
+      callback(mockData["data"]);
+    } else {
+      APIService(context)
+          .postData("getAuditSummary", data, true)
+          .then((resvalue) {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              callback(res["data"]);
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   void getCurrentDate(context,

@@ -34,7 +34,14 @@ class UserData {
     messgae = json['messgae'];
     token = json['token'];
     userId = json['user_id'];
-    clientid = json['clientid'].toString().split(",");
+    // clientid can be a String ("1" or "1,2") from API, or a List when
+    // reloaded from localStorage — handle both safely
+    final rawClient = json['clientid'];
+    if (rawClient is List) {
+      clientid = rawClient.map((e) => e.toString().trim()).where((s) => s.isNotEmpty).toList();
+    } else {
+      clientid = rawClient?.toString().split(",").map((s) => s.trim()).where((s) => s.isNotEmpty).toList() ?? [];
+    }
     parentid = json['parentid'];
     mvalue = json['mvalue'];
     logintime = json['logintime'];
@@ -53,7 +60,8 @@ class UserData {
     data['token'] = this.token;
     data['logintime'] = this.logintime;
     data['user_id'] = this.userId;
-    data['clientid'] = this.clientid;
+    // Store as comma-separated string so fromJson can always parse it correctly
+    data['clientid'] = this.clientid?.join(",") ?? "";
     data['parentid'] = this.parentid;
     data['mvalue'] = this.mvalue;
     data['name'] = this.name;

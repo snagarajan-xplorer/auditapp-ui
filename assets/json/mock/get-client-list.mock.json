@@ -1,0 +1,11 @@
+{
+  "message": "Data fetched successfully",
+  "data": [
+    {
+      "clientid": "10",
+      "clientname": "Cholamandalam MS General Insurance",
+      "client_code": "CHOLA",
+      "status": "A"
+    }
+  ]
+}

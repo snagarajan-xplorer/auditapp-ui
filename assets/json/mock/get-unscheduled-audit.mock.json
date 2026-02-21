@@ -1,0 +1,84 @@
+{
+  "message": "Data fetched successfully",
+  "total": 6,
+  "data": [
+    {
+      "id": 1,
+      "client_id": "CL001",
+      "client": "Cholamandalam",
+      "zone": "South",
+      "state": "Karnataka",
+      "city": "Bengaluru",
+      "location": "ITPL Main Gate",
+      "type_of_location": "Hub",
+      "created_by": "Debashish",
+      "financial_year": "FY2025-26",
+      "audit_status": "Create Audit"
+    },
+    {
+      "id": 2,
+      "client_id": "CL002",
+      "client": "Hyundai",
+      "zone": "South",
+      "state": "Tamilnadu",
+      "city": "Chennai",
+      "location": "Chepauk",
+      "type_of_location": "Hub",
+      "created_by": "Saroj",
+      "financial_year": "FY2025-26",
+      "audit_status": "Create Audit"
+    },
+    {
+      "id": 3,
+      "client_id": "CL003",
+      "client": "Honda",
+      "zone": "South",
+      "state": "Tamilnadu",
+      "city": "Madurai",
+      "location": "Avani Moola Street",
+      "type_of_location": "Retail Store",
+      "created_by": "Debashish",
+      "financial_year": "FY2025-26",
+      "audit_status": "Create Audit"
+    },
+    {
+      "id": 4,
+      "client_id": "CL001",
+      "client": "Cholamandalam",
+      "zone": "South",
+      "state": "Andra Pradesh",
+      "city": "Vizag",
+      "location": "Port",
+      "type_of_location": "Office",
+      "created_by": "Saroj",
+      "financial_year": "FY2025-26",
+      "audit_status": "Create Audit"
+    },
+    {
+      "id": 5,
+      "client_id": "CL002",
+      "client": "Hyundai",
+      "zone": "South",
+      "state": "Telengana",
+      "city": "Hyderabad",
+      "location": "Charminar",
+      "type_of_location": "Office",
+      "created_by": "Debashish",
+      "financial_year": "FY2025-26",
+      "audit_status": "Create Audit"
+    },
+    {
+      "id": 6,
+      "client_id": "CL003",
+      "client": "Honda",
+      "zone": "North",
+      "state": "Delhi",
+      "city": "New Delhi",
+      "location": "Connaught Place",
+      "type_of_location": "Retail Store",
+      "created_by": "Saroj",
+      "financial_year": "FY2025-26",
+      "audit_status": "Create Audit"
+    }
+  ]
+}

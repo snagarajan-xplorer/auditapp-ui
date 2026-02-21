@@ -233,8 +233,8 @@ class ProfileCard extends StatelessWidget {
                 usercontroller.userData.name ?? "",
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF000000),
                 ),
               ),
               SizedBox(height: 1),
@@ -242,7 +242,7 @@ class ProfileCard extends StatelessWidget {
                 usercontroller.userData.rolename ?? "",
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w100,
+                  fontWeight: FontWeight.w300,
                   color: Color(0xFF898989),
                 ),
               ),
@@ -267,7 +267,7 @@ class ProfileCard extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   )
