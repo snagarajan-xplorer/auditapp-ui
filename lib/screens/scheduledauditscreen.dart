@@ -387,16 +387,21 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
   Widget _dataCell(String value, {int flex = 2, bool isLast = false}) {
     return Expanded(
       flex: flex,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 23, horizontal: 8),
-        decoration: BoxDecoration(
-          border: isLast
-              ? null
-              : Border(right: BorderSide(color: Color(0xFFE0E0E0), width: 0.8)),
+      child: Tooltip(
+        message: value,
+        waitDuration: Duration(milliseconds: 500),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 23, horizontal: 8),
+          decoration: BoxDecoration(
+            border: isLast
+                ? null
+                : Border(right: BorderSide(color: Color(0xFFE0E0E0), width: 0.8)),
+          ),
+          child: Text(value,
+              style: TextStyle(fontSize: 12, color: Color(0xFF505050)),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1),
         ),
-        child: Text(value,
-            style: TextStyle(fontSize: 12, color: Color(0xFF505050)),
-            overflow: TextOverflow.ellipsis),
       ),
     );
   }

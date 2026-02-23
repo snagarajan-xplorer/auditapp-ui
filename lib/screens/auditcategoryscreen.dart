@@ -2006,7 +2006,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
             }else if(id == 5){
               APIService(context).showWindowAlert(title:"",desc: AppTranslations.of(context)!.text("key_message_09"),showCancelBtn: true,callback: (){
                 usercontroller.logout(context, data: {}, callback: (){
-                  Navigator.pushNamed(context, "/login-v2");
+                  Navigator.pushNamed(context, "/login");
                   //Get.offNamed("/login");
                 });
               });

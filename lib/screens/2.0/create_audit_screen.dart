@@ -7,11 +7,11 @@ import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:flutter/cupertino.dart';
 
-import '../constants.dart';
-import '../controllers/usercontroller.dart';
-import '../localization/app_translations.dart';
-import '../responsive.dart';
-import 'main/layoutscreen.dart';
+import '../../constants.dart';
+import '../../controllers/usercontroller.dart';
+import '../../localization/app_translations.dart';
+import '../../responsive.dart';
+import '../main/layoutscreen.dart';
 
 /// ---------------------------------------------------------------------------
 /// Create Audit Screen
@@ -43,6 +43,9 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
 
   /// Data passed from the unscheduled audit screen row
   Map<String, dynamic>? _prefillData;
+
+  /// Track the selected audit type (Scheduled or Un Scheduled)
+  String _selectedAuditType = 'Scheduled';
 
   static const List<String> _locationTypes = [
     'Retail Store',
@@ -232,10 +235,12 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                   ),
                 )
                 .toList(),
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
-            ),
+            validator: _selectedAuditType == 'Scheduled'
+                ? FormBuilderValidators.required(
+                    errorText:
+                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+                  )
+                : null,
             onChanged: (value) {
               if (value == null) return;
               _uc.getTemplateList(
@@ -247,7 +252,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                 },
               );
             },
-            decoration: _inputDecoration('Company Name'),
+            decoration: _inputDecoration('Company Name', required: _selectedAuditType == 'Scheduled'),
           ),
         ),
         _hSpace,
@@ -263,11 +268,13 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                   ),
                 )
                 .toList(),
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
-            ),
-            decoration: _inputDecoration('Template Name'),
+            validator: _selectedAuditType == 'Scheduled'
+                ? FormBuilderValidators.required(
+                    errorText:
+                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+                  )
+                : null,
+            decoration: _inputDecoration('Template Name', required: _selectedAuditType == 'Scheduled'),
           ),
         ),
       ];
@@ -287,11 +294,13 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   Widget _fieldBranchName() => FormBuilderTextField(
         name: 'branch',
         style: Theme.of(context).textTheme.bodyMedium,
-        validator: FormBuilderValidators.required(
-          errorText:
-              AppTranslations.of(context)!.text('key_error_01') ?? '',
-        ),
-        decoration: _inputDecoration('Audit Branch Name'),
+        validator: _selectedAuditType == 'Scheduled'
+            ? FormBuilderValidators.required(
+                errorText:
+                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+              )
+            : null,
+        decoration: _inputDecoration('Audit Branch Name', required: _selectedAuditType == 'Scheduled'),
       );
 
   /// Row: Zone | Pincode | State
@@ -430,11 +439,13 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                   ),
                 )
                 .toList(),
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
-            ),
-            decoration: _inputDecoration('Assigned To'),
+            validator: _selectedAuditType == 'Scheduled'
+                ? FormBuilderValidators.required(
+                    errorText:
+                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+                  )
+                : null,
+            decoration: _inputDecoration('Assigned To', required: _selectedAuditType == 'Scheduled'),
           ),
         ),
         _hSpace,
@@ -447,11 +458,13 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
             lastDate: _lastDate,
             inputType: InputType.date,
             style: Theme.of(context).textTheme.bodyMedium,
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
-            ),
-            decoration: _inputDecoration('Date').copyWith(
+            validator: _selectedAuditType == 'Scheduled'
+                ? FormBuilderValidators.required(
+                    errorText:
+                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+                  )
+                : null,
+            decoration: _inputDecoration('Date', required: _selectedAuditType == 'Scheduled').copyWith(
               suffixIcon: const Icon(CupertinoIcons.calendar, size: 20),
             ),
           ),
@@ -465,11 +478,13 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
             format: DateFormat.jm(),
             timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
             style: Theme.of(context).textTheme.bodyMedium,
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
-            ),
-            decoration: _inputDecoration('Time').copyWith(
+            validator: _selectedAuditType == 'Scheduled'
+                ? FormBuilderValidators.required(
+                    errorText:
+                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+                  )
+                : null,
+            decoration: _inputDecoration('Time', required: _selectedAuditType == 'Scheduled').copyWith(
               suffixIcon: const Icon(CupertinoIcons.clock, size: 20),
             ),
           ),
@@ -493,14 +508,18 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
       height: buttonHeight,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF0376d8),
+          backgroundColor: const Color(0xFF535353),
           padding: const EdgeInsets.all(5),
         ),
         onPressed: _onCreateAudit,
         child: const Center(
           child: Text(
             'Create Audit',
-            style: paragraphTextStyle,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
@@ -529,13 +548,28 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
       }
     });
 
-    data['end_date'] = data['start_date'];
-    data['end_time'] = data['start_time'];
+    // For unscheduled audits, set default end_date and end_time
+    if (_selectedAuditType == 'Un Scheduled') {
+      data['end_date'] = data['start_date'] ?? data['start_date'];
+      data['end_time'] = data['start_time'] ?? data['start_time'];
+    } else {
+      // For scheduled audits, set end_date and end_time to start_date and start_time
+      data['end_date'] = data['start_date'];
+      data['end_time'] = data['start_time'];
+    }
+
     data['created_user'] = _uc.userData.userId;
+    data['audit_type'] = _selectedAuditType;
 
     // Ensure optional DB fields have a default (columns are NOT NULLABLE)
     data.putIfAbsent('remarks', () => ' ');
     data.putIfAbsent('location', () => ' ');
+    data.putIfAbsent('branch', () => ' ');
+    data.putIfAbsent('client_id', () => ' ');
+    data.putIfAbsent('template_id', () => ' ');
+    data.putIfAbsent('assigned_user', () => ' ');
+    data.putIfAbsent('start_date', () => ' ');
+    data.putIfAbsent('start_time', () => ' ');
 
     // Remove fields that don't exist in tbl_audit
     data.removeWhere((key, _) => !_dbFields.contains(key));
@@ -596,33 +630,54 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                                 errorText:
                                     AppTranslations.of(context)!.text('key_error_01') ?? '',
                               ),
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedAuditType = value ?? 'Scheduled';
+                                });
+                              },
                               decoration: _inputDecoration('Select Audit Type'),
                             ),
                           ),
                           const SizedBox(height: defaultPadding * 1.5),
 
-                          // ── Scheduled Audit Details ──────────────────────
-                          _sectionHeader('Scheduled Audit Details'),
-                          _responsiveRow(_rowCompanyTemplate()),
-                          const SizedBox(height: defaultPadding),
-                          _fieldAuditName(),
-                          const SizedBox(height: defaultPadding * 1.5),
+                          // ── SCHEDULED AUDIT FORM ──────────────────────────
+                          if (_selectedAuditType == 'Scheduled')
+                            ...[
+                              // ── Scheduled Audit Details ──────────────────────
+                              _sectionHeader('Scheduled Audit Details'),
+                              _responsiveRow(_rowCompanyTemplate()),
+                              const SizedBox(height: defaultPadding),
+                              _fieldAuditName(),
+                              const SizedBox(height: defaultPadding * 1.5),
 
-                          // ── Audit Branch Details ─────────────────────────
-                          _sectionHeader('Audit Branch Details'),
-                          _fieldBranchName(),
-                          const SizedBox(height: defaultPadding),
-                          _responsiveRow(_rowZonePincodeState()),
-                          const SizedBox(height: defaultPadding),
-                          _responsiveRow(_rowCityLocationTypeOf()),
-                          const SizedBox(height: defaultPadding * 1.5),
+                              // ── Audit Branch Details ─────────────────────────
+                              _sectionHeader('Audit Branch Details'),
+                              _fieldBranchName(),
+                              const SizedBox(height: defaultPadding),
+                              _responsiveRow(_rowZonePincodeState()),
+                              const SizedBox(height: defaultPadding),
+                              _responsiveRow(_rowCityLocationTypeOf()),
+                              const SizedBox(height: defaultPadding * 1.5),
 
-                          // ── Audit Schedule ───────────────────────────────
-                          _sectionHeader('Audit Schedule'),
-                          _responsiveRow(_rowAssignedDatetime()),
-                          const SizedBox(height: defaultPadding),
-                          _fieldInformation(),
-                          const SizedBox(height: defaultPadding * 1.5),
+                              // ── Audit Schedule ───────────────────────────────
+                              _sectionHeader('Audit Schedule'),
+                              _responsiveRow(_rowAssignedDatetime()),
+                              const SizedBox(height: defaultPadding),
+                              _fieldInformation(),
+                              const SizedBox(height: defaultPadding * 1.5),
+                            ]
+                          else
+                            // ── UNSCHEDULED AUDIT FORM ────────────────────────
+                            ...[
+                              // ── Audit Basic Details ──────────────────────────
+                              _sectionHeader('Audit Basic Details'),
+                              _fieldAuditName(),
+                              const SizedBox(height: defaultPadding),
+                              _responsiveRow(_rowZonePincodeState()),
+                              const SizedBox(height: defaultPadding),
+                              _responsiveRow(_rowCityLocationTypeOf()),
+                              const SizedBox(height: defaultPadding * 1.5),
+                            ],
 
                           // ── Submit row ───────────────────────────────────
                           Row(

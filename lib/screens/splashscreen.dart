@@ -31,7 +31,7 @@ class _SplashscreenState extends State<Splashscreen>
       const Duration(seconds: 5),
       () {
         // Routemaster.of(context).push("/login");
-        Get.offNamed('/login-v2');
+        Get.offNamed('/login');
 
         //Navigator.popAndPushNamed(context, "/login");
         print("yes");
@@ -54,7 +54,7 @@ class _SplashscreenState extends State<Splashscreen>
           width: 300,
           child: Column(
             children: [
-              Image(image: AssetImage("assets/images/logo.png")),
+              Image(image: AssetImage("assets/images/can_logo.png")),
               LinearProgressIndicator(
                 value: controller.value,
                 semanticsLabel: '',

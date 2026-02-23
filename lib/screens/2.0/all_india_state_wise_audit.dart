@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'main/layoutscreen.dart';
-import '../constants.dart';
+import '../main/layoutscreen.dart';
+import '../../constants.dart';
 import 'dart:ui' as ui;
 
 class AllIndiaStateWiseAudit extends StatefulWidget { //all-india-state-audit

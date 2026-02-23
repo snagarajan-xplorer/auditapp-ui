@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/usercontroller.dart';
-import '../services/api_service.dart';
+import '../../controllers/usercontroller.dart';
+import '../../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,8 +15,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   String email = "";
   String password = "";
-  String selectedRole = "Administrator";
-  final List<String> roles = ["Administrator", "Audit Manager", "Auditor", "Client / Member"];
+  String selectedRole = "AD";
+
+  // Map role display names to role IDs
+  final Map<String, String> roleMap = {
+    "AD": "Administrator",
+    "SrA": "Audit Manager",
+    "JrA": "Auditor",
+    "CL": "Client / Member",
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 28),
             const Text(
-              'Welcome to the Profits Consulting Audit Application',
+              'Welcome to the Profaids Consulting Audit Application',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 24,
@@ -139,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(
                       width: 360,
                       child: DropdownButtonFormField<String>(
-                        value: roles.contains(selectedRole) ? selectedRole : null,
+                        value: roleMap.containsKey(selectedRole) ? selectedRole : null,
                         decoration: InputDecoration(
                           labelText: 'Role',
                           labelStyle: const TextStyle(
@@ -155,15 +162,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           filled: true,
                           fillColor: Colors.white,
                         ),
-                        items: roles.map((role) {
+                        items: roleMap.entries.map((entry) {
                           return DropdownMenuItem(
-                            value: role,
-                            child: Text(role),
+                            value: entry.key,
+                            child: Text(entry.value),
                           );
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            selectedRole = value ?? roles.first;
+                            selectedRole = value ?? roleMap.keys.first;
                           });
                         },
                       ),
@@ -178,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             var obj = {
                               "email": email,
                               "password": password,
-                              "role": selectedRole,
+                              "role": selectedRole, // sends role ID e.g. "AD", "SrA"
                             };
                             usercontroller.login(context, data: obj, callback: () {
                               if (usercontroller.userData.changepass == "N") {

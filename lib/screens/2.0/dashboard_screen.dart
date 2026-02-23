@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:audit_app/models/reportobj.dart';
-import 'package:audit_app/screens/main/layoutscreen.dart';
+import '../main/layoutscreen.dart';
 import 'package:audit_app/services/utility.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';

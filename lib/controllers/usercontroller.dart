@@ -585,9 +585,15 @@ class UserController extends GetxController {
         if (!res.containsKey("type")) {
           if (res.containsKey("data")) {
             callback(res["data"]);
+          } else {
+            // API returned e.g. {"message": "No Record found"}
+            callback([]);
           }
+          return;
         }
       }
+      // Fallback: response was short or had "type" — treat as empty
+      callback([]);
     });
   }
 

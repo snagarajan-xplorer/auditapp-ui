@@ -4,8 +4,9 @@ import 'package:audit_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
-import 'main/layoutscreen.dart';
-import '../constants.dart';
+import '../main/layoutscreen.dart';
+import '../../constants.dart';
+import '../../widget/reusable_table.dart';
 
 class AuditListV2Screen extends StatefulWidget {
   const AuditListV2Screen({super.key});
@@ -103,6 +104,10 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       _applyFilter();
       if (mounted) setState(() => isLoading = false);
     });
+    // Safety: if callback never fires, stop loading after a timeout
+    Future.delayed(const Duration(seconds: 10), () {
+      if (mounted && isLoading) setState(() => isLoading = false);
+    });
   }
 
   void _applyFilter() {
@@ -121,18 +126,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     });
   }
 
-  List<Map<String, dynamic>> get _pagedAudits {
-    final start = (currentPage - 1) * pageSize;
-    final end = (start + pageSize).clamp(0, filteredAudits.length);
-    return filteredAudits.sublist(start, end);
-  }
-
-  int get _totalPages => filteredAudits.isEmpty ? 1 : (filteredAudits.length / pageSize).ceil();
-
   // ─── Data field helpers (normalize raw getAuditList fields) ─────────────────
-
-  String _getAuditId(Map<String, dynamic> row) =>
-      (row["audit_no"] ?? row["audit_id"] ?? "-").toString();
 
   String _getAuditName(Map<String, dynamic> row) =>
       (row["auditname"] ?? row["audit_name"] ?? "-").toString();
@@ -168,25 +162,6 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       return {"label": raw["label"]?.toString() ?? "-", "color": raw["color"]?.toString() ?? "grey"};
     }
     return _statusMap[raw?.toString()] ?? {"label": raw?.toString() ?? "-", "color": "grey"};
-  }
-
-  // ─── Status helpers ─────────────────────────────────────────────────────────
-
-  Color _statusColor(String color) {
-    switch (color) {
-      case "green":
-        return Color(0xFF67AC5B);
-      case "orange":
-        return Color(0xFFF29500);
-      case "purple":
-        return Color(0xFF9654CE);
-      case "red":
-        return Color(0xFFDD0000);
-      case "pink":
-        return Color(0xFFAC5B5B);
-      default:
-        return Color(0xFF505050);
-    }
   }
 
   // ─── Action Buttons per status ──────────────────────────────────────────────
@@ -440,7 +415,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                           fontSize: 20,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF505050))),
-                  SizedBox(height: 4),
+                  SizedBox(height: 4), 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -452,8 +427,11 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                       // Filters row
                       Row(
                         children: [
-                          _buildFilterDropdown("State:", stateOptions,
-                              selectedState, (val) {
+                          TableFilterDropdown(
+                              label: "State:",
+                              items: stateOptions,
+                              value: selectedState,
+                              onChanged: (val) {
                             setState(() {
                               selectedState = val!;
                               selectedZone = "All";
@@ -461,18 +439,21 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                             _applyFilter();
                           }),
                           SizedBox(width: 12),
-                          _buildFilterDropdown(
-                              "Zone :", zoneOptions, selectedZone, (val) {
+                          TableFilterDropdown(
+                              label: "Zone :",
+                              items: zoneOptions,
+                              value: selectedZone,
+                              onChanged: (val) {
                             setState(() => selectedZone = val!);
                             _applyFilter();
                           }),
                           SizedBox(width: 12),
-                          _buildFilterDropdown(
-                              "",
-                              financialYears
+                          TableFilterDropdown(
+                              items: financialYears
                                   .map((e) => e["label"] as String)
                                   .toList(),
-                              financialYears.firstWhere((e) => e["value"] == year)["label"]!, (val) {
+                              value: financialYears.firstWhere((e) => e["value"] == year)["label"]!,
+                              onChanged: (val) {
                             final selected = financialYears.firstWhere((e) => e["label"] == val);
                             setState(() {
                               year = selected["value"]!;
@@ -489,41 +470,55 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
               ),
             ),
 
-            // Table
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Color(0xFFE0E0E0)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              margin: EdgeInsets.symmetric(
-                  horizontal: defaultPadding, vertical: defaultPadding / 2),
-              child: isLoading
-                  ? Container(
-                      height: 300,
-                      child: Center(child: CircularProgressIndicator()))
-                  : filteredAudits.isEmpty
-                      ? Container(
-                          height: 200,
-                          child: Center(
-                            child: Text("No records found",
-                                style: TextStyle(
-                                    fontSize: 16, color: Color(0xFF898989))),
-                          ))
-                      : Column(
-                          children: [
-                            _buildTableHeader(),
-                            ..._pagedAudits
-                                .asMap()
-                                .entries
-                                .map((e) => _buildTableRow(e.value, e.key))
-                                .toList(),
-                          ],
-                        ),
+            // Table + Pagination
+            ReusableTable(
+              columns: [
+                TableColumnDef(label: "Audit ID", flex: 3, key: "audit_no"),
+                TableColumnDef(
+                  label: "Audit Name", flex: 2,
+                  cellBuilder: (row, _) => _truncatedNameCell(_getAuditName(row)),
+                ),
+                TableColumnDef(label: "Zone", flex: 2, key: "zone"),
+                TableColumnDef(label: "State", flex: 2, key: "state"),
+                TableColumnDef(label: "City", flex: 2, key: "city"),
+                TableColumnDef(
+                  label: "Assigned to", flex: 2,
+                  cellBuilder: (row, _) => _plainCell(_getAssignedTo(row)),
+                ),
+                TableColumnDef(
+                  label: "Sched. Date", flex: 2,
+                  cellBuilder: (row, _) => _plainCell(_getSchedDate(row)),
+                ),
+                TableColumnDef(
+                  label: "End Date", flex: 2,
+                  cellBuilder: (row, _) => _plainCell(_getEndDate(row)),
+                ),
+                TableColumnDef(
+                  label: "Status", flex: 2,
+                  cellBuilder: (row, _) {
+                    final s = _getStatus(row);
+                    return statusBadgeCell(
+                      label: s["label"] ?? "-",
+                      color: s["color"] ?? "grey",
+                    );
+                  },
+                ),
+                TableColumnDef(
+                  label: "Report", flex: 3, isLast: true,
+                  cellBuilder: (row, _) => Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                    child: _buildActionButtons(row),
+                  ),
+                ),
+              ],
+              rows: filteredAudits,
+              isLoading: isLoading,
+              currentPage: currentPage,
+              pageSize: pageSize,
+              maxVisiblePages: 5,
+              headerFontWeight: FontWeight.w700,
+              onPageChanged: (page) => setState(() => currentPage = page),
             ),
-
-            // Pagination
-            _buildPagination(),
 
             SizedBox(height: defaultPadding * 2),
           ],
@@ -532,126 +527,32 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     );
   }
 
-  // ─── Table Header ───────────────────────────────────────────────────────────
+  // ─── Cell helpers (used by column cellBuilders) ────────────────────────────
 
-  Widget _buildTableHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(0xFF8D8D8D),
-        borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
-      ),
-      child: Row(
-        children: [
-          _headerCell("Audit ID", flex: 2),
-          _headerCell("Audit Name", flex: 3),
-          _headerCell("Zone", flex: 1),
-          _headerCell("State", flex: 2),
-          _headerCell("City", flex: 2),
-          _headerCell("Assigned to", flex: 2),
-          _headerCell("Sched. Date", flex: 2),
-          _headerCell("End Date", flex: 2),
-          _headerCell("Status", flex: 2),
-          _headerCell("Report", flex: 3, isLast: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerCell(String label, {int flex = 2, bool isLast = false}) {
-    return Expanded(
-      flex: flex,
+  Widget _truncatedNameCell(String value) {
+    final firstWord = value.split(' ').first;
+    final displayText = value.contains(' ') ? '$firstWord...' : value;
+    return Tooltip(
+      message: value,
+      waitDuration: Duration(milliseconds: 500),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        padding: EdgeInsets.symmetric(vertical: 18, horizontal: 10),
         decoration: BoxDecoration(
-          border: isLast
-              ? null
-              : Border(
-                  right: BorderSide(color: Color(0xFFBCBCBC), width: 0.5)),
+          border: Border(
+              right: BorderSide(color: Color(0xFFE0E0E0), width: 0.8)),
         ),
-        child: Text(label,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.white)),
+        child: Text(displayText,
+            style: TextStyle(fontSize: 13, color: Color(0xFF505050)),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1),
       ),
     );
   }
 
-  // ─── Table Row ──────────────────────────────────────────────────────────────
-
-  Widget _buildTableRow(Map<String, dynamic> row, int index) {
-    final status = _getStatus(row);
-    final statusLabel = status["label"] ?? "-";
-    final statusColorStr = status["color"] ?? "grey";
-    final statusColor = _statusColor(statusColorStr);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border:
-            Border(bottom: BorderSide(color: Color(0xFFE0E0E0), width: 0.5)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _dataCell(_getAuditId(row), flex: 2),
-          _dataCell(_getAuditName(row), flex: 3),
-          _dataCell((row["zone"] ?? "-").toString(), flex: 1),
-          _dataCell((row["state"] ?? "-").toString(), flex: 2),
-          _dataCell((row["city"] ?? "-").toString(), flex: 2),
-          _dataCell(_getAssignedTo(row), flex: 2),
-          _dataCell(_getSchedDate(row), flex: 2),
-          _dataCell(_getEndDate(row), flex: 2),
-          // Status badge
-          Expanded(
-            flex: 2,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 18, horizontal: 10),
-              decoration: BoxDecoration(
-                border: Border(
-                    right:
-                        BorderSide(color: Color(0xFFE0E0E0), width: 0.8)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    margin: EdgeInsets.only(right: 6),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Flexible(
-                    child: Text(statusLabel,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: statusColor)),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Report / Action buttons
-          Expanded(
-            flex: 3,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-              child: _buildActionButtons(row),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _dataCell(String value, {int flex = 2}) {
-    return Expanded(
-      flex: flex,
+  Widget _plainCell(String value) {
+    return Tooltip(
+      message: value,
+      waitDuration: Duration(milliseconds: 500),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 18, horizontal: 10),
         decoration: BoxDecoration(
@@ -659,122 +560,10 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
               right: BorderSide(color: Color(0xFFE0E0E0), width: 0.8)),
         ),
         child: Text(value,
-            style: TextStyle(fontSize: 12, color: Color(0xFF505050)),
-            overflow: TextOverflow.ellipsis),
+            style: TextStyle(fontSize: 13, color: Color(0xFF505050)),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1),
       ),
-    );
-  }
-
-  // ─── Pagination ─────────────────────────────────────────────────────────────
-
-  Widget _buildPagination() {
-    if (_totalPages <= 1) return SizedBox.shrink();
-
-    // Show max 5 page numbers at a time, centered on current page
-    int startPage = (currentPage - 2).clamp(1, _totalPages);
-    int endPage = (startPage + 4).clamp(1, _totalPages);
-    if (endPage - startPage < 4) {
-      startPage = (endPage - 4).clamp(1, _totalPages);
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: defaultPadding, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Previous button
-          _pageButton(Icons.chevron_left, currentPage > 1, () {
-            setState(() => currentPage--);
-          }),
-          // Page numbers
-          ...List.generate(endPage - startPage + 1, (i) {
-            final page = startPage + i;
-            final isActive = page == currentPage;
-            return GestureDetector(
-              onTap: () => setState(() => currentPage = page),
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isActive ? Color(0xFF01ADEF) : Colors.white,
-                  border: Border.all(
-                      color:
-                          isActive ? Color(0xFF01ADEF) : Color(0xFFE0E0E0)),
-                ),
-                child: Center(
-                  child: Text("$page",
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color:
-                              isActive ? Colors.white : Color(0xFF4D4F5C))),
-                ),
-              ),
-            );
-          }),
-          // Next button
-          _pageButton(Icons.chevron_right, currentPage < _totalPages, () {
-            setState(() => currentPage++);
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _pageButton(IconData icon, bool enabled, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          border: Border.all(color: Color(0xFFD7DAE2)),
-          color: Colors.white,
-        ),
-        child: Icon(icon,
-            size: 18,
-            color: enabled ? Color(0xFF808495) : Color(0xFFCCCCCC)),
-      ),
-    );
-  }
-
-  // ─── Filter Dropdown ────────────────────────────────────────────────────────
-
-  Widget _buildFilterDropdown(String label, List<String> items, String value,
-      void Function(String?) onChanged) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (label.isNotEmpty) ...[
-          Text(label,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF505050),
-                  fontWeight: FontWeight.w400)),
-          SizedBox(width: 8),
-        ],
-        Container(
-          height: 40,
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Color(0xFFC9C9C9)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButton<String>(
-            value: value,
-            underline: SizedBox(),
-            icon: Icon(Icons.arrow_drop_down,
-                size: 20, color: Color(0xFF505050)),
-            style: TextStyle(fontSize: 14, color: Color(0xFF505050)),
-            items: items
-                .map(
-                    (item) => DropdownMenuItem(value: item, child: Text(item)))
-                .toList(),
-            onChanged: onChanged,
-          ),
-        ),
-      ],
     );
   }
 }
