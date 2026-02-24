@@ -107,7 +107,7 @@ const buttonHeight = 40.0;
 
 // CURRENTLY ACTIVE (LOCAL - REQUIRES BACKEND RUNNING!)
 const API_URL = "http://127.0.0.1:8000/api/";
-const IMG_URL = "http://127.0.0.1:8000/storage/";
+const IMG_URL = "http://127.0.0.1:8000/api/img/";
 
 // PRODUCTION SERVER
 // const API_URL = "https://auditondgo.com/restapi/public/api/";

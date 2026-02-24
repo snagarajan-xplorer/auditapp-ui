@@ -358,7 +358,7 @@ class _SideMenuState extends State<SideMenu> {
                           press: () {
                             if (widget.enableAction!) {
                               usercontroller.selectedIndex = 11;
-                              Navigator.pushNamed(context, "/user",
+                              Navigator.pushNamed(context, "/templatelist",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
                                       mapData: {}));
@@ -377,7 +377,7 @@ class _SideMenuState extends State<SideMenu> {
                           press: () {
                             if (widget.enableAction!) {
                               usercontroller.selectedIndex = 12;
-                              Navigator.pushNamed(context, "/user",
+                              Navigator.pushNamed(context, "/createbrand",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
                                       mapData: {}));

@@ -9,7 +9,8 @@ import 'package:audit_app/screens/auditlistscreen.dart';
 import 'package:audit_app/screens/changepassword_screen.dart';
 import 'package:audit_app/screens/questionscreen.dart';
 
-import 'package:audit_app/screens/templatelistscreen.dart';
+// import 'package:audit_app/screens/templatelistscreen.dart';
+import 'package:audit_app/screens/2.0/template_list_screen.dart';
 import 'package:audit_app/screens/templatescreenedit.dart';
 import 'package:audit_app/screens/userscreen.dart';
 import 'package:audit_app/theme/themes.dart';
@@ -42,6 +43,9 @@ import 'package:audit_app/screens/2.0/red_report_audit.dart';
 import 'package:audit_app/screens/2.0/audit_list_screen.dart';
 import 'package:audit_app/screens/2.0/user_screen.dart';
 import 'package:audit_app/screens/2.0/create_user_screen.dart';
+import 'package:audit_app/screens/2.0/template_edit_screen.dart';
+import 'package:audit_app/screens/2.0/create_brand_screen.dart';
+import 'package:audit_app/screens/2.0/edit_brand_screen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -92,7 +96,7 @@ class _MainAppState extends State<MainApp> {
             GetPage(name: "/createuser", page: () => CreateUserScreen()),
             GetPage(name: "/auditinfo", page: () => AuditInfoScreen()),
             GetPage(name: "/templateedit", page: () => TemplateEditScreen()),
-            GetPage(name: "/templatelist", page: () => Templatelistscreen()),
+            GetPage(name: "/templatelist", page: () => TemplateScreen()),
             GetPage(name: "/addtemplate", page: () => AddTemplateScreen()),
             GetPage(
                 name: "/scheduledaudit", page: () => ScheduledAuditScreen()),
@@ -110,6 +114,9 @@ class _MainAppState extends State<MainApp> {
             GetPage(name: "/", page: () => Splashscreen()),
             //2.0
             GetPage(name: "/login", page: () => LoginScreen()),
+            GetPage(name: "/edittemplate", page: ()=>TemplateEditScreenV2()),
+            GetPage(name: "/createbrand", page: () => CreateBrandScreen()),
+            GetPage(name: "/editbrand", page: () => EditBrandScreen()),
           ],
           //   routes: <String, WidgetBuilder>{
           //     "/login": (context) => Loginscreen(),

@@ -14,16 +14,21 @@ import '../../services/api_service.dart';
 import '../main/layoutscreen.dart';
 
 
-class CreateUserScreen extends StatefulWidget {
-  const CreateUserScreen({super.key});
+class TemplateEditScreenV2 extends StatefulWidget {
+  const TemplateEditScreenV2({super.key});
 
   @override
-  State<CreateUserScreen> createState() => _CreateUserScreenState();
+  State<TemplateEditScreenV2> createState() => _TemplateEditScreenV2State();
 }
 
-class _CreateUserScreenState extends State<CreateUserScreen> {
+class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
   final UserController _uc = Get.put(UserController());
+
+  TextEditingController templateNameController = TextEditingController();
+
+   String? selectedClientId;
+  bool _isActive = true;
 
   // Data
   List<dynamic> _roles = [];
@@ -42,46 +47,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   ScreenArgument? _pageArgument;
   bool _isEditMode = false;
   Map<String, dynamic>? _editData;
-
-  // Indian states list for the State dropdown
-  static const List<String> _indianStates = [
-    'Andhra Pradesh',
-    'Arunachal Pradesh',
-    'Assam',
-    'Bihar',
-    'Chhattisgarh',
-    'Goa',
-    'Gujarat',
-    'Haryana',
-    'Himachal Pradesh',
-    'Jharkhand',
-    'Karnataka',
-    'Kerala',
-    'Madhya Pradesh',
-    'Maharashtra',
-    'Manipur',
-    'Meghalaya',
-    'Mizoram',
-    'Nagaland',
-    'Odisha',
-    'Punjab',
-    'Rajasthan',
-    'Sikkim',
-    'Tamil Nadu',
-    'Telangana',
-    'Tripura',
-    'Uttar Pradesh',
-    'Uttarakhand',
-    'West Bengal',
-    'Andaman and Nicobar Islands',
-    'Chandigarh',
-    'Dadra and Nagar Haveli and Daman and Diu',
-    'Delhi',
-    'Jammu and Kashmir',
-    'Ladakh',
-    'Lakshadweep',
-    'Puducherry',
-  ];
 
   // ── helpers ──────────────────────────────────────────────────────────────
   InputDecoration _inputDecoration(String label) {
@@ -130,7 +95,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     }
 
     // Read arguments
-    final args = ModalRoute.of(context)?.settings.arguments;
+    final args = ModalRoute.of(context)?.settings.arguments ?? Get.arguments;
     if (args is ScreenArgument) {
       _pageArgument = args;
       if (args.mode == "Edit" && args.editData != null) {
@@ -149,6 +114,11 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       callback: (clients) {
         _clientList = clients;
         if (mounted) setState(() {});
+
+        // If edit mode, pre-fill form after clients are loaded
+        if (_isEditMode && _editData != null) {
+          _prefillEditData();
+        }
       },
     );
 
@@ -163,11 +133,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         if (!res.containsKey("type") && res.containsKey("data")) {
           _roles = res["data"];
           if (mounted) setState(() {});
-
-          // If edit mode, pre-fill form
-          if (_isEditMode && _editData != null) {
-            _prefillEditData();
-          }
         }
       }
     });
@@ -177,50 +142,22 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     if (_editData == null) return;
 
     Future.delayed(const Duration(milliseconds: 400), () {
-      final patch = <String, dynamic>{};
-
-      if (_editData!['name'] != null) patch['name'] = _editData!['name'];
-      if (_editData!['email'] != null) patch['email'] = _editData!['email'];
-      if (_editData!['mobile'] != null) {
-        patch['mobile'] = _editData!['mobile'].toString();
-      }
-      if (_editData!['joiningdate'] != null &&
-          _editData!['joiningdate'].toString().isNotEmpty) {
-        try {
-          patch['joiningdate'] =
-              Jiffy.parse(_editData!['joiningdate'].toString()).dateTime;
-        } catch (_) {}
-      }
-      if (_editData!['state'] != null &&
-          _editData!['state'].toString().trim().isNotEmpty) {
-        _selectedState = _editData!['state'];
-        patch['state'] = _editData!['state'];
-      }
-      if (_editData!['city'] != null &&
-          _editData!['city'].toString().trim().isNotEmpty) {
-        patch['city'] = _editData!['city'];
-      }
-      if (_editData!['role'] != null) patch['role'] = _editData!['role'];
-
-      // Handle client/brand selection
-      if (_editData!['client'] != null) {
-        List<String> ids = [];
-        if (_editData!['client'] is List) {
-          ids = (_editData!['client'] as List)
-              .map((e) => e.toString())
-              .toList();
-        } else if (_editData!['client'] is String) {
-          final str = _editData!['client'].toString().trim();
-          if (str.isNotEmpty && str != '0') {
-            ids = str.split(',').map((e) => e.trim()).toList();
-          }
-        }
-        _selectedBrandIds = ids;
-        _allBrandsSelected =
-            _clientList.isNotEmpty && ids.length == _clientList.length;
+      // Pre-fill template name
+      if (_editData!['templatename'] != null) {
+        templateNameController.text = _editData!['templatename'].toString();
       }
 
-      _formKey.currentState?.patchValue(patch);
+      // Pre-fill selected brand/client
+      final clientId = _editData!['client_id'] ?? _editData!['clientid'];
+      if (clientId != null) {
+        selectedClientId = clientId.toString();
+      }
+
+      // Pre-fill active status
+      if (_editData!['status'] != null) {
+        _isActive = _editData!['status'].toString() == 'A';
+      }
+
       if (mounted) setState(() {});
     });
   }
@@ -249,55 +186,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   // ── field builders ────────────────────────────────────────────────────────
 
   /// Row 1: Username | Email ID | Mobile No.
-  Widget _rowUsernameEmailMobile() {
-    return Responsive.isDesktop(context)
-        ? Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _fieldUsername()),
-              _hSpace,
-              Expanded(child: _fieldEmail()),
-              _hSpace,
-              Expanded(child: _fieldMobile()),
-            ],
-          )
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _fieldUsername(),
-              const SizedBox(height: defaultPadding),
-              _fieldEmail(),
-              const SizedBox(height: defaultPadding),
-              _fieldMobile(),
-            ],
-          );
-  }
-
-  /// Row 2: Joining Date | State | City
-  Widget _rowDateStateCity() {
-    return Responsive.isDesktop(context)
-        ? Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _fieldJoiningDate()),
-              _hSpace,
-              Expanded(child: _fieldState()),
-              _hSpace,
-              Expanded(child: _fieldCity()),
-            ],
-          )
-        : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _fieldJoiningDate(),
-              const SizedBox(height: defaultPadding),
-              _fieldState(),
-              const SizedBox(height: defaultPadding),
-              _fieldCity(),
-            ],
-          );
-  }
-
+ 
   Widget _fieldUsername() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,88 +199,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
           validator: FormBuilderValidators.required(
             errorText: 'Please enter username',
           ),
-          decoration: _inputDecoration(''),
-        ),
-      ],
-    );
-  }
-
-  Widget _fieldEmail() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Email ID'),
-        FormBuilderTextField(
-          name: 'email',
-          style: Theme.of(context).textTheme.bodyMedium,
-          keyboardType: TextInputType.emailAddress,
-          validator: FormBuilderValidators.compose([
-            FormBuilderValidators.required(errorText: 'Please enter email'),
-            FormBuilderValidators.email(errorText: 'Please enter valid email'),
-          ]),
-          decoration: _inputDecoration(''),
-        ),
-      ],
-    );
-  }
-
-  Widget _fieldMobile() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Mobile No.'),
-        FormBuilderTextField(
-          name: 'mobile',
-          style: Theme.of(context).textTheme.bodyMedium,
-          keyboardType: TextInputType.phone,
-          maxLength: 10,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validator: FormBuilderValidators.required(
-            errorText: 'Please enter mobile number',
-          ),
-          decoration: _inputDecoration(''),
-        ),
-      ],
-    );
-  }
-
-  Widget _fieldJoiningDate() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Joining Date'),
-        FormBuilderDateTimePicker(
-          name: 'joiningdate',
-          inputType: InputType.date,
-          style: Theme.of(context).textTheme.bodyMedium,
-          firstDate: Jiffy.now().subtract(years: 10).dateTime,
-          lastDate: Jiffy.now().add(years: 1).dateTime,
-          decoration: _inputDecoration('').copyWith(
-            suffixIcon: const Icon(Icons.calendar_today, size: 18),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _fieldState() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('State'),
-        FormBuilderDropdown<String>(
-          name: 'state',
-          items: _indianStates
-              .map<DropdownMenuItem<String>>(
-                (s) => DropdownMenuItem(value: s, child: Text(s)),
-              )
-              .toList(),
-          onChanged: (value) {
-            _selectedState = value;
-            // Reset city when state changes
-            _formKey.currentState?.fields['city']?.didChange(null);
-            if (mounted) setState(() {});
-          },
           decoration: _inputDecoration(''),
         ),
       ],
@@ -606,7 +413,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
           ),
           elevation: 0,
         ),
-        onPressed: _onCreateUser,
+        onPressed: () {},
         child: Text(
           _isEditMode ? 'Update User' : 'Create New User',
           style: const TextStyle(
@@ -619,62 +426,11 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     );
   }
 
-  // ── form submit ───────────────────────────────────────────────────────────
-  void _onCreateUser() {
-    if (!_formKey.currentState!.saveAndValidate()) return;
-
-    final formData = Map<String, dynamic>.from(_formKey.currentState!.value);
-
-    // Handle joining date
-    if (formData['joiningdate'] != null && formData['joiningdate'] is DateTime) {
-      formData['joiningdate'] =
-          (formData['joiningdate'] as DateTime).toIso8601String();
-    } else {
-      formData['joiningdate'] =
-          Jiffy.now().dateTime.toIso8601String();
-    }
-
-    // Handle brand/client
-    final selectedRole = formData['role'];
-    if (selectedRole == 'AD' || selectedRole == 'JrA') {
-      formData['client'] = '0';
-      formData['parentid'] = 0;
-    } else if (selectedRole == 'SrA') {
-      formData['parentid'] = 0;
-      formData['client'] = _selectedBrandIds.join(', ');
-    } else {
-      formData['client'] = _selectedBrandIds.join(', ');
-      formData['parentid'] = 0;
-    }
-
-    // Set status
-    formData['status'] = 'A';
-
-    // Set defaults for optional fields
-    formData.putIfAbsent('pincode', () => ' ');
-    formData.putIfAbsent('address', () => ' ');
-    formData.putIfAbsent('district', () => ' ');
-    formData['state'] = formData['state'] ?? ' ';
-    formData['city'] = formData['city'] ?? ' ';
-
-    // If edit mode, include id
-    if (_isEditMode && _editData != null && _editData!['id'] != null) {
-      formData['id'] = _editData!['id'];
-    }
-
-    _uc.register(context, data: formData, callback: (res) {
-      // Navigate back to user list
-      final arg = _pageArgument ??
-          ScreenArgument(argument: ArgumentData.USER, mapData: {});
-      Navigator.pushNamed(context, '/user', arguments: arg);
-    });
-  }
-
   // ── build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return LayoutScreen(
-      previousScreenName: 'Profaids Users',
+      previousScreenName: 'Create Template',
       showBackbutton: true,
       child: SafeArea(
         child: SingleChildScrollView(
@@ -705,7 +461,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
               // Title
               Text(
-                _isEditMode ? 'Edit Profaids Users' : 'Create Profaids Users',
+               'Edit Template',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
@@ -720,24 +476,8 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Row 1: Username | Email ID | Mobile No.
-                    _rowUsernameEmailMobile(),
                     const SizedBox(height: defaultPadding),
-
-                    // Row 2: Joining Date | State | City
-                    _rowDateStateCity(),
-                    const SizedBox(height: defaultPadding * 1.5),
-
-                    // Role
-                    _fieldRole(),
-                    const SizedBox(height: defaultPadding * 1.5),
-
-                    // Brand
-                    _fieldBrand(),
-                    const SizedBox(height: defaultPadding * 2),
-
-                    // Submit button
-                    Center(child: _buildSubmitButton()),
+                    _buildCreateTemplateSection(),
                     const SizedBox(height: defaultPadding * 2),
                   ],
                 ),
@@ -745,6 +485,155 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCreateTemplateSection() {
+    return Container(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 320,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Template Name',
+                        style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: templateNameController,
+                      readOnly: true,
+                      enabled: false,
+                      decoration: InputDecoration(
+                        hintText: '',
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                        filled: true,
+                        fillColor: const Color(0xFFEEEEEE),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              SizedBox(
+                width: 320,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Brand',
+                        style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: selectedClientId,
+                      isExpanded: true,
+                      items: _clientList
+                          .map<DropdownMenuItem<String>>((client) =>
+                              DropdownMenuItem(
+                                value: client['clientid']?.toString(),
+                                child: Text(
+                                    client['clientname']?.toString() ?? ''),
+                              ))
+                          .toList(),
+                      onChanged: null,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4),
+                            borderSide: const BorderSide(color: Color(0xFFBDBDBD))),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4),
+                            borderSide: const BorderSide(color: Color(0xFFBDBDBD))),
+                        disabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(4),
+                            borderSide: const BorderSide(color: Color(0xFFBDBDBD))),
+                        filled: true,
+                        fillColor: const Color(0xFFEEEEEE),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Active toggle
+          Row(
+            children: [
+              Transform.scale(
+                scale: 1.3,
+                child: Switch(
+                  value: _isActive,
+                  onChanged: (value) {
+                    setState(() {
+                      _isActive = value;
+                    });
+                  },
+                  activeColor: Colors.white,
+                  activeTrackColor: const Color(0xFF67AC5B),
+                  inactiveThumbColor: Colors.white,
+                  inactiveTrackColor: const Color(0xFFBDBDBD),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Active',
+                style: TextStyle(fontSize: 14, color: Color(0xFF505050)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Save Template button
+          Center(
+            child: SizedBox(
+              width: 350,
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () {
+                  final templateId = _editData?['id'] ?? _editData?['template_id'];
+                  if (templateId == null) return;
+                  _uc.getTempalteStatus(
+                    context,
+                    data: {
+                      'template_id': templateId.toString(),
+                      'status': _isActive ? 'A' : 'IA',
+                    },
+                    callback: (res) {
+                      if (res['message'] != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(res['message'].toString())),
+                        );
+                      }
+                      if (mounted){
+                        Navigator.pop(context, true);
+                      }
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF535353),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4)),
+                ),
+                child: const Text(
+                  'Save Template',
+                  style: TextStyle(fontSize: 14, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1152,4 +1152,114 @@ class UserController extends GetxController {
       });
     });
   }
-}
+
+  void downloadTemplate(context,
+      {required Map<String, dynamic> data,
+      required Function(dynamic) callback}) {
+    final templateId = data['template_id'];
+    // Construct the download URL for the template export endpoint
+    final String downloadUrl = '${API_URL}templateexport?id=$templateId';
+    callback({"url": downloadUrl});
+  }
+
+  // ── Brand / Client ──────────────────────────────────────────────────────
+
+  void getBrandList(context,
+      {required Function(List<dynamic>) callback}) {
+    APIService(context).getData("getBrandList", true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (!res.containsKey("type")) {
+          if (res.containsKey("data")) {
+            callback(res["data"]);
+          }
+        }
+      }
+    });
+  }
+
+  void createBrand(context,
+      {required String brandname,
+      required dynamic logoBytes,
+      String? logoFilename,
+      required Map<String, dynamic> data,
+      required Function(dynamic) callback}) {
+    APIService(context)
+        .uploadFiles(
+      logoFilename ?? '',
+      logoBytes,
+      "createBrand",
+      {
+        'brandname': brandname,
+        ...data,
+      },
+      fileKey: "logo",
+    )
+        .then((resvalue) {
+      if (resvalue != null && resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (res.containsKey("message")) {
+          APIService(context).showToastMgs(res["message"]);
+          callback(res);
+        }
+      }
+    });
+  }
+
+  void createBrandNoLogo(context,
+      {required Map<String, dynamic> data,
+      required Function(dynamic) callback}) {
+    APIService(context).postData("createBrand", data, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (res.containsKey("message")) {
+          APIService(context).showToastMgs(res["message"]);
+          callback(res);
+        }
+      }
+    });
+  }
+
+  void updateBrand(context,
+      {required String clientid,
+      required String brandname,
+      dynamic logoBytes,
+      String? logoFilename,
+      required Map<String, dynamic> data,
+      required Function(dynamic) callback}) {
+    if (logoBytes != null && logoFilename != null) {
+      APIService(context)
+          .uploadFiles(
+        logoFilename,
+        logoBytes,
+        "updateBrand",
+        {
+          'clientid': clientid,
+          'brandname': brandname,
+          ...data,
+        },
+        fileKey: "logo",
+      )
+          .then((resvalue) {
+        if (resvalue != null && resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (res.containsKey("message")) {
+            APIService(context).showToastMgs(res["message"]);
+            callback(res);
+          }
+        }
+      });
+    } else {
+      APIService(context)
+          .postData("updateBrand", {'clientid': clientid, 'brandname': brandname, ...data}, true)
+          .then((resvalue) {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (res.containsKey("message")) {
+            APIService(context).showToastMgs(res["message"]);
+            callback(res);
+          }
+        }
+      });
+    }
+  }}

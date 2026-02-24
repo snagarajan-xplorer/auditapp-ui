@@ -199,9 +199,10 @@ class ReusableTable extends StatelessWidget {
         border: Border(
             bottom: BorderSide(color: Color(0xFFE0E0E0), width: 0.5)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: columns.map((col) {
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: columns.map((col) {
           // If the column has a custom cell builder, use it.
           if (col.cellBuilder != null) {
             return Expanded(flex: col.flex, child: col.cellBuilder!(row, index));
@@ -210,6 +211,7 @@ class ReusableTable extends StatelessWidget {
           final value = _resolveValue(row, col.key);
           return _dataCell(value, col);
         }).toList(),
+        ),
       ),
     );
   }
