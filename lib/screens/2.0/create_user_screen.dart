@@ -37,6 +37,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   // Selected brand IDs (multi-select)
   List<String> _selectedBrandIds = [];
   bool _allBrandsSelected = false;
+  bool _brandSectionOpen = true;
 
   // State dropdown data
   // ignore: unused_field
@@ -450,7 +451,11 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
   /// Brand multi-select checkbox widget (custom)
   Widget _fieldBrand() {
-    final selectedRole = _formKey.currentState?.fields['role']?.value;
+    // Determine the current role: prefer the form field value, fall back to edit data
+    String? selectedRole = _formKey.currentState?.fields['role']?.value;
+    if (selectedRole == null && _isEditMode && _editData != null) {
+      selectedRole = _editData!['role']?.toString();
+    }
     // Hide brands for AD and JrA roles
     if (selectedRole == 'AD' || selectedRole == 'JrA') {
       return const SizedBox.shrink();
@@ -474,7 +479,11 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
             children: [
               // Header with "Select" label
               InkWell(
-                onTap: () {},
+                onTap: () {
+                  setState(() {
+                    _brandSectionOpen = !_brandSectionOpen;
+                  });
+                },
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -489,53 +498,59 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                                 : '${_selectedBrandIds.length} selected',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF505050),
+                          color: Color(0xFF535353),
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_up,
-                          color: Color(0xFF505050)),
+                      Icon(
+                        _brandSectionOpen
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: const Color(0xFF535353),
+                      ),
                     ],
                   ),
                 ),
               ),
-              const Divider(height: 1, color: Color(0xFFE0E0E0)),
-              // "All Brands" option
-              _brandCheckboxTile(
-                label: 'All Brands',
-                isChecked: _allBrandsSelected,
-                onChanged: (checked) {
-                  setState(() {
-                    _allBrandsSelected = checked ?? false;
-                    if (_allBrandsSelected) {
-                      _selectedBrandIds = _clientList
-                          .map((c) => c['clientid'].toString())
-                          .toList();
-                    } else {
-                      _selectedBrandIds = [];
-                    }
-                  });
-                },
-              ),
-              // Individual brands
-              ..._clientList.map((client) {
-                final id = client['clientid'].toString();
-                final name = client['clientname'].toString();
-                return _brandCheckboxTile(
-                  label: name,
-                  isChecked: _selectedBrandIds.contains(id),
+              if (_brandSectionOpen) ...[
+                const Divider(height: 1, color: Color(0xFFC9C9C9)),
+                // "All Brands" option
+                _brandCheckboxTile(
+                  label: 'All Brands',
+                  isChecked: _allBrandsSelected,
                   onChanged: (checked) {
                     setState(() {
-                      if (checked == true) {
-                        _selectedBrandIds.add(id);
+                      _allBrandsSelected = checked ?? false;
+                      if (_allBrandsSelected) {
+                        _selectedBrandIds = _clientList
+                            .map((c) => c['clientid'].toString())
+                            .toList();
                       } else {
-                        _selectedBrandIds.remove(id);
+                        _selectedBrandIds = [];
                       }
-                      _allBrandsSelected = _clientList.isNotEmpty &&
-                          _selectedBrandIds.length == _clientList.length;
                     });
                   },
-                );
-              }),
+                ),
+                // Individual brands
+                ..._clientList.map((client) {
+                  final id = client['clientid'].toString();
+                  final name = client['clientname'].toString();
+                  return _brandCheckboxTile(
+                    label: name,
+                    isChecked: _selectedBrandIds.contains(id),
+                    onChanged: (checked) {
+                      setState(() {
+                        if (checked == true) {
+                          _selectedBrandIds.add(id);
+                        } else {
+                          _selectedBrandIds.remove(id);
+                        }
+                        _allBrandsSelected = _clientList.isNotEmpty &&
+                            _selectedBrandIds.length == _clientList.length;
+                      });
+                    },
+                  );
+                }),
+              ],
             ],
           ),
         ),
@@ -553,7 +568,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
+          border: Border(bottom: BorderSide(color: Color(0xFFC9C9C9))),
         ),
         child: Row(
           children: [
@@ -563,9 +578,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               child: Checkbox(
                 value: isChecked,
                 onChanged: onChanged,
-                activeColor: const Color(0xFF4DB6AC),
+                activeColor: const Color(0xFF02B2EB),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
@@ -600,7 +615,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         child: Text(
           _isEditMode ? 'Update User' : 'Create New User',
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color: Colors.white,
           ),
@@ -708,7 +723,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               FormBuilder(
                 key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, 
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Row 1: Username | Email ID | Mobile No.
                     _rowUsernameEmailMobile(),
