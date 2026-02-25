@@ -21,22 +21,22 @@ class ButtonComp extends StatelessWidget {
       child: icon == null ? ElevatedButton(
 
         style: TextButton.styleFrom(
-          backgroundColor: disabled == false ? color : Colors.grey.shade100 ,
+          backgroundColor: disabled == false ? Color(0xFF02B2EB) : Color(0xFF535353) ,
           padding: EdgeInsets.all(5),
 
         ),
         onPressed: disabled == false ? onPressed : null,
-        child: Center(child: Text(label,style: paragraphTextStyle,)),
+        child: Center(child: Text(label,style: TextStyle(color: Colors.white),)),
       ):ElevatedButton.icon(
 
         style: TextButton.styleFrom(
-          backgroundColor: disabled == false ? color : Colors.grey.shade100 ,
+          backgroundColor: disabled == false ? color : Color(0xFF535353) ,
           padding: EdgeInsets.all(5),
 
         ),
         icon:icon,
         onPressed: disabled == false ? onPressed : null,
-        label: Center(child: Text(label,style: paragraphTextStyle,)),
+        label: Center(child: Text(label,style: TextStyle(fontSize: 14,fontWeight: FontWeight.w600))),
       ),
     );
   }

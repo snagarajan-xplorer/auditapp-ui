@@ -68,29 +68,23 @@ class BoxContainer extends StatelessWidget {
     );
   }
   Widget withoutImage(context){
+    final bool hasFixedHeight = height != null;
     return Container(
         height: height,
         width: width,
         padding: EdgeInsets.all(padding! ),
-        decoration: isBGTransparent == false ?BoxDecoration(
-          color: Theme.of(context).colorScheme.secondary,
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade200,
-              spreadRadius: 3,
-              blurRadius: 3,
-              offset: Offset(0, 3), // changes position of shadow
-            ),
-          ],
-        ):null,
+        decoration: isBGTransparent! ? null : BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
+        ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: hasFixedHeight ? MainAxisSize.max : MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Visibility(
                     visible: showTitle!,
@@ -109,13 +103,14 @@ class BoxContainer extends StatelessWidget {
                 visible: showTitle!,
                 child: SizedBox(height: defaultPadding)
             ),
-            Flexible(
-              flex: 5,
-                child: SizedBox(
-                  height: double.infinity,
-                  child: child,
-                )
-            )
+            hasFixedHeight
+                ? Flexible(
+                    flex: 5,
+                    child: SizedBox(
+                      height: double.infinity,
+                      child: child,
+                    ))
+                : child,
           ],
         )
     );

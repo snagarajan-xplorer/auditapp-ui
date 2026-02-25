@@ -597,6 +597,68 @@ class UserController extends GetxController {
     });
   }
 
+  /// Fetch single audit detail by ID (for Audit Detail V2 screen).
+  void getAuditDetailById(context,
+      {required Map<String, dynamic> data,
+      required Function(Map<String, dynamic>) callback}) {
+    APIService(context).postData("getAuditDetailById", data, true).then((resvalue) {
+      try {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type") && res.containsKey("data")) {
+            callback(Map<String, dynamic>.from(res["data"]));
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint("getAuditDetailById error: $e");
+      }
+      callback({});
+    });
+  }
+
+  /// Start an audit — transition from Scheduled to In Progress.
+  void startAudit(context,
+      {required Map<String, dynamic> data,
+      required Function(bool) callback}) {
+    APIService(context).postData("startAudit", data, true).then((resvalue) {
+      try {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type") && res.containsKey("message")) {
+            APIService(context).showToastMgs(res["message"]);
+            callback(!res.containsKey("type") && res.containsKey("status"));
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint("startAudit error: $e");
+      }
+      callback(false);
+    });
+  }
+
+  /// Delete an audit permanently.
+  void deleteAudit(context,
+      {required Map<String, dynamic> data,
+      required Function(bool) callback}) {
+    APIService(context).postData("deleteAudit", data, true).then((resvalue) {
+      try {
+        if (resvalue.length != 5) {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (!res.containsKey("type") && res.containsKey("message")) {
+            APIService(context).showToastMgs(res["message"]);
+            callback(true);
+            return;
+          }
+        }
+      } catch (e) {
+        debugPrint("deleteAudit error: $e");
+      }
+      callback(false);
+    });
+  }
+
   /// Filter mock data by year range (April to March financial year).
   /// [yearStr] is the end year of the FY, e.g. "2026" for FY2025-26.
   static List<dynamic> _filterByYear(List<dynamic> items, String yearStr, String dateField) {

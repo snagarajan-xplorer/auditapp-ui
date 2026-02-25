@@ -186,7 +186,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
         children: [
           Expanded(
             child: _actionButton("Edit", Color(0xFF535353), () {
-              Navigator.pushNamed(context, "/addaudit",
+              Navigator.pushNamed(context, "/createaudit",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
                       mode: "Edit",
@@ -213,20 +213,43 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
     // Upcoming → Edit
     if (statusLabel == "Upcoming" || rawStatus == "S") {
-      return _actionButton("Edit", Color(0xFF535353), () {
-        Navigator.pushNamed(context, "/addaudit",
-            arguments: ScreenArgument(
-                argument: ArgumentData.USER,
-                mode: "Edit",
-                mapData: allAudits,
-                editData: row));
-      });
+      // return _actionButton("Edit", Color(0xFF535353), () {
+      //   Navigator.pushNamed(context, "/createaudit",
+      //       arguments: ScreenArgument(
+      //           argument: ArgumentData.USER,
+      //           mode: "Edit",
+      //           mapData: allAudits,
+      //           editData: row));
+      // });
+      return Row(
+        children: [
+          Expanded(
+            child: _actionButton("Edit", Color(0xFF535353), () {
+              Navigator.pushNamed(context, "/createaudit",
+                  arguments: ScreenArgument(
+                      argument: ArgumentData.USER,
+                      mode: "Edit",
+                      mapData: allAudits,
+                      editData: row));
+            }, flexible: true),
+          ),
+          SizedBox(width: 5),
+          Expanded(
+            child: _actionButton("Start", Color(0xFF67AC5B), () {
+              Navigator.pushNamed(context, "/auditcategorylist-v2",
+                  arguments: ScreenArgument(
+                      argument: ArgumentData.USER,
+                      mapData: row));
+            }, flexible: true),
+          ),
+        ],
+      );
     }
 
-    // Cancelled → disabled
+    // Cancelled → Delete
     if (statusLabel == "Cancelled" || rawStatus == "CL") {
-      return _actionButton("Cancelled", Color(0xFFC9C9C9), null,
-          textColor: Color(0xFFA09E9E));
+      return _actionButton("Cancelled", Color(0xFFC9C9C9), () {
+      });
     }
 
     return SizedBox.shrink();
@@ -376,13 +399,15 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         alignment: Alignment.center,
-                        child: Text("Delete",
+                        child: Text("Confirm",
                             style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: Colors.white)),
                       ),
                     ),
+                    SizedBox(width: 12),
+                    // Permanent delete button
                   ],
                 ),
               ],
@@ -391,6 +416,23 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
         );
       },
     );
+  }
+
+  void _deleteAudit(dynamic row) {
+    APIService(context).showWindowAlert(
+        title: "Delete Audit",
+        desc: "Are you sure you want to permanently delete this audit? This action cannot be undone.",
+        showCancelBtn: true,
+        callback: () {
+          Map<String, dynamic> dObj = {
+            "audit_id": row["id"] ?? row["audit_id"],
+          };
+          usercontroller.deleteAudit(context, data: dObj, callback: (success) {
+            if (success) {
+              _loadData();
+            }
+          });
+        });
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────

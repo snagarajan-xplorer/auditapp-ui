@@ -275,7 +275,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
         children: [
           // Brand Name
           SizedBox(
-            width: double.infinity, 
+            width: double.infinity,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

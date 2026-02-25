@@ -263,6 +263,7 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
                           "city":             row["city"],
                           "location":         row["location"],
                           "type_of_location": row["type_of_location"],
+                          "pincode":          row["pincode"],
                           "unscheduled_id":   row["id"],
                         });
                       },

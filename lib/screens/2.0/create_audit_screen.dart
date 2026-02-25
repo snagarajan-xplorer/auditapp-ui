@@ -10,6 +10,7 @@ import 'package:flutter/cupertino.dart';
 import '../../constants.dart';
 import '../../controllers/usercontroller.dart';
 import '../../localization/app_translations.dart';
+import '../../models/screenarguments.dart';
 import '../../responsive.dart';
 import '../main/layoutscreen.dart';
 
@@ -44,8 +45,19 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   /// Data passed from the unscheduled audit screen row
   Map<String, dynamic>? _prefillData;
 
+  /// Whether this is an edit of an existing audit
+  bool _isEditMode = false;
+
+  /// The audit ID when editing
+  dynamic _editAuditId;
+
   /// Track the selected audit type (Scheduled or Un Scheduled)
   String _selectedAuditType = 'Scheduled';
+
+  /// Flag to prevent onChanged from interfering during prefill
+  bool _isPrefilling = false;
+
+
 
   static const List<String> _locationTypes = [
     'Retail Store',
@@ -106,6 +118,11 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
   @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitialData());
@@ -116,10 +133,18 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
       _uc.loadInitData();
     }
 
-    // Read arguments passed from unscheduled audit screen
+    // Read arguments passed from audit list (Edit) or unscheduled audit screen
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map<String, dynamic>) {
+    if (args is ScreenArgument && args.mode == 'Edit' && args.editData != null) {
+      // Coming from audit list "Edit" button
+      _isEditMode = true;
+      _prefillData = Map<String, dynamic>.from(args.editData!);
+      _editAuditId = _prefillData!['id'] ?? _prefillData!['audit_id'];
+      _selectedAuditType = 'Scheduled';
+    } else if (args is Map<String, dynamic>) {
       _prefillData = args;
+      // Coming from "Schedule Audit" on unscheduled screen — always Scheduled
+      _selectedAuditType = 'Scheduled';
     }
 
     _uc.getClientList(
@@ -140,55 +165,142 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               _zones = zones.map((z) => z.toString()).toList();
               if (mounted) setState(() {});
 
-              // Pre-fill form fields from unscheduled audit row data
+              // Pre-fill form fields from unscheduled audit row data or edit mode
               if (_prefillData != null) {
+                _isPrefilling = true;
                 Future.delayed(const Duration(milliseconds: 400), () {
                   final pf = _prefillData!;
 
-                  // If client_id is present, load templates for that client
+                  // Build base patch FIRST (fields that don't need async)
+                  final patch = <String, dynamic>{};
+                  patch['audit_type'] = 'Scheduled';
+                  if (pf['client_id'] != null) patch['client_id'] = pf['client_id'].toString();
+                  if (pf['zone'] != null && pf['zone'] != '-') patch['zone'] = pf['zone'];
+                  if (pf['location'] != null && pf['location'] != '-') patch['location'] = pf['location'];
+                  if (pf['type_of_location'] != null && pf['type_of_location'] != '-') patch['type_of_location'] = pf['type_of_location'];
+                  if (pf['branch'] != null && pf['branch'] != '-') patch['branch'] = pf['branch'];
+
+                  // Edit mode: also prefill auditname, assigned_user, remarks, start_date, start_time
+                  if (_isEditMode) {
+                    final auditName = (pf['auditname'] ?? pf['audit_name'] ?? '').toString();
+                    if (auditName.isNotEmpty) patch['auditname'] = auditName;
+                    if (pf['assigned_user'] != null) patch['assigned_user'] = pf['assigned_user'].toString();
+                    if (pf['remarks'] != null && pf['remarks'].toString().trim().isNotEmpty) {
+                      patch['remarks'] = pf['remarks'].toString();
+                    }
+                    // Parse start_date
+                    if (pf['start_date'] != null) {
+                      try {
+                        final dt = DateTime.parse(pf['start_date'].toString());
+                        patch['start_date'] = dt;
+                        // Allow editing past dates in edit mode
+                        if (dt.isBefore(_firstDate)) {
+                          _firstDate = dt;
+                          _initialDate = dt;
+                        }
+                      } catch (_) {}
+                    }
+                    // Parse start_time
+                    if (pf['start_time'] != null) {
+                      try {
+                        final rawTime = pf['start_time'].toString();
+                        // Handle formats like "09:00:00" or ISO datetime
+                        DateTime timeValue;
+                        if (rawTime.contains('T') || rawTime.contains('-')) {
+                          timeValue = DateTime.parse(rawTime);
+                        } else {
+                          final parts = rawTime.split(':');
+                          timeValue = DateTime(2000, 1, 1, int.parse(parts[0]), int.parse(parts[1]));
+                        }
+                        patch['start_time'] = timeValue;
+                      } catch (_) {}
+                    }
+                  }
+
+                  final pincode = pf['pincode']?.toString() ?? '';
+                  if (pincode.isNotEmpty && pincode != '-') {
+                    patch['pincode'] = pincode;
+                  }
+
+                  // Helper to re-apply all fields after any setState rebuild
+                  void reapplyPatch() {
+                    _formKey.currentState?.patchValue(patch);
+                    if (pf['template_id'] != null && _templateList.isNotEmpty) {
+                      _formKey.currentState?.patchValue({
+                        'template_id': pf['template_id'].toString(),
+                      });
+                    }
+                  }
+
+                  // Apply base fields immediately
+                  _formKey.currentState?.patchValue(patch);
+
+                  // Load templates for the selected client
                   if (pf['client_id'] != null) {
-                    final clientId = pf['client_id'].toString();
                     _uc.getTemplateList(
                       context,
-                      clientid: clientId,
+                      clientid: pf['client_id'].toString(),
                       callback: (templates) {
                         _templateList = templates;
                         if (mounted) setState(() {});
+                        // Re-apply all fields + template after rebuild
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          reapplyPatch();
+                          _isPrefilling = false;
+                        });
                       },
                     );
                   }
 
-                  // Patch available form values
-                  final patch = <String, dynamic>{};
-                  if (pf['client_id'] != null) {
-                    patch['client_id'] = pf['client_id'].toString();
+                  // Handle pincode-dependent fields (state, city) asynchronously
+                  if (pincode.length == 6) {
+                    _uc.getPinCode(
+                      context,
+                      pincode: pincode,
+                      callback: (res) {
+                        _cityList = res.isNotEmpty
+                            ? res
+                            : (pf['city'] != null && pf['city'] != '-'
+                                ? [{'Name': pf['city']}]
+                                : []);
+                        final stateValue = res.isNotEmpty
+                            ? res[0]['State']
+                            : (pf['state'] != null && pf['state'] != '-'
+                                ? pf['state']
+                                : null);
+                        if (mounted) setState(() {});
+                        Future.delayed(const Duration(milliseconds: 100), () {
+                          if (stateValue != null) {
+                            _formKey.currentState?.patchValue({'state': stateValue});
+                          }
+                          // Re-apply all fields after rebuild
+                          reapplyPatch();
+                          final cityToSelect =
+                              pf['city'] ?? (res.isNotEmpty ? res[0]['Name'] : null);
+                          if (cityToSelect != null) {
+                            Future.delayed(const Duration(milliseconds: 200), () {
+                              _formKey.currentState?.patchValue({'city': cityToSelect});
+                            });
+                          }
+                        });
+                      },
+                    );
+                  } else {
+                    // No valid pincode — set state/city from prefill data directly
+                    if (pf['state'] != null && pf['state'] != '-') {
+                      _formKey.currentState?.patchValue({'state': pf['state']});
+                    }
+                    if (pf['city'] != null && pf['city'] != '-') {
+                      _cityList = [{'Name': pf['city']}];
+                      if (mounted) setState(() {});
+                      Future.delayed(const Duration(milliseconds: 200), () {
+                        reapplyPatch();
+                        _formKey.currentState?.patchValue({'city': pf['city']});
+                      });
+                    }
+                    // If no template load is pending, clear prefilling flag
+                    if (pf['client_id'] == null) _isPrefilling = false;
                   }
-                  if (pf['zone'] != null && pf['zone'] != '-') {
-                    patch['zone'] = pf['zone'];
-                  }
-                  if (pf['state'] != null && pf['state'] != '-') {
-                    patch['state'] = pf['state'];
-                  }
-                  if (pf['city'] != null && pf['city'] != '-') {
-                    // Add the city to city list so dropdown has the value
-                    _cityList = [{'Name': pf['city']}];
-                    if (mounted) setState(() {});
-                    Future.delayed(const Duration(milliseconds: 200), () {
-                      _formKey.currentState?.patchValue({'city': pf['city']});
-                    });
-                  }
-                  if (pf['location'] != null && pf['location'] != '-') {
-                    patch['location'] = pf['location'];
-                  }
-                  if (pf['type_of_location'] != null &&
-                      pf['type_of_location'] != '-') {
-                    patch['type_of_location'] = pf['type_of_location'];
-                  }
-                  if (pf['branch'] != null && pf['branch'] != '-') {
-                    patch['branch'] = pf['branch'];
-                  }
-
-                  _formKey.currentState?.patchValue(patch);
                 });
               }
             });
@@ -242,7 +354,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                   )
                 : null,
             onChanged: (value) {
-              if (value == null) return;
+              if (value == null || _isPrefilling) return;
               _uc.getTemplateList(
                 context,
                 clientid: value,
@@ -279,9 +391,44 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
         ),
       ];
 
+  // ── Financial year helper ────────────────────────────────────────────────
+  String _computeFinancialYear() {
+    final now = DateTime.now();
+    final fyStart = now.month >= 4 ? now.year : now.year - 1;
+    return 'FY$fyStart-${(fyStart + 1).toString().substring(2)}';
+  }
+
+  /// Full-width: Company Name (for un-scheduled form – no template loading)
+  Widget _fieldCompanyNameOnly() => FormBuilderDropdown<String>(
+        name: 'client_id',
+        items: _clientList
+            .map<DropdownMenuItem<String>>(
+              (c) => DropdownMenuItem(
+                value: c['clientid'].toString(),
+                child: Text(c['clientname']),
+              ),
+            )
+            .toList(),
+        validator: FormBuilderValidators.required(
+          errorText:
+              AppTranslations.of(context)!.text('key_error_01') ?? '',
+        ),
+        decoration: _inputDecoration('Company Name'),
+      );
+
+  // ── initialValue helpers (safe getter from prefill data) ────────────────
+  String? _prefillString(String key, [String? altKey]) {
+    if (_prefillData == null) return null;
+    final v = _prefillData![key] ?? (altKey != null ? _prefillData![altKey] : null);
+    if (v == null) return null;
+    final s = v.toString();
+    return (s.isEmpty || s == '-') ? null : s;
+  }
+
   /// Full-width: Audit Name
   Widget _fieldAuditName() => FormBuilderTextField(
         name: 'auditname',
+        initialValue: _isEditMode ? _prefillString('auditname', 'audit_name') : null,
         style: Theme.of(context).textTheme.bodyMedium,
         validator: FormBuilderValidators.required(
           errorText:
@@ -293,6 +440,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   /// Full-width: Audit Branch Name
   Widget _fieldBranchName() => FormBuilderTextField(
         name: 'branch',
+        initialValue: _prefillString('branch'),
         style: Theme.of(context).textTheme.bodyMedium,
         validator: _selectedAuditType == 'Scheduled'
             ? FormBuilderValidators.required(
@@ -326,6 +474,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
           flex: 1,
           child: FormBuilderTextField(
             name: 'pincode',
+            initialValue: _prefillString('pincode'),
             style: Theme.of(context).textTheme.bodyMedium,
             maxLength: 6,
             keyboardType:
@@ -366,6 +515,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
           flex: 1,
           child: FormBuilderTextField(
             name: 'state',
+            initialValue: _prefillString('state'),
             style: Theme.of(context).textTheme.bodyMedium,
             validator: FormBuilderValidators.required(
               errorText:
@@ -402,15 +552,25 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
           flex: 1,
           child: FormBuilderTextField(
             name: 'location',
+            initialValue: _prefillString('location'),
             style: Theme.of(context).textTheme.bodyMedium,
-            decoration: _inputDecoration('Location', required: false),
+            validator: _selectedAuditType == 'Un-scheduled'
+                ? FormBuilderValidators.required(
+                    errorText:
+                        AppTranslations.of(context)!.text('key_error_01') ?? '', 
+                  )
+                : null,
+            decoration: _inputDecoration(
+              'Location',
+              required: _selectedAuditType == 'Un-scheduled',
+            ),
           ),
         ),
         _hSpace,
-        Flexible(
+        Flexible( 
           flex: 1,
           child: FormBuilderDropdown<String>(
-            name: 'type_of_location',
+            name: 'type_of_location', 
             items: _locationTypes
                 .map<DropdownMenuItem<String>>(
                   (t) => DropdownMenuItem(value: t, child: Text(t)),
@@ -494,6 +654,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   /// Full-width: Information (multiline)
   Widget _fieldInformation() => FormBuilderTextField(
         name: 'remarks',
+        initialValue: _isEditMode ? _prefillString('remarks') : null,
         maxLines: 4,
         style: Theme.of(context).textTheme.bodyMedium,
         decoration: _inputDecoration('Information', required: false).copyWith(
@@ -512,10 +673,10 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
           padding: const EdgeInsets.all(5),
         ),
         onPressed: _onCreateAudit,
-        child: const Center(
+        child: Center(
           child: Text(
-            'Create Audit',
-            style: TextStyle(
+            _isEditMode ? 'Update Audit' : 'Create Audit',
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: Colors.white,
@@ -528,58 +689,77 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
 
   // ── form submit ───────────────────────────────────────────────────────────
   // Fields that exist in tbl_audit (match the model's $fillable + DB columns)
-  static const Set<String> _dbFields = {
+  static const Set<String> _dbFieldsScheduled = {
     'auditname', 'audit_no', 'start_date', 'client_id', 'start_time',
     'pincode', 'zone', 'state', 'city', 'assigned_user', 'template_id',
     'created_user', 'latitude', 'longitude', 'reporturl', 'remarks',
     'publish_user', 'end_date', 'end_time', 'complete_date', 'branch',
-    'publish_date', 'location',
+    'publish_date', 'location', 'type_of_location',
+  };
+
+  // Fields that exist in tbl_unscheduled_audit
+  static const Set<String> _dbFieldsUnscheduled = {
+    'client_id', 'zone', 'state', 'city', 'pincode',
+    'location', 'type_of_location', 'created_user', 'financial_year',
   };
 
   void _onCreateAudit() {
     if (!_formKey.currentState!.saveAndValidate()) return;
 
-    final Map<String, dynamic> data = {};
+    final Map<String, dynamic> raw = {};
     _formKey.currentState!.value.forEach((key, value) {
       if (value is DateTime) {
-        data[key] = Jiffy.parseFromDateTime(value).dateTime.toIso8601String();
+        raw[key] = Jiffy.parseFromDateTime(value).dateTime.toIso8601String();
       } else {
-        data[key] = value;
+        raw[key] = value;
       }
     });
+    raw['created_user'] = _uc.userData.userId;
 
-    // For unscheduled audits, set default end_date and end_time
-    if (_selectedAuditType == 'Un Scheduled') {
-      data['end_date'] = data['start_date'] ?? data['start_date'];
-      data['end_time'] = data['start_time'] ?? data['start_time'];
+    if (_selectedAuditType == 'Un-scheduled') {
+      // ── Un-scheduled audit ───────────────────────────────────────────────
+      raw['financial_year'] = _computeFinancialYear();
+
+      // Keep only columns that exist in tbl_unscheduled_audit
+      raw.removeWhere((key, _) => !_dbFieldsUnscheduled.contains(key));
+
+      // Null-guard
+      raw.updateAll((key, value) => value ?? '');
+
+      _uc.saveUnScheduledAudit(context, data: raw, callback: (success) {
+        if (success) Navigator.pushNamed(context, '/unscheduledaudit');
+      });
     } else {
-      // For scheduled audits, set end_date and end_time to start_date and start_time
-      data['end_date'] = data['start_date'];
-      data['end_time'] = data['start_time'];
+      // ── Scheduled audit ──────────────────────────────────────────────────
+      raw['end_date']   = raw['start_date'];
+      raw['end_time']   = raw['start_time'];
+
+      // Ensure optional DB fields have a default (columns are NOT NULLABLE)
+      raw.putIfAbsent('remarks',       () => ' ');
+      raw.putIfAbsent('location',      () => ' ');
+      raw.putIfAbsent('branch',        () => ' ');
+      raw.putIfAbsent('client_id',     () => ' ');
+      raw.putIfAbsent('template_id',   () => ' ');
+      raw.putIfAbsent('assigned_user', () => ' ');
+      raw.putIfAbsent('start_date',    () => ' ');
+      raw.putIfAbsent('start_time',    () => ' ');
+
+      // Remove fields that don't exist in tbl_audit
+      raw.removeWhere((key, _) => !_dbFieldsScheduled.contains(key));
+
+      // Replace null values with space (DB columns are NOT NULLABLE)
+      raw.updateAll((key, value) => value ?? ' ');
+
+      // In edit mode, include the audit ID so backend performs update
+      // (added after filtering so it's in the request but not in _dbFieldsScheduled)
+      if (_isEditMode && _editAuditId != null) {
+        raw['id'] = _editAuditId;
+      }
+
+      _uc.saveAudit(context, data: raw, callback: () {
+        Navigator.pushNamed(context, '/auditlist');
+      });
     }
-
-    data['created_user'] = _uc.userData.userId;
-    data['audit_type'] = _selectedAuditType;
-
-    // Ensure optional DB fields have a default (columns are NOT NULLABLE)
-    data.putIfAbsent('remarks', () => ' ');
-    data.putIfAbsent('location', () => ' ');
-    data.putIfAbsent('branch', () => ' ');
-    data.putIfAbsent('client_id', () => ' ');
-    data.putIfAbsent('template_id', () => ' ');
-    data.putIfAbsent('assigned_user', () => ' ');
-    data.putIfAbsent('start_date', () => ' ');
-    data.putIfAbsent('start_time', () => ' ');
-
-    // Remove fields that don't exist in tbl_audit
-    data.removeWhere((key, _) => !_dbFields.contains(key));
-
-    // Replace null values with space (DB columns are NOT NULLABLE)
-    data.updateAll((key, value) => value ?? ' ');
-
-    _uc.saveAudit(context, data: data, callback: () {
-      Navigator.pushNamed(context, '/auditlist');
-    });
   }
 
   // ── build helper: responsive row/column ──────────────────────────────────
@@ -671,7 +851,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                             ...[
                               // ── Audit Basic Details ──────────────────────────
                               _sectionHeader('Audit Basic Details'),
-                              _fieldAuditName(),
+                              _fieldCompanyNameOnly(),
                               const SizedBox(height: defaultPadding),
                               _responsiveRow(_rowZonePincodeState()),
                               const SizedBox(height: defaultPadding),

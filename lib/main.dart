@@ -46,6 +46,8 @@ import 'package:audit_app/screens/2.0/create_user_screen.dart';
 import 'package:audit_app/screens/2.0/template_edit_screen.dart';
 import 'package:audit_app/screens/2.0/create_brand_screen.dart';
 import 'package:audit_app/screens/2.0/edit_brand_screen.dart';
+import 'package:audit_app/screens/2.0/audit_detail_screen.dart';
+import 'package:audit_app/screens/2.0/audit_category_screen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -85,10 +87,9 @@ class _MainAppState extends State<MainApp> {
             GetPage(name: "/user", page: () => UserScreenV2()),
             GetPage(name: "/client", page: () => UserScreenV2()),
             GetPage(name: "/question", page: () => UserScreen()),
-            GetPage(name: "/auditdetails", page: () => AuditDetails()),
+            // GetPage(name: "/auditdetails", page: () => AuditDetails()),
             GetPage(name: "/addquestion", page: () => Questionscreen()),
-            GetPage(
-                name: "/auditcategorylist", page: () => AuditCategoryScreen()),
+            GetPage(name: "/auditcategorylist", page: () => AuditCategoryScreen()),
             GetPage(name: "/auditlist-v1", page: () => Auditlistscreen()),
             GetPage(name: "/addaudit", page: () => AddAuditScreen()),
             GetPage(name: "/createaudit", page: () => CreateAuditScreen()),
@@ -117,6 +118,8 @@ class _MainAppState extends State<MainApp> {
             GetPage(name: "/edittemplate", page: ()=>TemplateEditScreenV2()),
             GetPage(name: "/createbrand", page: () => CreateBrandScreen()),
             GetPage(name: "/editbrand", page: () => EditBrandScreen()),
+            GetPage(name: "/auditdetails", page: () => AuditDetailsScreen()),
+            GetPage(name: "/auditcategorylist-v2", page: () => AuditCategoryScreenV2()),
           ],
           //   routes: <String, WidgetBuilder>{
           //     "/login": (context) => Loginscreen(),
