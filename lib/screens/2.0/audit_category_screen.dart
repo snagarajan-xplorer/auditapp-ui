@@ -343,6 +343,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
     return InputDecoration(
       filled: true,
       fillColor: Colors.white,
+      hoverColor: Colors.white,
       contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       counterText: "",
       errorMaxLines: 3,
@@ -1750,6 +1751,9 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                     setState(() {});
                   },
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hoverColor: Colors.white,
                     contentPadding:
                         EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     border: OutlineInputBorder(

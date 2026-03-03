@@ -67,6 +67,9 @@ class AppThemeData {
       cardTheme: const CardThemeData(
         margin: EdgeInsets.zero,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        hoverColor: Colors.white,
+      ),
     );
 
     final appColorScheme = AppColorScheme(
@@ -144,6 +147,9 @@ class AppThemeData {
         ),
         cardTheme: const CardThemeData(
           margin: EdgeInsets.zero,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          hoverColor: Colors.white,
         ),
         textButtonTheme: TextButtonThemeData(
             style: TextButton.styleFrom(backgroundColor: Colors.red)));

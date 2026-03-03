@@ -124,6 +124,9 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                   maxLines: 5,
                   onChanged: (val) => reason = val,
                   decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    hoverColor: Colors.white,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(color: Color(0xFFC9C9C9))),
