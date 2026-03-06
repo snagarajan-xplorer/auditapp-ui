@@ -29,13 +29,15 @@ class APIService {
     VoidCallback? cancelcallback,
     bool? allowClosePopup = true,
     bool? showCancelBtn = false,
+    bool? hideTitle = false,
+    Color? okButtonColor,
     String? okbutton,
     String? cancelbutton}){
     List<Widget> buttons = [];
     if (title!.isEmpty) {
       title = AppTranslations.of(context)!.text("key_info").capitalize;
     }
-    ButtonComp btn1 = ButtonComp(width:90,label: okbutton == null ? AppTranslations.of(context)!.text("key_btn_yes").toUpperCase() : okbutton,
+    ButtonComp btn1 = ButtonComp(color: okButtonColor ?? Color(0xFF0376d8), width:90,label: okbutton == null ? AppTranslations.of(context)!.text("key_btn_yes").toUpperCase() : okbutton,
       onPressed: () {
         if(allowClosePopup!){
           Navigator.pop(context);
@@ -62,11 +64,12 @@ class APIService {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(title ?? "",style: headTextStyle,),
+          title: hideTitle == true ? null : Text(title ?? "",style: headTextStyle,),
           content: Container(
             width: Responsive.isMobile(context)?350:500,
             child: child == null ? Text(desc ?? "",style: paragraphTextStyle,):child,
           ),
+          actionsAlignment: MainAxisAlignment.center,
           actions: buttons,
         );
       },

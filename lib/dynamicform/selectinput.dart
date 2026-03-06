@@ -83,7 +83,7 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
     return Visibility(
         visible: widget.fieldObj.visibility == "Y"?true:false,
         child: Container(
-          height: 80,
+          constraints: BoxConstraints(minHeight: 80),
           child: FormBuilderDropdown<String>(
 
             name: widget.fieldObj.fieldName!,
@@ -133,6 +133,8 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
               focusedBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
                   borderSide: BorderSide(color: ThemeData().primaryColor, width: 1.0)),
               errorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
+                  borderSide: BorderSide(color: Colors.red, width: 1.0)),
+              focusedErrorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
                   borderSide: BorderSide(color: Colors.red, width: 1.0)),
             ), items: widget.fieldObj.options!,
           ),

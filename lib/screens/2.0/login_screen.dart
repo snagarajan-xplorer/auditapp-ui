@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String email = "";
   String password = "";
   String selectedRole = "AD";
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   // Map role display names to role IDs
   final Map<String, String> roleMap = {
@@ -56,6 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Form(
                 key: formKey,
+                autovalidateMode: _autovalidateMode,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -68,9 +70,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 48),
-                    SizedBox(
-                      width: 360,
-                      height: 50,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360, minHeight: 50),
                       child: TextFormField(
                         decoration: InputDecoration(
                           labelText: 'Email',
@@ -82,6 +83,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(
                               color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
                             ),
                           ),
                           filled: true,
@@ -100,14 +125,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your email';
                           }
+                          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                          if (!emailRegex.hasMatch(value)) {
+                            return 'Please enter a valid email address';
+                          }
                           return null;
                         },
                       ),
                     ),
                     const SizedBox(height: 10),
-                    SizedBox(
-                      width: 360,
-                      height: 50,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360, minHeight: 50),
                       child: TextFormField(
                         obscureText: true,
                         decoration: InputDecoration(
@@ -120,6 +148,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(
                               color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
                             ),
                           ),
                           filled: true,
@@ -159,6 +211,30 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: Color(0xFFC9C9C9),
                             ),
                           ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFC9C9C9),
+                            ),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            ),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            ),
+                          ),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -168,6 +244,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(entry.value),
                           );
                         }).toList(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select a role';
+                          }
+                          return null;
+                        },
                         onChanged: (value) {
                           setState(() {
                             selectedRole = value ?? roleMap.keys.first;
@@ -182,6 +264,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: () {
                           if (formKey.currentState!.validate()) {
+                            setState(() {
+                              _autovalidateMode = AutovalidateMode.disabled;
+                            });
                             var obj = {
                               "email": email,
                               "password": password,
@@ -195,6 +280,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
                             }, onFail: (String str) {
                               APIService(context).showWindowAlert(title: "", desc: str, callback: () {});
+                            });
+                          } else {
+                            setState(() {
+                              _autovalidateMode = AutovalidateMode.onUserInteraction;
                             });
                           }
                         },

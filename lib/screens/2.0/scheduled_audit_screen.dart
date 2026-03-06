@@ -44,8 +44,6 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
       ..sort();
     return ["All", ...zoneSet];
   }
-  final List<String> years = ["FY2024-25", "FY2023-24", "FY2022-23", "FY2021-22", "FY2020-21"];
-
   // Data state
   bool isLoading = false;
   List<dynamic> allAudits = [];
@@ -161,7 +159,7 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
     return LayoutScreen(
       showBackbutton: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(left: 50, right: 36),
+        padding: EdgeInsets.only(left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

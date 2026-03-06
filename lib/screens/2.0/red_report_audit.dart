@@ -165,10 +165,12 @@ class _RedReportScreenState extends State<RedReportScreen>
   }
 
   Future<void> loadFinancialYears() async {
-    // Always show last 5 financial years in FY format, like dashboard_screen.dart
-    final currentYear = DateTime.now().year;
+    // Build financial years — Indian FY starts in April
+    // If current month < April, current FY start year = last year
+    final now = DateTime.now();
+    final fyStartYear = now.month >= 4 ? now.year : now.year - 1;
     financialYears = List.generate(5, (index) {
-      final year = currentYear - index;
+      final year = fyStartYear - index;
       final nextYearShort = (year + 1).toString().substring(2);
       final fyValue = "FY$year-$nextYearShort";
       return {"label": fyValue, "value": fyValue};

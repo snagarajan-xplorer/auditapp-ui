@@ -30,12 +30,12 @@ class UserController extends GetxController {
   List<String> year = [];
   int startYear = 2025;
   List<Map<String, dynamic>> scoreArr = [
-    {"color": Colors.red, "value": "0"},
-    {"color": Colors.orange, "value": "1"},
-    {"color": Colors.yellow, "value": "2"},
-    {"color": Colors.lightGreen, "value": "3"},
-    {"color": Colors.indigo, "value": "4"},
-    {"color": Colors.blueGrey, "value": "N/A"}
+    {"color": Color(0xFFF54234), "value": "0"},
+    {"color": Color(0xFFFFB552), "value": "1"},
+    {"color": Color(0xFFFFFD55), "value": "2"},
+    {"color": Color(0xFFA4DD5A), "value": "3"},
+    {"color": Color(0xFF5EC2FF), "value": "4"},
+    {"color": Color(0xFFD1D1D1), "value": "N/A"}
   ];
   List<Map<String, dynamic>> scoreArr2 = [
     {"color": Colors.red, "value": "0"},
@@ -180,6 +180,20 @@ class UserController extends GetxController {
           if (res.containsKey("mid")) {
             callback(res);
           }
+        }
+      }
+    });
+  }
+
+  void checkUserAuditAssignment(context,
+      {required int userId, required Function(bool assigned, int auditCount) callback}) {
+    APIService(context)
+        .postData("checkUserAuditAssignment", {"user_id": userId}, true, loader: false)
+        .then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (!res.containsKey("type")) {
+          callback(res["assigned"] ?? false, res["audit_count"] ?? 0);
         }
       }
     });
@@ -785,9 +799,18 @@ class UserController extends GetxController {
           if (!res.containsKey("type")) {
             if (res.containsKey("data")) {
               callback(res["data"]);
+            } else {
+              // No record found – return empty map so dashboard shows 0 values
+              callback({});
             }
+          } else {
+            callback({});
           }
+        } else {
+          callback({});
         }
+      }).catchError((error) {
+        callback({});
       });
     }
   }
@@ -930,9 +953,18 @@ class UserController extends GetxController {
           if (!res.containsKey("type")) {
             if (res.containsKey("data")) {
               callback(res["data"]);
+            } else {
+              // No record found – return zero counts
+              callback({"complete": 0, "incomplete": 0, "upcoming": 0, "cancel": 0});
             }
+          } else {
+            callback({"complete": 0, "incomplete": 0, "upcoming": 0, "cancel": 0});
           }
+        } else {
+          callback({"complete": 0, "incomplete": 0, "upcoming": 0, "cancel": 0});
         }
+      }).catchError((error) {
+        callback({"complete": 0, "incomplete": 0, "upcoming": 0, "cancel": 0});
       });
     }
   }

@@ -39,6 +39,9 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
   final _controller = PageController(keepPage: false);
   final _questioncontroller = PageController(keepPage: false);
 
+  /// True when opened from "View Audit" on a published audit — all fields read-only.
+  bool isViewMode = false;
+
   int answerQuest = 0;
   bool enableAction = true;
   bool showNextBtn = true;
@@ -81,6 +84,23 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
   List<dynamic> clientUsers = [];
   String? selectedClientEmail;
 
+  // Validation: starts disabled, switches to onUserInteraction after first submit
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+
+  /// Get the current dropdown value from selecteddropdown or fallback to config
+  dynamic _getDropdownValue(dynamic question, dynamic element2) {
+    List<dynamic> arr = (question["selecteddropdown"] ?? [])
+        .where((item) => item["dropdownid"] == element2["dropdownid"])
+        .toList();
+    if (arr.isNotEmpty && arr[0]["selectedoption"] != null &&
+        arr[0]["selectedoption"].toString().trim().isNotEmpty) {
+      return arr[0]["selectedoption"];
+    }
+    var val = element2["selectedoption"];
+    if (val == null || val.toString().trim().isEmpty) return null;
+    return val;
+  }
+
   Future<void> processAuditCategories() async {
     int ansValue = 0;
     int totalValue = 0;
@@ -122,10 +142,15 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
           ModalRoute.of(context)?.settings.arguments as ScreenArgument;
       dynamic mapData = pageargument?.mapData ?? {};
       String auditId = (mapData["id"] ?? mapData["audit_id"] ?? "").toString();
+
+      // Detect view-only mode (from "View Audit" on published audits)
+      if (pageargument?.mode == "View") {
+        isViewMode = true;
+      }
       
       // If audit status is "S" (Scheduled/Upcoming), start it first
       String status = (mapData["status"] ?? "").toString();
-      if (status == "S") {
+      if (!isViewMode && status == "S") {
         usercontroller.startAudit(context, data: {"audit_id": auditId}, callback: (success) {
           _loadAuditData(auditId);
         });
@@ -177,6 +202,32 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
           totalPer = percentage.toString();
         }
 
+        // Initialize step states based on existing audit progress
+        String auditStatus = (auditObj["status"] ?? "").toString();
+        bool hasBranch = auditObj["branch"] != null && auditObj["branch"].length != 0;
+        bool allCatsDone = _allCategoriesComplete();
+        if (auditStatus == "P") {
+          // Already published → all steps completed
+          childs = [2, 2, 2, 2];
+          activeStep = 3;
+          publishReviewed = true;
+          _loadClientUsers();
+        } else if (auditStatus == "C") {
+          // Acknowledged/Completed → Published step is active
+          childs = [2, 2, 2, 1];
+          activeStep = 3;
+          _loadClientUsers();
+        } else if (hasBranch && allCatsDone) {
+          // Branch saved + all categories done → Submit Review is active
+          childs = [2, 2, 1, 0];
+          activeStep = 2;
+        } else if (hasBranch) {
+          // Branch saved, categories still in-progress
+          childs = [2, 1, 0, 0];
+          activeStep = 1;
+        }
+        // else: default [1, 0, 0, 0] — Branch Details active
+
         Future.delayed(Duration(milliseconds: 400)).then((eleobj) {
           if (activeStep == 0) {
             if (auditObj["branch"].length != 0) {
@@ -186,6 +237,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                   Jiffy.parse(date).dateTime;
               formKey.currentState!.patchValue(auditObj["branch"][0]);
             }
+          }
+          // Jump to the correct page based on restored step
+          if (activeStep > 0) {
+            _controller.jumpToPage(activeStep);
           }
         });
         setState(() {});
@@ -203,6 +258,27 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
         element["complete"] = true;
       }
       setState(() {});
+    }
+  }
+
+  /// Returns true only when every category in the audit is complete.
+  bool _allCategoriesComplete() {
+    if (auditObj["categorys"] == null || auditObj["categorys"].isEmpty) {
+      return false;
+    }
+    List<dynamic> completed = auditObj["categorys"]
+        .where((obj) => obj["complete"] == true)
+        .toList();
+    return completed.length == auditObj["categorys"].length;
+  }
+
+  /// Sync Audit Activity step indicator based on actual category completion.
+  /// Call this whenever returning to the category cards view.
+  void _syncAuditActivityStepState() {
+    if (_allCategoriesComplete()) {
+      childs[1] = 2; // completed
+    } else {
+      childs[1] = 1; // in-progress
     }
   }
 
@@ -274,41 +350,40 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
         List<dynamic> catearr = auditObj["categorys"]
             .where((obj) => obj["complete"] == true)
             .toList();
-        String categoryname = categoryObj["categoryname"];
-        Widget child = Container(
-          height: 80,
-          child: Column(
-            children: [
-              Text(categoryname, style: headingTextStyle),
-              SizedBox(height: 30),
-              Text(
-                  AppTranslations.of(context)!.text("key_message_13"),
-                  style: paragraphTextStyle),
-            ],
-          ),
-        );
         if (auditObj["categorys"].length == catearr.length) {
+          // ALL categories complete → advance to Submit Review
           childs[0] = 2;
           childs[1] = 2;
+          childs[2] = 1;
           APIService(context).showWindowAlert(
               title: "",
-              desc: "",
-              child: child,
+              hideTitle: true,
+              okButtonColor: Color(0xFF67AC5B),
+              desc: AppTranslations.of(context)!.text("key_message_13"),
               callback: () {
-                activeStep = 1;
-                gotoPage();
+                showQuestion = false;
+                activeStep = 2;
                 setState(() {});
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _controller.jumpToPage(activeStep);
+                });
               });
           setState(() {});
         } else {
+          // Current category complete, others remain → back to Audit Activity cards
           APIService(context).showWindowAlert(
               title: "",
-              desc: "",
-              child: child,
+              hideTitle: true,
+              okButtonColor: Color(0xFF67AC5B),
+              desc: AppTranslations.of(context)!.text("key_message_13"),
               callback: () {
+                showQuestion = false;
                 activeStep = 1;
-                gotoPage();
+                _syncAuditActivityStepState();
                 setState(() {});
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _controller.jumpToPage(activeStep);
+                });
               });
         }
       } else {
@@ -359,6 +434,9 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
       errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(5.0),
           borderSide: BorderSide(color: Colors.red, width: 1.0)),
+      focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(5.0),
+          borderSide: BorderSide(color: Colors.red, width: 1.0)),
       suffixIcon: suffixIcon,
     );
   }
@@ -374,6 +452,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
             padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             child: FormBuilder(
               key: formKey,
+              autovalidateMode: _autovalidateMode,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -394,7 +473,8 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           AppTranslations.of(context)!.text("key_branch"),
                           FormBuilderTextField(
                             name: "managername",
-                            validator: FormBuilderValidators.compose([
+                            readOnly: isViewMode,
+                            validator: isViewMode ? null : FormBuilderValidators.compose([
                               FormBuilderValidators.required(
                                   errorText: AppTranslations.of(context)!
                                       .text("key_error_01"))
@@ -410,7 +490,8 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           AppTranslations.of(context)!.text("key_idcard"),
                           FormBuilderTextField(
                             name: "idcardno",
-                            validator: FormBuilderValidators.compose([
+                            readOnly: isViewMode,
+                            validator: isViewMode ? null : FormBuilderValidators.compose([
                               FormBuilderValidators.required(
                                   errorText: AppTranslations.of(context)!
                                       .text("key_error_01"))
@@ -426,11 +507,12 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           AppTranslations.of(context)!.text("key_joiningdate"),
                           FormBuilderDateTimePicker(
                             name: "joining_date",
+                            enabled: !isViewMode,
                             initialDate: Jiffy.now().dateTime,
                             firstDate:
                                 Jiffy.now().subtract(years: 40).dateTime,
                             lastDate: Jiffy.now().dateTime,
-                            validator: FormBuilderValidators.compose([
+                            validator: isViewMode ? null : FormBuilderValidators.compose([
                               FormBuilderValidators.required(
                                   errorText: AppTranslations.of(context)!
                                       .text("key_error_01"))
@@ -459,13 +541,14 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           AppTranslations.of(context)!.text("key_phoneno"),
                           FormBuilderTextField(
                             name: "phoneno",
+                            readOnly: isViewMode,
                             maxLength: 10,
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly
                             ],
                             keyboardType: TextInputType.numberWithOptions(
                                 signed: true, decimal: false),
-                            validator: FormBuilderValidators.compose([
+                            validator: isViewMode ? null : FormBuilderValidators.compose([
                               FormBuilderValidators.required(
                                   errorText: AppTranslations.of(context)!
                                       .text("key_error_01")),
@@ -487,7 +570,8 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           AppTranslations.of(context)!.text("key_username"),
                           FormBuilderTextField(
                             name: "emailid",
-                            validator: FormBuilderValidators.compose([
+                            readOnly: isViewMode,
+                            validator: isViewMode ? null : FormBuilderValidators.compose([
                               FormBuilderValidators.required(
                                   errorText: AppTranslations.of(context)!
                                       .text("key_error_01")),
@@ -505,13 +589,21 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                     ],
                   ),
                   SizedBox(height: 32),
-                  // Continue to Audit button — centered
+                  // Continue to Audit / Next button — centered
                   Center(
                     child: ButtonComp(
                       width: 250,
-                      label: "Continue to Audit",
+                      label: isViewMode ? "Next" : "Continue to Audit",
                       onPressed: () {
+                        if (isViewMode) {
+                          // In view mode, just navigate to next step
+                          activeStep = 1;
+                          setState(() {});
+                          gotoPage();
+                          return;
+                        }
                         if (formKey.currentState!.saveAndValidate()) {
+                          _autovalidateMode = AutovalidateMode.disabled;
                           Map<String, dynamic> obj =
                               Map.of(formKey.currentState!.value);
                           obj["joining_date"] =
@@ -521,11 +613,24 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           obj["audit_id"] = auditObj["id"];
                           usercontroller.saveAuditBranch(context, data: obj,
                               callback: () {
+                            _autovalidateMode = AutovalidateMode.disabled;
+                            // Store submitted values so they can be restored on Previous
+                            if (auditObj["branch"].isEmpty) {
+                              auditObj["branch"].add(Map<String, dynamic>.from(formKey.currentState!.value));
+                            } else {
+                              auditObj["branch"][0] = Map<String, dynamic>.from(formKey.currentState!.value);
+                            }
                             childs[0] = 2;
                             childs[1] = 1;
                             activeStep = 1;
                             setState(() {});
                             gotoPage();
+                          });
+                        } else {
+                          // Validation failed — switch to onUserInteraction
+                          // so errors clear as user edits each field
+                          setState(() {
+                            _autovalidateMode = AutovalidateMode.onUserInteraction;
                           });
                         }
                       },
@@ -684,7 +789,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
       ratingStr = ratingVal.toString();
     }
 
-    if (answeredQuestion == totalQuestion &&
+    if (isViewMode) {
+      btnLabel = "View";
+      btnColor = Color(0xFF29B6F6);
+    } else if (answeredQuestion == totalQuestion &&
         answeredQuestion != "0") {
       btnLabel = "Completed";
       btnColor = Color(0xFF67AC5B);
@@ -722,7 +830,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                   overflow: TextOverflow.ellipsis),
             ),
             SizedBox(height: 8),
-            // Stats row
+            // Stats row 1: Average Score | %Secured
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -769,6 +877,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               ],
             ),
             SizedBox(height: 4),
+            // Stats row 2: Questions | Rating
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -847,8 +956,8 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
       pageStep = 0;
     }
     totalpage = questionArray.length;
-    childs[1] = 2;
-    // We reuse step 1 page but enter question mode
+    // Keep Audit Activity step as in-progress while viewing questions
+    // (childs[1] stays at 1; only set to 2 when ALL categories are complete)
     showQuestion = true;
     if (questionArray[pageStep]["answer"].toString().trim().isEmpty) {
       selectedColor = Colors.transparent;
@@ -931,37 +1040,43 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           itemCount: questionArray.length,
                           controller: _questioncontroller,
                           itemBuilder: (context, index) {
-                            return _questionComp(questionArray[index]);
+                            return KeyedSubtree(
+                              key: ValueKey("question_${questionArray[index]["questionid"]}"),
+                              child: _questionComp(questionArray[index]),
+                            );
                           },
                         ),
                       ),
                       // Side index buttons
                       SizedBox(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: questionArray.map((element) {
-                            id++;
-                            return InkWell(
-                              onTap: () {
-                                _handleQuestionIndexTap(element);
-                              },
-                              child: Container(
-                                width: pageStep == element["index"] ? 30 : 20,
-                                height: 30,
-                                margin: EdgeInsets.only(top: 4, bottom: 4),
-                                decoration: BoxDecoration(
-                                  color: _getQuestionColor(element, id),
-                                  borderRadius: BorderRadius.only(
-                                      topRight: Radius.circular(8),
-                                      bottomRight: Radius.circular(8)),
+                        width: 30,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: questionArray.map((element) {
+                              id++;
+                              return InkWell(
+                                onTap: () {
+                                  _handleQuestionIndexTap(element);
+                                },
+                                child: Container(
+                                  width: pageStep == element["index"] ? 30 : 20,
+                                  height: 30,
+                                  margin: EdgeInsets.only(top: 4, bottom: 4),
+                                  decoration: BoxDecoration(
+                                    color: _getQuestionColor(element, id),
+                                    borderRadius: BorderRadius.only(
+                                        topRight: Radius.circular(8),
+                                        bottomRight: Radius.circular(8)),
+                                  ),
+                                  child: Center(
+                                    child: Text(id.toString(),
+                                        style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w600)),
+                                  ),
                                 ),
-                                child: Center(
-                                  child: Text(id.toString(),
-                                      style: TextStyle(color: Colors.white,fontSize: 16,fontWeight: FontWeight.w600)),
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       )
                     ],
@@ -977,72 +1092,101 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ButtonComp(
-                    width: 120,
-                    label: "Previous",
-                    color: Color(0xFF555555),
-                    onPressed: () {
-                      if (pageStep > 0) {
-                        if (questionArray[pageStep]["answer"]
-                            .toString()
-                            .trim()
-                            .isNotEmpty) {
-                          if (questionArray[pageStep]["submitAns"]
-                              .toString()
-                              .trim()
-                              .isEmpty) {
-                            APIService(context).showWindowAlert(
-                                title: "",
-                                desc: AppTranslations.of(context)!
-                                    .text("key_message_24"),
-                                callback: () {
-                                  saveAnswerQuestion(
-                                      onCallback: (id) {
-                                    _navigateToQuestion(pageStep - 1);
-                                  });
-                                },
-                                showCancelBtn: true,
-                                okbutton: AppTranslations.of(context)!
-                                    .text("key_btn_save"));
-                            return;
-                          }
+                  // Hide Previous button on the first question
+                  if (pageStep > 0)
+                    ButtonComp(
+                      width: 120,
+                      label: "Previous",
+                      color: Color(0xFF555555),
+                      onPressed: () {
+                        if (isViewMode) {
+                          _navigateToQuestion(pageStep - 1);
+                          return;
                         }
-                        _navigateToQuestion(pageStep - 1);
-                      }
-                    },
-                  ),
-                  SizedBox(width: 20),
+                        String answer = questionArray[pageStep]["answer"].toString().trim();
+                        String submitAns = questionArray[pageStep]["submitAns"].toString().trim();
+                        if (answer.isNotEmpty && answer != submitAns) {
+                          saveAnswerQuestion(onCallback: (id) {
+                            _navigateToQuestion(pageStep - 1);
+                          });
+                        } else {
+                          _navigateToQuestion(pageStep - 1);
+                        }
+                      },
+                    ),
+                  if (pageStep > 0) SizedBox(width: 20),
                   Visibility(
-                    visible: showNextBtn,
+                    visible: isViewMode ? (pageStep < questionArray.length - 1) : showNextBtn,
                     child: ButtonComp(
                       width: 120,
                       label: AppTranslations.of(context)!
                           .text("key_btn_next"),
                       onPressed: () async {
-                        if (questionArray[pageStep]["submitAns"]
-                            .toString()
-                            .trim()
-                            .isEmpty) {
-                          APIService(context).showWindowAlert(
-                              title: "",
-                              desc: AppTranslations.of(context)!
-                                  .text("key_message_24"),
-                              callback: () {
-                                saveAnswerQuestion(
-                                    onCallback: (id) async {
-                                  if (pageStep <
-                                      questionArray.length - 1) {
-                                    _navigateToQuestion(pageStep + 1);
-                                  }
-                                });
-                              },
-                              showCancelBtn: true,
-                              okbutton: AppTranslations.of(context)!
-                                  .text("key_btn_save"));
+                        if (isViewMode) {
+                          if (pageStep < questionArray.length - 1) {
+                            _navigateToQuestion(pageStep + 1);
+                          }
                           return;
                         }
-                        if (pageStep < questionArray.length - 1) {
+                        String answer = questionArray[pageStep]["answer"].toString().trim();
+                        String submitAns = questionArray[pageStep]["submitAns"].toString().trim();
+                        if (answer.isNotEmpty && answer != submitAns) {
+                          saveAnswerQuestion(onCallback: (id) async {
+                            if (pageStep < questionArray.length - 1) {
+                              _navigateToQuestion(pageStep + 1);
+                            }
+                            // On last question, saveAnswerQuestion already
+                            // shows the popup when all questions are answered
+                          });
+                        } else if (pageStep < questionArray.length - 1) {
                           _navigateToQuestion(pageStep + 1);
+                        } else {
+                          // Last question with answer already saved
+                          // Show category saved popup if all questions answered
+                          List ansList = questionArray
+                              .where((ele) => ele["submitAns"].toString().trim().isNotEmpty)
+                              .toList();
+                          if (ansList.length == questionArray.length) {
+                            setCategoryStatus(categoryObj);
+                            List<dynamic> catearr = auditObj["categorys"]
+                                .where((obj) => obj["complete"] == true)
+                                .toList();
+                            if (auditObj["categorys"].length == catearr.length) {
+                              // ALL categories complete → Submit Review
+                              childs[0] = 2;
+                              childs[1] = 2;
+                              childs[2] = 1;
+                              APIService(context).showWindowAlert(
+                                  title: "",
+                                  hideTitle: true,
+                                  okButtonColor: Color(0xFF67AC5B),
+                                  desc: AppTranslations.of(context)!.text("key_message_13"),
+                                  callback: () {
+                                    showQuestion = false;
+                                    activeStep = 2;
+                                    setState(() {});
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      _controller.jumpToPage(activeStep);
+                                    });
+                                  });
+                            } else {
+                              // Current category complete → back to cards
+                              APIService(context).showWindowAlert(
+                                  title: "",
+                                  hideTitle: true,
+                                  okButtonColor: Color(0xFF67AC5B),
+                                  desc: AppTranslations.of(context)!.text("key_message_13"),
+                                  callback: () {
+                                    showQuestion = false;
+                                    activeStep = 1;
+                                    _syncAuditActivityStepState();
+                                    setState(() {});
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      _controller.jumpToPage(activeStep);
+                                    });
+                                  });
+                            }
+                          }
                         }
                       },
                     ),
@@ -1076,27 +1220,19 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
   }
 
   void _handleQuestionIndexTap(dynamic element) {
-    if (questionArray[pageStep]["answer"].toString().trim().isNotEmpty) {
-      if (questionArray[pageStep]["submitAns"]
-          .toString()
-          .trim()
-          .isEmpty) {
-        APIService(context).showWindowAlert(
-            title: "",
-            desc: AppTranslations.of(context)!
-                .text("key_message_24"),
-            callback: () {
-              saveAnswerQuestion(onCallback: (id) {
-                _navigateToQuestion(element["index"]);
-              });
-            },
-            showCancelBtn: true,
-            okbutton: AppTranslations.of(context)!
-                .text("key_btn_save"));
-        return;
-      }
+    if (isViewMode) {
+      _navigateToQuestion(element["index"]);
+      return;
     }
-    _navigateToQuestion(element["index"]);
+    String answer = questionArray[pageStep]["answer"].toString().trim();
+    String submitAns = questionArray[pageStep]["submitAns"].toString().trim();
+    if (answer.isNotEmpty && answer != submitAns) {
+      saveAnswerQuestion(onCallback: (id) {
+        _navigateToQuestion(element["index"]);
+      });
+    } else {
+      _navigateToQuestion(element["index"]);
+    }
   }
 
   Color _getQuestionColor(element, index) {
@@ -1104,7 +1240,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
     if (element["answer"].toString().trim().isEmpty) {
       if (pageStep == index - 1) c = Color(0xFF2E77D0);
     } else {
-      c = Color(0xFFA4DD5A);
+      c = Color(0xFF67AC5B);
       if (pageStep == index - 1) c = Color(0xFF2E77D0);
     }
     return c;
@@ -1145,11 +1281,11 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                         borderRadius:
                             BorderRadius.all(Radius.circular(25)),
                         border: Border.all(
-                            color: Colors.grey.shade400, width: 1.0)),
+                            color: Color(0xFF707070), width: 1.0)),
                     child: Center(
                       child: Text(question["answer"],
                           style: TextStyle(
-                              color: Colors.white,
+                              color: Colors.black,
                               fontSize: 15,
                               fontWeight: FontWeight.w800)),
                     ),
@@ -1158,7 +1294,8 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                   Text(AppTranslations.of(context)!
                       .text("key_score"),style: TextStyle(fontSize: 16,fontWeight: FontWeight.w600,color: Color(0xFF505050)),),
                   SizedBox(height: 10),
-                  // Score buttons row
+                  // Score buttons row (hidden in view mode — score circle above is enough)
+                  if (!isViewMode)
                   Wrap(
                     children: usercontroller.scoreArr
                         .map((element) => Container(
@@ -1199,9 +1336,8 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                     padding: const EdgeInsets.only(right: 16),
                     child: _labeledField(
                       element2["dropdownname"],
-                      FormBuilderDropdown<dynamic>(
-                        name: "zone_${element2["dropdownid"]}",
-                        initialValue: element2["selectedoption"],
+                      DropdownButtonFormField<dynamic>(
+                        value: _getDropdownValue(question, element2),
                         items: element2["options"]
                             .map<DropdownMenuItem<dynamic>>(
                                 (toElement) => DropdownMenuItem(
@@ -1210,7 +1346,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                                           toElement["optionvalue"]),
                                     ))
                             .toList(),
-                        onChanged: (value) {
+                        onChanged: isViewMode ? null : (value) {
                           List<dynamic> arr = question["selecteddropdown"]
                               .where((item) =>
                                   item["dropdownid"] ==
@@ -1225,6 +1361,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           } else {
                             arr[0]["selectedoption"] = value;
                           }
+                          setState(() {});
                         },
                         decoration: _plainFieldDecoration(),
                       ),
@@ -1238,9 +1375,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
             _labeledField(
               AppTranslations.of(context)!.text("key_review"),
               FormBuilderTextField(
-                name: "reviews",
+                name: "reviews_${question["questionid"]}",
+                readOnly: isViewMode,
                 keyboardType: TextInputType.multiline,
-                maxLines: 5,
+                maxLines: 3,
                 initialValue: question["reviews"],
                 style: Theme.of(context).textTheme.bodyMedium,
                 onChanged: (value) {
@@ -1255,9 +1393,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
             _labeledField(
               AppTranslations.of(context)!.text("key_customer_review"),
               FormBuilderTextField(
-                name: "clientremarks",
+                name: "clientremarks_${question["questionid"]}",
+                readOnly: isViewMode,
                 keyboardType: TextInputType.multiline,
-                maxLines: 5,
+                maxLines: 3,
                 initialValue: question["clientremarks"],
                 style: Theme.of(context).textTheme.bodyMedium,
                 onChanged: (value) {
@@ -1271,6 +1410,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
             // File attachments
             Row(
               children: [
+                if (!isViewMode)
                 Flexible(
                   flex: 1,
                   child: SizedBox(
@@ -1382,6 +1522,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                                 ),
                               ),
                             ),
+                            if (!isViewMode)
                             Positioned(
                               right: 0,
                               top: 0,
@@ -1444,6 +1585,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
     String auditorName = "";
     String reviewSubmitted = "";
 
+
     try {
       auditDate = Jiffy.parse(auditObj["start_date"])
           .format(pattern: "dd/MM/yyyy");
@@ -1457,108 +1599,134 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
     reviewSubmitted = Jiffy.now().format(pattern: "dd/MM/yyyy");
 
     return SingleChildScrollView(
-      child: Center(
-        child: BoxContainer(
-          width: wdt,
-          height: double.infinity,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Submit Review",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.black87)),
-              SizedBox(height: defaultPadding),
-              // Company name
-              Center(
-                child: Text(companyName,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: EdgeInsets.only(left: 80),
+          child: SizedBox(
+            width: wdt,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start, 
+              children: [
+              // "Submit Review" heading above the card
+              Padding(
+                padding: EdgeInsets.only(top: defaultPadding, bottom: defaultPadding),
+                child: Text("Submit Review",
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 18,
                         color: Colors.black87)),
               ),
-              SizedBox(height: defaultPadding),
-              // Info rows
-              _infoRow("Audit ID", auditId, "Audit Date", auditDate),
-              SizedBox(height: defaultPadding),
-              _infoRow(
-                  "Audit assigned by", assignedBy, "Audit time", auditTime),
-              SizedBox(height: defaultPadding),
-              _infoRow(
-                  "Auditor", auditorName, "Review Submitted", reviewSubmitted),
-              SizedBox(height: defaultPadding * 2),
-              // Acknowledgment checkbox
+              // White card
               Container(
-                padding: EdgeInsets.all(12),
+                width: double.infinity,
+                padding: EdgeInsets.all(defaultPadding),
                 decoration: BoxDecoration(
-                    border: Border.all(color: Colors.blue.shade200, width: 2),
-                    borderRadius: BorderRadius.circular(8)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300, width: 1),
+                ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Company name
+                    Text(companyName,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87)),
+                    SizedBox(height: defaultPadding * 1.5),
+                    // Info rows
+                    _infoRow("Audit ID", auditId, "Audit Date", auditDate),
+                    SizedBox(height: defaultPadding * 1.5),
+                    _infoRow("Audit assigned by", assignedBy, "Audit time",
+                        auditTime),
+                    SizedBox(height: defaultPadding * 1.5),
+                    _infoRow("Auditor", auditorName, "Review Submitted",
+                        reviewSubmitted),
+                    SizedBox(height: defaultPadding * 2),
+                    // Acknowledgment checkbox with blue border
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Checkbox(
-                          value: reviewAcknowledged,
-                          activeColor: Colors.blue,
-                          onChanged: (val) {
+                          value: isViewMode ? true : reviewAcknowledged,
+                          activeColor: Color(0xFF505050),
+                          onChanged: isViewMode ? null : (val) {
                             reviewAcknowledged = val ?? false;
                             setState(() {});
                           },
                         ),
+                        SizedBox(width: 4),
                         Expanded(
-                          child: Text(
-                            "I acknowledge the audit's conclusion, with all activities performed as per established protocol.",
-                            style: TextStyle(fontSize: 14),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
+                            child: Text(
+                              "I acknowledge the audit's conclusion, with all activities performed as per established protocol",
+                              style: TextStyle(fontSize: 14),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 8),
+                    SizedBox(height: defaultPadding),
+                    // Proof of location text
                     Text("Proof of location is included.",
                         style: TextStyle(
                             fontSize: 13, color: Colors.grey.shade700)),
-                    SizedBox(height: 10),
-                    // Proof image upload
+                    SizedBox(height: defaultPadding),
+                    // Browse button + image preview
+                    if (!isViewMode)
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
                           width: 120,
                           height: buttonHeight,
-                          child: ElevatedButton.icon(
-                              onPressed: () async {
-                                FilePickerResult? result =
-                                    await FilePicker.platform.pickFiles(
-                                  type: FileType.image,
-                                  allowMultiple: false,
-                                  withData: true,
-                                );
-                                if (result != null &&
-                                    result.files.isNotEmpty) {
-                                  setState(() {
-                                    showImage = false;
-                                    acknowlodgeImage = true;
-                                    _imageBytes = result.files.first.bytes;
-                                    _imageName = result.files.first.name;
-                                  });
-                                }
-                              },
-                              icon: Icon(Icons.cloud_upload,
-                                  size: 20, color: Colors.white),
-                              label: Text("Browse",
-                                  style: TextStyle(color: Colors.white))),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0xFF02B2EB),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            onPressed: () async {
+                              FilePickerResult? result =
+                                  await FilePicker.platform.pickFiles(
+                                type: FileType.image,
+                                allowMultiple: false,
+                                withData: true,
+                              );
+                              if (result != null &&
+                                  result.files.isNotEmpty) {
+                                setState(() {
+                                  showImage = false;
+                                  acknowlodgeImage = true;
+                                  _imageBytes = result.files.first.bytes;
+                                  _imageName = result.files.first.name;
+                                });
+                              }
+                            },
+                            child: Text("Browse",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600)),
+                          ),
                         ),
-                        SizedBox(width: 10),
+                        SizedBox(width: 16),
                         if (acknowlodgeImage && _imageBytes != null)
                           Container(
-                            width: 100,
-                            height: 80,
+                            width: 150,
+                            height: 120,
                             decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                    color: Colors.grey.shade300)),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: Colors.grey.shade300),
+                            ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.memory(_imageBytes!,
@@ -1567,16 +1735,14 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                           ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              SizedBox(height: defaultPadding * 2),
-              // Submit button
-              Center(
-                child: ButtonComp(
-                  width: 250,
-                  label: "Submit to Review",
-                  onPressed: () {
+                    SizedBox(height: defaultPadding * 2),
+                    // Submit button (hidden in view mode)
+                    if (!isViewMode)
+                    Center(
+                      child: ButtonComp(
+                        width: 300,
+                        label: "Submit to Review",
+                        onPressed: () {
                     if (!reviewAcknowledged) {
                       APIService(context).showWindowAlert(
                           title: "",
@@ -1625,6 +1791,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               ),
             ],
           ),
+          ),
+            ],
+          ),
+          ),
         ),
       ),
     );
@@ -1641,13 +1811,13 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
             children: [
               Text(label1,
                   style: TextStyle(
-                      color: Colors.grey.shade600, fontSize: 13)),
+                      color: Color(0xFF898989), fontSize: 16)),
               SizedBox(height: 4),
               Text(value1,
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: Colors.black87)),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Color(0xFF505050))),
             ],
           ),
         ),
@@ -1691,12 +1861,19 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
 
   Widget publishedChild() {
     String companyName = auditObj["companyname"] ?? "";
+    bool isAlreadyPublished = (auditObj["status"] ?? "").toString() == "P";
+
+    // Pre-fill client email from saved audit data if available
+    if (isAlreadyPublished && auditObj["client_email"] != null && auditObj["client_email"].toString().isNotEmpty) {
+      selectedClientEmail ??= auditObj["client_email"];
+    }
 
     return SingleChildScrollView(
       child: Center(
         child: BoxContainer(
           width: wdt,
-          height: double.infinity,
+          height: null,
+          isBGTransparent: true,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -1704,9 +1881,9 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               SizedBox(height: defaultPadding),
               Text(companyName,
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       fontSize: 16,
-                      color: Colors.black87)),
+                      color: Color(0xFF505050))),
               SizedBox(height: defaultPadding),
               // Download Report button
               OutlinedButton.icon(
@@ -1714,17 +1891,18 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                   js.context.callMethod('open', [
                     API_URL +
                         "exportControl?type=1&id=" +
-                        (auditObj["id"] ?? "").toString(),
+                        (auditObj["reporturl"] ?? "").toString(),
                     "_blank"
                   ]);
                 },
-                icon: Icon(Icons.download, color: kPrimaryColor),
+
                 label: Text("Download Report",
-                    style: TextStyle(color: kPrimaryColor)),
+                    style: TextStyle(color: Color(0xFF02B2EB))),
+                icon: Icon(Icons.download, color: Color(0xFF02B2EB)), 
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: kPrimaryColor),
+                  side: BorderSide(color: Color(0xFF02B2EB)),
                   padding:
-                      EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
@@ -1733,10 +1911,11 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               // Select Client Mail
               Text("Select Client Mail Id",
                   style: TextStyle(
-                      fontSize: 14, color: Colors.grey.shade700)),
+                      fontSize: 14, color: Color(0xFF505050))),
               SizedBox(height: 8),
               SizedBox(
-                width: 350,
+                width: 340,
+                height: 40,
                 child: DropdownButtonFormField<String>(
                   value: selectedClientEmail,
                   items: clientUsers
@@ -1746,7 +1925,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                       child: Text(user["email"] ?? ""),
                     );
                   }).toList(),
-                  onChanged: (val) {
+                  onChanged: isAlreadyPublished ? null : (val) {
                     selectedClientEmail = val;
                     setState(() {});
                   },
@@ -1771,19 +1950,37 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                 children: [
                   Checkbox(
                     value: publishReviewed,
-                    activeColor: Colors.green,
-                    onChanged: (val) {
+                    activeColor: Color(0xFF67AC5B),
+                    onChanged: isAlreadyPublished ? null : (val) {
                       publishReviewed = val ?? false;
                       setState(() {});
                     },
                   ),
                   Text(
                       "I'm reviewed the audit's conclusion, with all activities.",
-                      style: TextStyle(fontSize: 14)),
+                      style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
                 ],
               ),
               SizedBox(height: defaultPadding * 2),
+              // Published status badge
+              if (isAlreadyPublished)
+                Padding(
+                  padding: EdgeInsets.only(bottom: defaultPadding),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 20),
+                      SizedBox(width: 8),
+                      Text("Audit Published Successfully",
+                          style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 15)),
+                    ],
+                  ),
+                ),
               // Publish button
+              if (!isAlreadyPublished)
               ButtonComp(
                 width: 300,
                 color: Color(0xFF6FAF4E),
@@ -1807,6 +2004,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                   Map<String, dynamic> data = {
                     "audit_id": auditObj["id"],
                     "userid": usercontroller.userData.userId,
+                    "client_email": selectedClientEmail,
                   };
                   usercontroller.publishAuditStatus(context, data: data,
                       callback: () {
@@ -1823,6 +2021,9 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                     APIService(context)
                         .postData("sendEmail", emailData, true)
                         .then((_) {});
+                    // Mark Published step as completed
+                    childs[3] = 2;
+                    setState(() {});
                     APIService(context).showWindowAlert(
                         title: "",
                         desc: "Audit published successfully!",
@@ -1846,15 +2047,72 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
   //  Helpers
   // =====================================================
 
-  String _getBackButtonName() {
-    if (activeStep == 0)
-      return AppTranslations.of(context)!.text("key_auditinfo");
-    if (activeStep == 1 && !showQuestion)
-      return "Branch Details";
-    if (activeStep == 1 && showQuestion) return "Audit Activity";
-    if (activeStep == 2) return "Audit Activity";
-    if (activeStep == 3) return "Submit Review";
-    return AppTranslations.of(context)!.text("key_auditinfo");
+  /// Inline back button handler — replaces header back button
+  void _handleBack() {
+    if (showQuestion) {
+      if (isViewMode) {
+        // In view mode, just go back to category cards
+        showQuestion = false;
+        setState(() {});
+        return;
+      }
+      // Return from question view to category cards
+      if (questionArray[pageStep]["answer"]
+          .toString()
+          .trim()
+          .isNotEmpty) {
+        if (questionArray[pageStep]["submitAns"]
+            .toString()
+            .trim()
+            .isEmpty) {
+          APIService(context).showWindowAlert(
+              title: "",
+              desc: AppTranslations.of(context)!
+                  .text("key_message_24"),
+              callback: () {
+                saveAnswerQuestion(onCallback: (id) {
+                  showQuestion = false;
+                  _syncAuditActivityStepState();
+                  setState(() {});
+                });
+              },
+              showCancelBtn: true,
+              okbutton: AppTranslations.of(context)!
+                  .text("key_btn_save"));
+          return;
+        }
+      }
+      showQuestion = false;
+      _syncAuditActivityStepState();
+      setState(() {});
+      return;
+    }
+    if (activeStep == 0) {
+      Navigator.of(context).pop();
+    } else if (activeStep == 1) {
+      activeStep = 0;
+      if (!isViewMode) childs[0] = 1;
+      if (auditObj["branch"].length != 0) {
+        Future.delayed(Duration(milliseconds: 400)).then((value) {
+          var dateVal = auditObj["branch"][0]["joining_date"];
+          if (dateVal is! DateTime) {
+            auditObj["branch"][0]["joining_date"] =
+                Jiffy.parse(dateVal.toString()).dateTime;
+          }
+          formKey.currentState!.patchValue(auditObj["branch"][0]);
+        });
+      }
+      gotoPage();
+    } else if (activeStep == 2) {
+      activeStep = 1;
+      if (!isViewMode) childs[1] = 1;
+      gotoPage();
+    } else if (activeStep == 3) {
+      activeStep = 2;
+      if (!isViewMode) childs[2] = 1;
+      gotoPage();
+    }
+    setState(() {});
   }
 
   // =====================================================
@@ -1864,6 +2122,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
   Widget build(BuildContext context) {
     return LayoutScreen(
       onCallback: (id) {
+        if (isViewMode) {
+          _navigateMenu(id);
+          return;
+        }
         if (showQuestion &&
             questionArray.isNotEmpty &&
             questionArray[pageStep]["answer"].toString().trim().isNotEmpty) {
@@ -1883,71 +2145,35 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
         }
       },
       enableAction: enableAction,
-      previousScreenName: _getBackButtonName(),
-      backEvent: () {
-        if (showQuestion) {
-          // Return from question view to category list
-          if (questionArray[pageStep]["answer"]
-              .toString()
-              .trim()
-              .isNotEmpty) {
-            if (questionArray[pageStep]["submitAns"]
-                .toString()
-                .trim()
-                .isEmpty) {
-              APIService(context).showWindowAlert(
-                  title: "",
-                  desc: AppTranslations.of(context)!
-                      .text("key_message_24"),
-                  callback: () {
-                    saveAnswerQuestion(onCallback: (id) {
-                      showQuestion = false;
-                      setState(() {});
-                    });
-                  },
-                  showCancelBtn: true,
-                  okbutton: AppTranslations.of(context)!
-                      .text("key_btn_save"));
-              return;
-            }
-          }
-          showQuestion = false;
-          setState(() {});
-          return;
-        }
-        if (activeStep == 0) {
-          Navigator.of(context).pop();
-        } else if (activeStep == 1) {
-          activeStep = 0;
-          childs[0] = 1;
-          if (auditObj["branch"].length != 0) {
-            Future.delayed(Duration(milliseconds: 400)).then((value) {
-              String date =
-                  auditObj["branch"][0]["joining_date"].toString();
-              auditObj["branch"][0]["joining_date"] =
-                  Jiffy.parse(date).dateTime;
-              formKey.currentState!.patchValue(auditObj["branch"][0]);
-            });
-          }
-          gotoPage();
-        } else if (activeStep == 2) {
-          activeStep = 1;
-          childs[1] = 1;
-          gotoPage();
-        } else if (activeStep == 3) {
-          activeStep = 2;
-          childs[2] = 1;
-          gotoPage();
-        }
-        setState(() {});
-      },
-      showBackbutton: true,
+      showBackbutton: false,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Inline "← Back" button
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: 80, top: 12),
+              child: InkWell(
+                onTap: _handleBack,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.arrow_back, size: 18, color: Color(0xFF02B2EB)),
+                    SizedBox(width: 4),
+                    Text("Back",
+                        style: TextStyle(
+                            color: Color(0xFF02B2EB),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ),
+            ),
+          ),
           // Stepper
-          SizedBox(height: 20),
+          SizedBox(height: 10),
           SizedBox(
             height: 80,
             child: EasyStepper(
@@ -2059,6 +2285,23 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               ],
               onStepReached: (index) {
                 if (childs[index] == 0) return;
+                if (isViewMode) {
+                  showQuestion = false;
+                  activeStep = index;
+                  gotoPage();
+                  if (activeStep == 0 && auditObj["branch"].length != 0) {
+                    Future.delayed(Duration(milliseconds: 400)).then((value) {
+                      var dateVal = auditObj["branch"][0]["joining_date"];
+                      if (dateVal is! DateTime) {
+                        auditObj["branch"][0]["joining_date"] =
+                            Jiffy.parse(dateVal.toString()).dateTime;
+                      }
+                      formKey.currentState!.patchValue(auditObj["branch"][0]);
+                    });
+                  }
+                  setState(() {});
+                  return;
+                }
                 if (showQuestion &&
                     questionArray[pageStep]["answer"]
                         .toString()

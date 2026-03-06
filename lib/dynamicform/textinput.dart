@@ -85,7 +85,7 @@ class _TextInputCompState extends State<TextInputComp>  with TickerProviderState
     return Visibility(
       visible: widget.fieldObj.visibility == "Y"?true:false,
       child: Container(
-        height: 80,
+        constraints: BoxConstraints(minHeight: 80),
 
         child: FormBuilderTextField(
 
@@ -157,6 +157,8 @@ class _TextInputCompState extends State<TextInputComp>  with TickerProviderState
             focusedBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
                 borderSide: BorderSide(color: ThemeData().primaryColor, width: 1.0)),
             errorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
+                borderSide: BorderSide(color: Colors.red, width: 1.0)),
+            focusedErrorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
                 borderSide: BorderSide(color: Colors.red, width: 1.0)),
             suffixIcon: null,
 

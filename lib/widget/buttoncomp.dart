@@ -21,7 +21,7 @@ class ButtonComp extends StatelessWidget {
       child: icon == null ? ElevatedButton(
 
         style: TextButton.styleFrom(
-          backgroundColor: disabled == false ? Color(0xFF02B2EB) : Color(0xFF535353) ,
+          backgroundColor: disabled == false ? Color(0xFF67AC5B) : Color(0xFF535353),
           padding: EdgeInsets.all(5),
 
         ),

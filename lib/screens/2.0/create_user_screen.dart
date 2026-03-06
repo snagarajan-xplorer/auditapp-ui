@@ -24,6 +24,7 @@ class CreateUserScreen extends StatefulWidget {
 class _CreateUserScreenState extends State<CreateUserScreen> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
   final UserController _uc = Get.put(UserController());
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   // Data
   List<dynamic> _roles = [];
@@ -42,6 +43,11 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   ScreenArgument? _pageArgument;
   bool _isEditMode = false;
   Map<String, dynamic>? _editData;
+
+  // Active/Inactive status
+  bool _isActive = true;
+  bool _isAssignedToAudit = false;
+  int _assignedAuditCount = 0;
 
   // Indian states list for the State dropdown
   static const List<String> _indianStates = [
@@ -114,6 +120,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(5),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
     );
   }
 
@@ -136,6 +146,24 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       if (args.mode == "Edit" && args.editData != null) {
         _isEditMode = true;
         _editData = Map<String, dynamic>.from(args.editData!);
+        // Set initial active status from edit data
+        _isActive = (_editData!['status'] ?? 'A') != 'IA';
+
+        // Check if user is assigned to any audit
+        if (_editData!['id'] != null) {
+          _uc.checkUserAuditAssignment(
+            context,
+            userId: int.tryParse(_editData!['id'].toString()) ?? 0,
+            callback: (assigned, auditCount) {
+              if (mounted) {
+                setState(() {
+                  _isAssignedToAudit = assigned;
+                  _assignedAuditCount = auditCount;
+                });
+              }
+            },
+          );
+        }
       }
     }
 
@@ -594,6 +622,64 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   // ── submit button ─────────────────────────────────────────────────────────
+
+  /// Active/Inactive switch (only shown in edit mode)
+  Widget _fieldActiveSwitch() {
+    if (!_isEditMode) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Switch(
+              value: _isActive,
+              onChanged: (value) {
+                // Prevent deactivation if user is assigned to an audit
+                if (!value && _isAssignedToAudit) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Cannot deactivate this user. The user is assigned to $_assignedAuditCount audit(s).',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                setState(() {
+                  _isActive = value;
+                });
+              },
+              activeColor: Colors.green,
+              activeTrackColor: Colors.green.shade200,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _isActive ? 'Active' : 'Inactive',
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF505050),
+              ),
+            ),
+            if (!_isActive && _isAssignedToAudit) ...[
+              const SizedBox(width: 16),
+              Text(
+                '*Note that the user has been assigned an audit.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.red.shade700,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildSubmitButton() {
     return SizedBox(
       width: Responsive.isDesktop(context) ? 400 : double.infinity,
@@ -608,7 +694,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         ),
         onPressed: _onCreateUser,
         child: Text(
-          _isEditMode ? 'Update User' : 'Create New User',
+          _isEditMode ? 'Save  Profaids User' : 'Create New User',
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -621,7 +707,15 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
   // ── form submit ───────────────────────────────────────────────────────────
   void _onCreateUser() {
-    if (!_formKey.currentState!.saveAndValidate()) return;
+    if (!_formKey.currentState!.saveAndValidate()) {
+      setState(() {
+        _autovalidateMode = AutovalidateMode.onUserInteraction;
+      });
+      return;
+    }
+    setState(() {
+      _autovalidateMode = AutovalidateMode.disabled;
+    });
 
     final formData = Map<String, dynamic>.from(_formKey.currentState!.value);
 
@@ -647,8 +741,8 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       formData['parentid'] = 0;
     }
 
-    // Set status
-    formData['status'] = 'A';
+    // Set status based on switch (edit mode) or default active (create mode)
+    formData['status'] = _isEditMode ? (_isActive ? 'A' : 'IA') : 'A';
 
     // Set defaults for optional fields
     formData.putIfAbsent('pincode', () => ' ');
@@ -674,7 +768,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   @override
   Widget build(BuildContext context) {
     return LayoutScreen(
-      previousScreenName: 'Profaids Users',
+      previousScreenName: 'Settings',
       showBackbutton: true,
       child: SafeArea(
         child: SingleChildScrollView(
@@ -693,7 +787,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                     Text(
                       'Back',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w400,
                         color: Color(0xFF02B2EB),
                       ),
@@ -717,6 +811,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               // Form
               FormBuilder(
                 key: _formKey,
+                autovalidateMode: _autovalidateMode,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -734,6 +829,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
                     // Brand
                     _fieldBrand(),
+                    const SizedBox(height: defaultPadding * 1.5),
+
+                    // Active/Inactive switch (edit mode only)
+                    _fieldActiveSwitch(),
                     const SizedBox(height: defaultPadding * 2),
 
                     // Submit button

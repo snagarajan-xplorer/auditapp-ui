@@ -43,7 +43,7 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
     return Visibility(
         visible: widget.fieldObj.visibility == "Y"?true:false,
         child: Container(
-          height: 80,
+          constraints: BoxConstraints(minHeight: 80),
           child:  FormBuilderDateTimePicker(
             enabled: widget.fieldObj.disabledYN == "N"?true:false,
             name: widget.fieldObj.fieldName!,
@@ -104,6 +104,8 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
               focusedBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
                   borderSide: BorderSide(color: ThemeData().primaryColor, width: 1.0)),
               errorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
+                  borderSide: BorderSide(color: Colors.red, width: 1.0)),
+              focusedErrorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
                   borderSide: BorderSide(color: Colors.red, width: 1.0)),
 
               errorMaxLines: 3,

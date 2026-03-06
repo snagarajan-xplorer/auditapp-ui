@@ -66,7 +66,11 @@ class Input extends StatelessWidget {
                 borderSide: BorderSide(color: ThemeData().primaryColor, width: 1.0)),
             errorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
                 borderSide: BorderSide(color: Colors.red, width: 1.0)),
-
+            focusedErrorBorder: OutlineInputBorder(borderRadius:BorderRadius.circular(5.0),
+                borderSide: BorderSide(color: Colors.red, width: 1.0)),
+            helperText: ' ',
+            helperStyle: TextStyle(height: 0.5),
+            errorStyle: TextStyle(height: 0.5),
             hintText: placeholder));
   }
 }

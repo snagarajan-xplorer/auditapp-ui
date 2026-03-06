@@ -284,7 +284,8 @@ class _UserScreenV2State extends State<UserScreenV2> {
   @override
   Widget build(BuildContext context) {
     return LayoutScreen(
-      showBackbutton: false,
+      previousScreenName: 'Settings',
+      showBackbutton: true,
       child: SingleChildScrollView(
         padding: const EdgeInsets.only(left: 50, right: 36),
         child: Column(

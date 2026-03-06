@@ -64,10 +64,12 @@ class _AllIndiaStateWiseAuditState
   }
 
   Future<void> loadFinancialYears() async {
-    // Hardcoded last 5 financial years
-    final currentYear = DateTime.now().year;
+    // Build financial years — Indian FY starts in April
+    // If current month < April, current FY start year = last year
+    final now = DateTime.now();
+    final fyStartYear = now.month >= 4 ? now.year : now.year - 1;
     financialYears = List.generate(5, (index) {
-      final year = currentYear - index;
+      final year = fyStartYear - index;
       final nextYearShort = (year + 1).toString().substring(2);
       final fyValue = "FY$year-$nextYearShort";
       return {

@@ -29,9 +29,17 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments;
-      if (args is ScreenArgument && args.editData != null) {
-        rowData = Map<String, dynamic>.from(args.editData!);
-        _loadAuditDetail();
+      if (args is ScreenArgument) {
+        if (args.editData != null) {
+          rowData = Map<String, dynamic>.from(args.editData!);
+        } else if (args.mapData != null) {
+          rowData = Map<String, dynamic>.from(args.mapData!);
+        }
+        if (rowData.isNotEmpty) {
+          _loadAuditDetail();
+        } else {
+          setState(() => isLoading = false);
+        }
       } else {
         setState(() => isLoading = false);
       }
@@ -606,9 +614,9 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
         if (statusStr == "P")
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, "/auditdetails",
+              Navigator.pushNamed(context, "/auditcategorylist-v2",
                   arguments: ScreenArgument(
-                      argument: ArgumentData.USER, mapData: rowData));
+                      argument: ArgumentData.USER, mode: "View", mapData: rowData));
             },
             child: Container(
               width: 200,

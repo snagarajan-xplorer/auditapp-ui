@@ -74,10 +74,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
 
-    // Initialize financial years
-    final currentYear = DateTime.now().year;
+    // Initialize financial years — Indian FY starts in April
+    // If current month < April, current FY start year = last year
+    final now = DateTime.now();
+    final fyStartYear = now.month >= 4 ? now.year : now.year - 1;
     financialYears = List.generate(5, (index) {
-      final y = currentYear - index;
+      final y = fyStartYear - index;
       final nextYearShort = (y + 1).toString().substring(2);
       final fyValue = "FY$y-$nextYearShort";
       return {"label": fyValue, "value": fyValue};
@@ -187,6 +189,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       pieChart = [];
       auditList = [];
       allAuditList = [];
+      total = 0;
+      totalpercentage = 0;
+      heading = ["Zone", "State", "No of SMOs"];
+      rows = [];
+      dataObj = {
+        "complete": 0,
+        "incomplete": 0,
+        "upcoming": 0,
+        "cancel": 0
+      };
+      setState(() {});
       var map = {
         "client_id": clientid,
         "year": year,
@@ -205,6 +218,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
       usercontroller.getClientHeatReport(context, data: map,
           callback: (mapdata) {
+        // When no records found, mapdata is empty – show 0 values
+        if (mapdata == null || (mapdata is Map && mapdata.isEmpty)) {
+          dataObj = {
+            "complete": 0,
+            "incomplete": 0,
+            "upcoming": 0,
+            "cancel": 0
+          };
+          total = 0;
+          totalpercentage = 0;
+          reportList = [];
+          allAuditList = [];
+          heading = ["Zone", "State", "No of SMOs"];
+          rows = [];
+          usercontroller.countList = [
+            CloudStorageInfo(
+              title: "0",
+              numOfFiles: 0,
+              path: "P",
+              svgSrc: "assets/icons/Documents.svg",
+              totalStorage: "Published Audit",
+              color: Colors.green,
+              percentage: 0,
+            ),
+            CloudStorageInfo(
+              title: "0",
+              numOfFiles: 0,
+              path: "IP",
+              svgSrc: "assets/icons/google_drive.svg",
+              totalStorage: "In Progress Audit",
+              color: Colors.deepOrange,
+              percentage: 0,
+            ),
+            CloudStorageInfo(
+              title: "0",
+              numOfFiles: 0,
+              path: "S",
+              svgSrc: "assets/icons/one_drive.svg",
+              totalStorage: "Up Coming Audit",
+              color: Colors.blueAccent,
+              percentage: 0,
+            ),
+            CloudStorageInfo(
+              title: "0",
+              numOfFiles: 0,
+              path: "CL",
+              svgSrc: "assets/icons/drop_box.svg",
+              totalStorage: "Cancelled Audit",
+              color: Colors.grey.shade700,
+              percentage: 0,
+            ),
+          ];
+          showHeatmap = true;
+          setState(() {});
+          return;
+        }
         mapdata.forEach((key, value) {
           total = total + value.length;
           getChildObj(key, value, "state");

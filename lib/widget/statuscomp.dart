@@ -106,12 +106,12 @@ class StatusComp extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(width: 16,height: 16,decoration: BoxDecoration(
+        Container(width: 12,height: 12,decoration: BoxDecoration(
           color: percentage == -1 ? getColor(status):getColorPercentage(),
           borderRadius: BorderRadius.all(Radius.circular(8))
         ),),
-        SizedBox(width: 4,),
-        Text(statusvalue.toString().isEmpty ? getStringValue(status, context):statusvalue.toString())
+        SizedBox(width: 4),
+        Text(statusvalue.toString().isEmpty ? getStringValue(status, context):statusvalue.toString(),style: TextStyle(fontSize: 12,color: Color(0xFF505050), fontWeight: FontWeight.w600))
       ],
     );
   }

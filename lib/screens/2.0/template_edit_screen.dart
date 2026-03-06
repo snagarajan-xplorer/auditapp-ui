@@ -29,6 +29,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
 
    String? selectedClientId;
   bool _isActive = true;
+  bool _isAssignedToAudit = false;
 
   // Data
   List<dynamic> _roles = [];
@@ -79,6 +80,10 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(5),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
     );
   }
 
@@ -101,6 +106,27 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
       if (args.mode == "Edit" && args.editData != null) {
         _isEditMode = true;
         _editData = Map<String, dynamic>.from(args.editData!);
+
+        // Check if template is assigned to any active audit
+        final templateId = _editData!['id'] ?? _editData!['template_id'];
+        if (templateId != null) {
+          _uc.getTempalteStatus(
+            context,
+            data: {
+              'template_id': templateId.toString(),
+              'status': 'IA',
+            },
+            callback: (res) {
+              if (mounted) {
+                setState(() {
+                  // If cont is false and message mentions "assigned", template is assigned to audit
+                  _isAssignedToAudit = res['cont'] == false &&
+                      (res['message']?.toString().toLowerCase().contains('assigned') ?? false);
+                });
+              }
+            },
+          );
+        }
       }
     }
 
@@ -430,7 +456,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   @override
   Widget build(BuildContext context) {
     return LayoutScreen(
-      previousScreenName: 'Create Template',
+      previousScreenName: 'Settings',
       showBackbutton: true,
       child: SafeArea(
         child: SingleChildScrollView(
@@ -575,6 +601,17 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
                 child: Switch(
                   value: _isActive,
                   onChanged: (value) {
+                    if (!value && _isAssignedToAudit) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Cannot deactivate this template. It is assigned to an active audit.',
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
                     setState(() {
                       _isActive = value;
                     });
@@ -586,10 +623,21 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Active',
-                style: TextStyle(fontSize: 14, color: Color(0xFF505050)),
+              Text(
+                _isActive ? 'Active' : 'Inactive',
+                style: const TextStyle(fontSize: 14, color: Color(0xFF505050)),
               ),
+              if (!_isActive && _isAssignedToAudit) ...[
+                const SizedBox(width: 16),
+                Text(
+                  '*Note that the template has been assigned an audit.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.red.shade700,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 24),

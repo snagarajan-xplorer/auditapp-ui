@@ -462,7 +462,7 @@ void _downloadTemplate(String templateId) {
   Widget build(BuildContext context) {
     return LayoutScreen(
       previousScreenName: 'Settings',
-      showBackbutton: false,
+      showBackbutton: true,
       child: SingleChildScrollView(
         padding: const EdgeInsets.only(left: 50, right: 36),
         child: Column(

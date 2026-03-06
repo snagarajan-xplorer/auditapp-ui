@@ -432,7 +432,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
   Widget build(BuildContext context) {
     return LayoutScreen(
       previousScreenName: 'Settings',
-      showBackbutton: false,
+      showBackbutton: true,
       child: SingleChildScrollView(
          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 24),
         child: Column(

@@ -53,17 +53,17 @@ class _HeaderState extends State<Header> {
                       widget.callback();
                     },
                   ),
-                if (Responsive.isDesktop(context) && widget.showBackbutton!)
-                  IconButton(
-                    onPressed: () {
-                      if (widget.backEvent != null) {
-                        widget.backEvent!();
-                      } else {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    icon: Icon(CupertinoIcons.back),
-                  ),
+                // if (Responsive.isDesktop(context) && widget.showBackbutton!)
+                //   IconButton(
+                //     onPressed: () {
+                //       if (widget.backEvent != null) {
+                //         widget.backEvent!();
+                //       } else {
+                //         Navigator.of(context).pop();
+                //       }
+                //     },
+                //     icon: Icon(CupertinoIcons.back),
+                //   ),
                 if (Responsive.isDesktop(context) && widget.showBackbutton!)
                   InkWell(
                     onTap: () {
@@ -74,17 +74,17 @@ class _HeaderState extends State<Header> {
                       }
                     },
                     child: Container(
-                      padding: EdgeInsets.only(top: 7),
+                      padding: EdgeInsets.only(top: 7,left: 50),
                       child: Text(
                         widget.previousScreenName!,
-                        style: Theme.of(context).textTheme.titleMedium,
+                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600,color: Color(0xFF505050)),
                       ),
                     ),
                   ),
                 if (!widget.showBackbutton!)
                   Flexible(
                     child: Container(
-                      margin: EdgeInsets.only(left: 50),
+                      margin: EdgeInsets.only(left: 20),
                       constraints: BoxConstraints(maxWidth: 500),
                       child: BrandDropdown(),
                     ),
@@ -94,7 +94,7 @@ class _HeaderState extends State<Header> {
           ),
           // Right side - Profile Card
           Container(
-            margin: EdgeInsets.only(right: 36),
+            margin: EdgeInsets.only(right: 20),
             child: ProfileCard(),
           )
         ],
@@ -257,13 +257,18 @@ class ProfileCard extends StatelessWidget {
               borderRadius: BorderRadius.all(Radius.circular(21.0)),
               color: Colors.red,
             ),
-            child: usercontroller.userData.image == null
+            child: (usercontroller.userData.image == null ||
+                    usercontroller.userData.image!.trim().isEmpty)
                 ? Center(
                     child: Text(
-                      usercontroller.userData.name
-                          .toString()
+                      (usercontroller.userData.name ?? "")
                           .toUpperCase()
-                          .substring(0, 2),
+                          .length >= 2
+                          ? (usercontroller.userData.name ?? "")
+                              .toUpperCase()
+                              .substring(0, 2)
+                          : (usercontroller.userData.name ?? "")
+                              .toUpperCase(),
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -278,6 +283,25 @@ class ProfileCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       width: 40,
                       height: 40,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Text(
+                            (usercontroller.userData.name ?? "")
+                                .toUpperCase()
+                                .length >= 2
+                                ? (usercontroller.userData.name ?? "")
+                                    .toUpperCase()
+                                    .substring(0, 2)
+                                : (usercontroller.userData.name ?? "")
+                                    .toUpperCase(),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
           ),

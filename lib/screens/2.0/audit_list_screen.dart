@@ -197,18 +197,36 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
           SizedBox(width: 5),
           Expanded(
             child: _actionButton("Publish", Color(0xFF67AC5B), () {
-              _publishAudit(row);
+              Navigator.pushNamed(context, "/auditcategorylist-v2",
+                  arguments: ScreenArgument(
+                      argument: ArgumentData.USER,
+                      mapData: row));
             }, flexible: true),
           ),
         ],
       );
     }
 
-    // Inprogress → Cancel
+    // Inprogress → Continue + Cancel
     if (statusLabel == "Inprogress" || rawStatus == "IP" || rawStatus == "PG") {
-      return _actionButton("Cancel", Color(0xFF535353), () {
-        _cancelAudit(row);
-      });
+      return Row(
+        children: [
+          Expanded(
+            child: _actionButton("Cancel", Color(0xFF535353), () {
+              _cancelAudit(row);
+            }, flexible: true),
+          ),
+          SizedBox(width: 5),
+          Expanded(
+            child: _actionButton("Continue", Color(0xFF2E77D0), () {
+              Navigator.pushNamed(context, "/auditcategorylist-v2",
+                  arguments: ScreenArgument(
+                      argument: ArgumentData.USER,
+                      mapData: row));
+            }, flexible: true),
+          )
+        ],
+      );
     }
 
     // Upcoming → Edit
@@ -275,20 +293,6 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                 color: textColor)),
       ),
     );
-  }
-
-  void _publishAudit(dynamic row) {
-    APIService(context).showWindowAlert(
-        title: "Publish Audit",
-        desc: "Are you sure you want to publish this audit?",
-        showCancelBtn: true,
-        callback: () {
-          Map<String, dynamic> dataobj = {"audit_id": row["audit_id"]};
-          usercontroller.publishAuditStatus(context, data: dataobj,
-              callback: () async {
-            _loadData();
-          });
-        });
   }
 
   void _cancelAudit(dynamic row) {

@@ -31,6 +31,7 @@ class CreateAuditScreen extends StatefulWidget {
 class _CreateAuditScreenState extends State<CreateAuditScreen> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
   final UserController _uc = Get.put(UserController());
+  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   List<dynamic> _clientList = [];
   List<dynamic> _templateList = [];
@@ -56,6 +57,9 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
 
   /// Flag to prevent onChanged from interfering during prefill
   bool _isPrefilling = false;
+
+  /// When true, the audit-type dropdown is locked to 'Scheduled'
+  bool _lockScheduled = false;
 
 
 
@@ -113,6 +117,10 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
         borderRadius: BorderRadius.circular(5),
         borderSide: const BorderSide(color: Colors.red),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(5),
+        borderSide: const BorderSide(color: Colors.red),
+      ),
     );
   }
 
@@ -145,6 +153,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
       _prefillData = args;
       // Coming from "Schedule Audit" on unscheduled screen — always Scheduled
       _selectedAuditType = 'Scheduled';
+      _lockScheduled = args['lock_scheduled'] == true;
     }
 
     _uc.getClientList(
@@ -656,8 +665,12 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
         name: 'remarks',
         initialValue: _isEditMode ? _prefillString('remarks') : null,
         maxLines: 4,
+        autovalidateMode: _autovalidateMode,
+        validator: FormBuilderValidators.required(
+          errorText: 'Information is required',
+        ),
         style: Theme.of(context).textTheme.bodyMedium,
-        decoration: _inputDecoration('Information', required: false).copyWith(
+        decoration: _inputDecoration('Information', required: true).copyWith(
           contentPadding: const EdgeInsets.only(left: 20, top: 25),
         ),
       );
@@ -704,7 +717,15 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   };
 
   void _onCreateAudit() {
-    if (!_formKey.currentState!.saveAndValidate()) return;
+    if (!_formKey.currentState!.saveAndValidate()) {
+      setState(() {
+        _autovalidateMode = AutovalidateMode.onUserInteraction;
+      });
+      return;
+    }
+    setState(() {
+      _autovalidateMode = AutovalidateMode.disabled;
+    });
 
     final Map<String, dynamic> raw = {};
     _formKey.currentState!.value.forEach((key, value) {
@@ -791,6 +812,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                     padding: const EdgeInsets.all(defaultPadding),
                     child: FormBuilder(
                       key: _formKey,
+                      autovalidateMode: _autovalidateMode,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -801,6 +823,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                             child: FormBuilderDropdown<String>(
                               name: 'audit_type',
                               initialValue: 'Scheduled',
+                              enabled: !_lockScheduled,
                               items: _auditTypes
                                   .map<DropdownMenuItem<String>>(
                                     (t) => DropdownMenuItem(value: t, child: Text(t)),

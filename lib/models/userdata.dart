@@ -65,6 +65,7 @@ class UserData {
     data['parentid'] = this.parentid;
     data['mvalue'] = this.mvalue;
     data['name'] = this.name;
+    data['image'] = this.image;
     data['mobile'] = this.mobile;
     data['email'] = this.email;
     data['changepass'] = this.changepass;
