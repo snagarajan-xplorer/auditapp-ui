@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../controllers/usercontroller.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
+import '../../widget/app_form_field.dart';
 import '../../widget/reusable_table.dart';
 
 class CreateBrandScreen extends StatefulWidget {
@@ -276,47 +277,13 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
           // Brand Name
           SizedBox(
             width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Brand Name',
-                    style: TextStyle(
-                        fontSize: 14, color: Color(0xFF505050))),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 40,
-                  child: TextField(
-                    controller: _brandNameController,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFC9C9C9),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFC9C9C9),
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(4),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFC9C9C9),
-                          width: 1,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    ),
-                    style: const TextStyle(height: 1.0),
-                  ),
-                ),
-              ],
+            child: AppLabeledField(
+              label: 'Brand Name',
+              child: TextField(
+                controller: _brandNameController,
+                decoration: AppFormStyles.inputDecoration(),
+                style: const TextStyle(height: 1.0),
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -478,49 +445,14 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
     required TextEditingController controller,
     TextInputType keyboardType = TextInputType.text,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 14, color: Color(0xFF505050))),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 40,
-          child: TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: const BorderSide(
-                  color: Color(0xFFC9C9C9),
-                  width: 1,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: const BorderSide(
-                  color: Color(0xFFC9C9C9),
-                  width: 1,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: const BorderSide(
-                  color: Color(0xFFC9C9C9),
-                  width: 1,
-                ),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            ),
-            style: const TextStyle(height: 1.0),
-          ),
-        )
-      ],
+    return AppLabeledField(
+      label: label,
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: AppFormStyles.inputDecoration(),
+        style: const TextStyle(height: 1.0),
+      ),
     );
   }
 

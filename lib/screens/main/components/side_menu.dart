@@ -17,18 +17,66 @@ class SideMenu extends StatefulWidget {
 class _SideMenuState extends State<SideMenu> {
   UserController usercontroller = Get.put(UserController());
 
+  /// Route-aware menu key resolution.
+  ///
+  /// Maps each route to its valid menu keys (first = default).
+  /// If [selectedMenuKey] is inconsistent with the current URL,
+  /// it auto-corrects to the default key for that route.
+  /// This ensures the sidebar always reflects the actual page —
+  /// even on direct URL entry, deep links, or back/forward navigation.
+  static const _routeMenuKeys = <String, List<String>>{
+    '/dashboard': ['dashboard', 'heatmap-allindia', 'heatmap-region', 'reports-published'],
+    '/scheduledaudit': ['scheduled'],
+    '/unscheduledaudit': ['unscheduled'],
+    '/all-india-state-wise-audit': ['map-allindia-state'],
+    '/red-report': ['map-red-report'],
+    '/user': ['settings-users', 'reports-red', 'reports-ncc'],
+    '/templatelist': ['settings-template'],
+    '/createbrand': ['settings-brand'],
+    '/createaudit': ['audit-create'],
+    '/auditlist': ['audit-list'],
+  };
+
+  String _resolveMenuKey() {
+    final currentRoute = Get.currentRoute;
+    final currentKey = usercontroller.selectedMenuKey;
+
+    final validKeys = _routeMenuKeys[currentRoute];
+    if (validKeys != null) {
+      // Current key is valid for this route — keep it
+      if (validKeys.contains(currentKey)) return currentKey;
+      // Out-of-sync — fall back to the default key for this route
+      usercontroller.selectedMenuKey = validKeys.first;
+      return validKeys.first;
+    }
+
+    return currentKey;
+  }
+
   @override
   Widget build(BuildContext context) {
-    int selectedIndex = usercontroller.selectedIndex;
+    final menuKey = _resolveMenuKey();
 
-    // Dynamically determine which sections should be expanded based on selected index
-    bool isAuditStatusExpanded = [0, 1, 2].contains(selectedIndex);
-    bool isActivityWiseExpanded = [3, 4].contains(selectedIndex);
-    bool isMapWiseExpanded = [5, 6].contains(selectedIndex);
-    bool isHeatMapExpanded = isActivityWiseExpanded || isMapWiseExpanded;
-    bool isReportsExpanded = [7, 8, 9].contains(selectedIndex);
-    bool isSettingsExpanded = [10, 11, 12].contains(selectedIndex);
-    bool isAuditExpanded = [13, 14].contains(selectedIndex);
+    // Dynamically determine which sections should be expanded based on selected menu key
+    const auditStatusKeys = ['dashboard', 'scheduled', 'unscheduled'];
+    const heatMapActivityKeys = ['heatmap-allindia', 'heatmap-region'];
+    const heatMapMapKeys = ['map-allindia-state', 'map-red-report'];
+    const reportsActivityWiseKeys = ['heatmap-allindia', 'heatmap-region'];
+    const reportsMapWiseKeys = ['map-allindia-state', 'map-red-report'];
+    const reportsSubKeys = ['reports-published', 'reports-red', 'reports-ncc'];
+    const settingsKeys = ['settings-users', 'settings-template', 'settings-brand'];
+    const auditKeys = ['audit-create', 'audit-list'];
+
+    bool isAuditStatusExpanded = auditStatusKeys.contains(menuKey);
+    bool isHeatMapActivityExpanded = heatMapActivityKeys.contains(menuKey);
+    bool isHeatMapMapExpanded = heatMapMapKeys.contains(menuKey);
+    bool isHeatMapExpanded = isHeatMapActivityExpanded || isHeatMapMapExpanded;
+    bool isReportsActivityWiseExpanded = reportsActivityWiseKeys.contains(menuKey);
+    bool isReportsMapWiseExpanded = reportsMapWiseKeys.contains(menuKey);
+    bool isReportsSubExpanded = reportsSubKeys.contains(menuKey);
+    bool isReportsExpanded = isReportsActivityWiseExpanded || isReportsMapWiseExpanded || isReportsSubExpanded;
+    bool isSettingsExpanded = settingsKeys.contains(menuKey);
+    bool isAuditExpanded = auditKeys.contains(menuKey);
 
     return Drawer(
       child: Container(
@@ -72,12 +120,12 @@ class _SideMenuState extends State<SideMenu> {
                     collapsedBackgroundColor: Color(0xFF505050),
                     children: [
                       DrawerListTile(
-                        id: 0,
-                        selectedIndex: usercontroller.selectedIndex,
+                        menuKey: 'dashboard',
+                        selectedMenuKey: menuKey,
                         title: "Dashboard",
                         press: () {
                           if (widget.enableAction!) {
-                            usercontroller.selectedIndex = 0;
+                            usercontroller.selectedMenuKey = 'dashboard';
                             Navigator.pushNamed(context, "/dashboard");
                           } else {
                             widget.onCallback!(0);
@@ -85,12 +133,12 @@ class _SideMenuState extends State<SideMenu> {
                         },
                       ),
                       DrawerListTile(
-                        id: 1,
-                        selectedIndex: usercontroller.selectedIndex,
+                        menuKey: 'scheduled',
+                        selectedMenuKey: menuKey,
                         title: "Scheduled",
                         press: () {
                           if (widget.enableAction!) {
-                            usercontroller.selectedIndex = 1;
+                            usercontroller.selectedMenuKey = 'scheduled';
                             Navigator.pushNamed(context, "/scheduledaudit",
                                 arguments: ScreenArgument(
                                     argument: ArgumentData.USER, mapData: {}));
@@ -100,12 +148,12 @@ class _SideMenuState extends State<SideMenu> {
                         },
                       ),
                       DrawerListTile(
-                        id: 2,
-                        selectedIndex: usercontroller.selectedIndex,
+                        menuKey: 'unscheduled',
+                        selectedMenuKey: menuKey,
                         title: "Un-scheduled",
                         press: () {
                           if (widget.enableAction!) {
-                            usercontroller.selectedIndex = 2;
+                            usercontroller.selectedMenuKey = 'unscheduled';
                             Navigator.pushNamed(context, "/unscheduledaudit",
                                 arguments: ScreenArgument(
                                     argument: ArgumentData.USER, mapData: {}));
@@ -116,136 +164,7 @@ class _SideMenuState extends State<SideMenu> {
                       ),
                     ],
                   ),
-
-                  // Heat Map Section
-                  ExpansionTile(
-                    initiallyExpanded: isHeatMapExpanded,
-                    title: Text(
-                      "Heat Map",
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          height: 19 / 16),
-                    ),
-                    iconColor: Colors.white,
-                    collapsedIconColor: Colors.white,
-                    backgroundColor: Color(0xFF505050),
-                    collapsedBackgroundColor: Color(0xFF505050),
-                    children: [
-                      ExpansionTile(
-                        initiallyExpanded: isActivityWiseExpanded,
-                        title: Text(
-                          "Activity-Wise",
-                          style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFFB9B9B9),
-                              fontWeight: FontWeight.w100,
-                              height: 19 / 16),
-                        ),
-                        iconColor: Colors.white,
-                        collapsedIconColor: Colors.white,
-                        backgroundColor: Color(0xFF505050),
-                        collapsedBackgroundColor: Color(0xFF505050),
-                        children: [
-                          DrawerListTile(
-                            id: 3,
-                            selectedIndex: usercontroller.selectedIndex,
-                            title: "All India",
-                            press: () {
-                              if (widget.enableAction!) {
-                                usercontroller.selectedIndex = 3;
-                                Navigator.pushNamed(context, "/dashboard");
-                              } else {
-                                widget.onCallback!(3);
-                              }
-                            },
-                          ),
-                          DrawerListTile(
-                            id: 4,
-                            selectedIndex: usercontroller.selectedIndex,
-                            title: "Region",
-                            press: () {
-                              if (widget.enableAction!) {
-                                usercontroller.selectedIndex = 4;
-                                Navigator.pushNamed(context, "/dashboard");
-                              } else {
-                                widget.onCallback!(4);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                      ExpansionTile(
-                        initiallyExpanded: isMapWiseExpanded,
-                        title: Text(
-                          "Map-Wise",
-                          style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFFB9B9B9),
-                              fontWeight: FontWeight.w100,
-                              height: 19 / 16),
-                        ),
-                        iconColor: Colors.white,
-                        collapsedIconColor: Colors.white,
-                        backgroundColor: Color(0xFF505050),
-                        collapsedBackgroundColor: Color(0xFF505050),
-                        children: [
-                          DrawerListTile(
-                            id: 5,
-                            selectedIndex: usercontroller.selectedIndex,
-                            title: "All India (State wise)",
-                            press: () {
-                              if (widget.enableAction!) {
-                                usercontroller.selectedIndex = 5;
-
-                                // Prepare a basic payload — use the current year and user info
-                                final y = DateTime.now().year;
-                                final fy = "FY$y-${(y + 1).toString().substring(2)}";
-                                
-                                var map = {
-                                  "financial_year": fy,
-                                  "userid": usercontroller.userData.userId,
-                                  "role": usercontroller.userData.role
-                                };
-
-                                // Close the drawer manually first so it doesn't auto-close unexpectedly
-                                Navigator.pop(context);
-
-                                // Call the API and navigate when the data is ready
-                                usercontroller.getAllIndiaStateWiseAudit(
-                                    context,
-                                    data: map, callback: (res) {
-                                  Get.toNamed("/all-india-state-wise-audit");
-                                });
-                              } else {
-                                widget.onCallback!(5);
-                              }
-                            },
-                          ),
-                          DrawerListTile(
-                            id: 6,
-                            selectedIndex: usercontroller.selectedIndex,
-                            title: "Red Report (NC)",
-                            press: () {
-                              if (widget.enableAction!) {
-                                usercontroller.selectedIndex = 6;
-
-                                // Close the drawer manually first
-                                Navigator.pop(context);
-
-                                // Navigate to Red Report screen directly
-                                Get.toNamed("/red-report");
-                              } else {
-                                widget.onCallback!(6);
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  // Reports Section
+                // Reports Section
                   ExpansionTile(
                     initiallyExpanded: isReportsExpanded,
                     title: Text(
@@ -261,54 +180,180 @@ class _SideMenuState extends State<SideMenu> {
                     backgroundColor: Color(0xFF505050),
                     collapsedBackgroundColor: Color(0xFF505050),
                     children: [
-                      if (menuAccessRole
-                              .indexOf(usercontroller.userData.role!) !=
-                          -1)
-                        DrawerListTile(
-                          id: 7,
-                          selectedIndex: usercontroller.selectedIndex,
-                          title: "Published Report",
-                          press: () {
-                            if (widget.enableAction!) {
-                              usercontroller.selectedIndex = 7;
-                              Navigator.pushNamed(context, "/dashboard",
-                                  arguments: ScreenArgument(
-                                      argument: ArgumentData.USER,
-                                      mapData: {}));
-                            } else {
-                              widget.onCallback!(7);
-                            }
-                          },
+                      // Heat Map - Activity Wise
+                      ExpansionTile(
+                        initiallyExpanded: isReportsActivityWiseExpanded,
+                        title: Text(
+                          "Heat Map - Activity Wise",
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              height: 19 / 14),
                         ),
-                      DrawerListTile(
-                        id: 8,
-                        selectedIndex: usercontroller.selectedIndex,
-                        title: "Red Report",
-                        press: () {
-                          if (widget.enableAction!) {
-                            usercontroller.selectedIndex = 8;
-                            Navigator.pushNamed(context, "/user",
-                                arguments: ScreenArgument(
-                                    argument: ArgumentData.USER, mapData: {}));
-                          } else {
-                            widget.onCallback!(8);
-                          }
-                        },
+                        iconColor: Colors.white,
+                        collapsedIconColor: Colors.white,
+                        backgroundColor: Color(0xFF505050),
+                        collapsedBackgroundColor: Color(0xFF505050),
+                        children: [
+                          DrawerListTile(
+                            menuKey: 'heatmap-allindia',
+                            selectedMenuKey: menuKey,
+                            title: "All India",
+                            press: () {
+                              if (widget.enableAction!) {
+                                usercontroller.selectedMenuKey = 'heatmap-allindia';
+                                Navigator.pushNamed(context, "/dashboard");
+                              } else {
+                                widget.onCallback!(2);
+                              }
+                            },
+                          ),
+                          DrawerListTile(
+                            menuKey: 'heatmap-region',
+                            selectedMenuKey: menuKey,
+                            title: "Region",
+                            press: () {
+                              if (widget.enableAction!) {
+                                usercontroller.selectedMenuKey = 'heatmap-region';
+                                Navigator.pushNamed(context, "/dashboard");
+                              } else {
+                                widget.onCallback!(3);
+                              }
+                            },
+                          ),
+                        ],
                       ),
-                      DrawerListTile(
-                        id: 9,
-                        selectedIndex: usercontroller.selectedIndex,
-                        title: "NCC Report",
-                        press: () {
-                          if (widget.enableAction!) {
-                            usercontroller.selectedIndex = 9;
-                            Navigator.pushNamed(context, "/user",
-                                arguments: ScreenArgument(
-                                    argument: ArgumentData.USER, mapData: {}));
-                          } else {
-                            widget.onCallback!(9);
-                          }
-                        },
+                      // Heat Map - Map-Wise
+                      ExpansionTile(
+                        initiallyExpanded: isReportsMapWiseExpanded,
+                        title: Text(
+                          "Heat Map - Map-Wise",
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              height: 19 / 14),
+                        ),
+                        iconColor: Colors.white,
+                        collapsedIconColor: Colors.white,
+                        backgroundColor: Color(0xFF505050),
+                        collapsedBackgroundColor: Color(0xFF505050),
+                        children: [
+                          DrawerListTile(
+                            menuKey: 'map-allindia-state',
+                            selectedMenuKey: menuKey,
+                            title: "All India (State wise)",
+                            press: () {
+                              if (widget.enableAction!) {
+                                usercontroller.selectedMenuKey = 'map-allindia-state';
+
+                                // Prepare a basic payload
+                                final y = DateTime.now().year;
+                                final fy = "FY$y-${(y + 1).toString().substring(2)}";
+                                
+                                var map = {
+                                  "financial_year": fy,
+                                  "userid": usercontroller.userData.userId,
+                                  "role": usercontroller.userData.role
+                                };
+
+                                Navigator.pop(context);
+
+                                usercontroller.getAllIndiaStateWiseAudit(
+                                    context,
+                                    data: map, callback: (res) {
+                                  Get.toNamed("/all-india-state-wise-audit");
+                                });
+                              } else {
+                                widget.onCallback!(4);
+                              }
+                            },
+                          ),
+                          DrawerListTile(
+                            menuKey: 'map-red-report',
+                            selectedMenuKey: menuKey,
+                            title: "Red Report",
+                            press: () {
+                              if (widget.enableAction!) {
+                                usercontroller.selectedMenuKey = 'map-red-report';
+                                Navigator.pop(context);
+                                Get.toNamed("/red-report");
+                              } else {
+                                widget.onCallback!(5);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                      // Report
+                      ExpansionTile(
+                        initiallyExpanded: isReportsSubExpanded,
+                        title: Text(
+                          "Report",
+                          style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              height: 19 / 14),
+                        ),
+                        iconColor: Colors.white,
+                        collapsedIconColor: Colors.white,
+                        backgroundColor: Color(0xFF505050),
+                        collapsedBackgroundColor: Color(0xFF505050),
+                        children: [
+                          if (menuAccessRole
+                                  .indexOf(usercontroller.userData.role!) !=
+                              -1)
+                            DrawerListTile(
+                              menuKey: 'reports-published',
+                              selectedMenuKey: menuKey,
+                              title: "Published",
+                              press: () {
+                                if (widget.enableAction!) {
+                                  usercontroller.selectedMenuKey = 'reports-published';
+                                  Navigator.pushNamed(context, "/dashboard",
+                                      arguments: ScreenArgument(
+                                          argument: ArgumentData.USER,
+                                          mapData: {}));
+                                } else {
+                                  widget.onCallback!(6);
+                                }
+                              },
+                            ),
+                          DrawerListTile(
+                            menuKey: 'reports-red',
+                            selectedMenuKey: menuKey,
+                            title: "Red",
+                            press: () {
+                              if (widget.enableAction!) {
+                                usercontroller.selectedMenuKey = 'reports-red';
+                                Navigator.pushNamed(context, "/user",
+                                    arguments: ScreenArgument(
+                                        argument: ArgumentData.USER,
+                                        mapData: {}));
+                              } else {
+                                widget.onCallback!(7);
+                              }
+                            },
+                          ),
+                          DrawerListTile(
+                            menuKey: 'reports-ncc',
+                            selectedMenuKey: menuKey,
+                            title: "NC",
+                            press: () {
+                              if (widget.enableAction!) {
+                                usercontroller.selectedMenuKey = 'reports-ncc';
+                                Navigator.pushNamed(context, "/user",
+                                    arguments: ScreenArgument(
+                                        argument: ArgumentData.USER,
+                                        mapData: {}));
+                              } else {
+                                widget.onCallback!(8);
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -333,12 +378,12 @@ class _SideMenuState extends State<SideMenu> {
                               .indexOf(usercontroller.userData.role!) !=
                           -1)
                         DrawerListTile(
-                          id: 10,
-                          selectedIndex: usercontroller.selectedIndex,
-                          title: "Create Profaids Users",
+                          menuKey: 'settings-users',
+                          selectedMenuKey: menuKey,
+                          title: "Create User",
                           press: () {
                             if (widget.enableAction!) {
-                              usercontroller.selectedIndex = 10;
+                              usercontroller.selectedMenuKey = 'settings-users';
                               Navigator.pushNamed(context, "/user",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
@@ -352,12 +397,12 @@ class _SideMenuState extends State<SideMenu> {
                               .indexOf(usercontroller.userData.role!) !=
                           -1)
                         DrawerListTile(
-                          id: 11,
-                          selectedIndex: usercontroller.selectedIndex,
+                          menuKey: 'settings-template',
+                          selectedMenuKey: menuKey,
                           title: "Create Template",
                           press: () {
                             if (widget.enableAction!) {
-                              usercontroller.selectedIndex = 11;
+                              usercontroller.selectedMenuKey = 'settings-template';
                               Navigator.pushNamed(context, "/templatelist",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
@@ -367,16 +412,16 @@ class _SideMenuState extends State<SideMenu> {
                             }
                           },
                         ),
-                      if (menuAccessRole
+                      if (menuAccessRoleAdmin
                               .indexOf(usercontroller.userData.role!) !=
                           -1)
                         DrawerListTile(
-                          id: 12,
-                          selectedIndex: usercontroller.selectedIndex,
-                          title: "Create Brand",
+                          menuKey: 'settings-brand',
+                          selectedMenuKey: menuKey,
+                          title: "Create Client",
                           press: () {
                             if (widget.enableAction!) {
-                              usercontroller.selectedIndex = 12;
+                              usercontroller.selectedMenuKey = 'settings-brand';
                               Navigator.pushNamed(context, "/createbrand",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
@@ -409,12 +454,12 @@ class _SideMenuState extends State<SideMenu> {
                               .indexOf(usercontroller.userData.role!) !=
                           -1)
                         DrawerListTile(
-                          id: 13,
-                          selectedIndex: usercontroller.selectedIndex,
+                          menuKey: 'audit-create',
+                          selectedMenuKey: menuKey,
                           title: "Create Audit",
                           press: () {
                             if (widget.enableAction!) {
-                              usercontroller.selectedIndex = 13;
+                              usercontroller.selectedMenuKey = 'audit-create';
                               Navigator.pushNamed(context, "/createaudit",
                                   arguments: ScreenArgument(
                                       argument: ArgumentData.USER,
@@ -425,12 +470,12 @@ class _SideMenuState extends State<SideMenu> {
                           },
                         ),
                       DrawerListTile(
-                        id: 14,
-                        selectedIndex: usercontroller.selectedIndex,
+                        menuKey: 'audit-list',
+                        selectedMenuKey: menuKey,
                         title: "Audit List",
                         press: () {
                           if (widget.enableAction!) {
-                            usercontroller.selectedIndex = 14;
+                            usercontroller.selectedMenuKey = 'audit-list';
                             Navigator.pushNamed(context, "/auditlist",
                                 arguments: ScreenArgument(
                                     argument: ArgumentData.USER, mapData: {}));
@@ -454,15 +499,15 @@ class _SideMenuState extends State<SideMenu> {
 class DrawerListTile extends StatefulWidget {
   const DrawerListTile({
     Key? key,
-    // For selecting those three line once press "Command+D"
     required this.title,
-    required this.id,
+    required this.menuKey,
+    required this.selectedMenuKey,
     this.svgSrc,
     required this.press,
-    required this.selectedIndex,
     this.titleStyle,
   }) : super(key: key);
-  final int id, selectedIndex;
+  final String menuKey;
+  final String selectedMenuKey;
   final String title;
   final String? svgSrc;
   final VoidCallback press;
@@ -475,30 +520,31 @@ class DrawerListTile extends StatefulWidget {
 class _DrawerListTileState extends State<DrawerListTile> {
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      selected: widget.id == widget.selectedIndex ? true : false,
-      selectedColor: Color(0xFF505050),
-      selectedTileColor: Color.fromRGBO(33, 150, 243, 0.3),
-      onTap: widget.press,
-      horizontalTitleGap: 0.0,
-      contentPadding:
-          EdgeInsets.only(left: widget.svgSrc != null ? 16 : 32, right: 16),
-      leading: widget.svgSrc != null
-          ? SvgPicture.asset(
-              widget.svgSrc!,
-              colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-              height: 28,
-            )
-          : null,
-      title: Text(
-        widget.title,
-        style: widget.titleStyle ??
-            TextStyle(
-              fontSize: 14,
-              color: Colors.white,
-              fontWeight: FontWeight.w400,
-              height: 16 / 14,
-            ),
+    final isSelected = widget.menuKey == widget.selectedMenuKey;
+    return Container(
+      color: isSelected ? Color(0xFF02B2EB) : Colors.transparent,
+      child: ListTile(
+        onTap: widget.press,
+        horizontalTitleGap: 0.0,
+        contentPadding:
+            EdgeInsets.only(left: widget.svgSrc != null ? 16 : 32, right: 16),
+        leading: widget.svgSrc != null
+            ? SvgPicture.asset(
+                widget.svgSrc!,
+                colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                height: 28,
+              )
+            : null,
+        title: Text(
+          widget.title,
+          style: widget.titleStyle ??
+              TextStyle(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.w400,
+                height: 16 / 14,
+              ),
+        ),
       ),
     );
   }

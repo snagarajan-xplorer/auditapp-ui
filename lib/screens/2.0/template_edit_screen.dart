@@ -11,6 +11,7 @@ import '../../controllers/usercontroller.dart';
 import '../../models/screenarguments.dart';
 import '../../responsive.dart';
 import '../../services/api_service.dart';
+import '../../widget/app_form_field.dart';
 import '../main/layoutscreen.dart';
 
 
@@ -50,42 +51,6 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   Map<String, dynamic>? _editData;
 
   // ── helpers ──────────────────────────────────────────────────────────────
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      filled: true,
-      fillColor: Colors.white,
-      labelText: label,
-      labelStyle: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: Color(0xFF505050),
-      ),
-      contentPadding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
-      counterText: '',
-      errorMaxLines: 3,
-      hoverColor: Colors.transparent,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Color(0xFF4DB6AC)),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-    );
-  }
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
   @override
@@ -189,19 +154,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   }
 
   // ── section label ─────────────────────────────────────────────────────────
-  Widget _sectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF505050),
-        ),
-      ),
-    );
-  }
+
 
   // ── spacing helpers ───────────────────────────────────────────────────────
   Widget get _hSpace => SizedBox(
@@ -214,66 +167,57 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   /// Row 1: Username | Email ID | Mobile No.
  
   Widget _fieldUsername() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Username'),
-        FormBuilderTextField(
-          name: 'name',
-          style: Theme.of(context).textTheme.bodyMedium,
-          textCapitalization: TextCapitalization.words,
-          validator: FormBuilderValidators.required(
-            errorText: 'Please enter username',
-          ),
-          decoration: _inputDecoration(''),
+    return AppLabeledField(
+      label: 'Username',
+      child: FormBuilderTextField(
+        name: 'name',
+        style: Theme.of(context).textTheme.bodyMedium,
+        textCapitalization: TextCapitalization.words,
+        validator: FormBuilderValidators.required(
+          errorText: 'Please enter username',
         ),
-      ],
+        decoration: AppFormStyles.inputDecoration(),
+      ),
     );
   }
 
   Widget _fieldCity() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('City'),
-        FormBuilderTextField(
-          name: 'city',
-          style: Theme.of(context).textTheme.bodyMedium,
-          decoration: _inputDecoration(''),
-        ),
-      ],
+    return AppLabeledField(
+      label: 'City',
+      child: FormBuilderTextField(
+        name: 'city',
+        style: Theme.of(context).textTheme.bodyMedium,
+        decoration: AppFormStyles.inputDecoration(),
+      ),
     );
   }
 
   /// Role dropdown
   Widget _fieldRole() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Role'),
-        SizedBox(
-          width: Responsive.isDesktop(context) ? 350 : double.infinity,
-          child: FormBuilderDropdown<String>(
-            name: 'role',
-            items: _roles
-                .map<DropdownMenuItem<String>>(
-                  (r) => DropdownMenuItem(
-                    value: r['roleid'].toString(),
-                    child: Text(r['rolename'].toString()),
-                  ),
-                )
-                .toList(),
-            validator: FormBuilderValidators.required(
-              errorText: 'Please select role',
-            ),
-            onChanged: (value) {
-              // Handle visibility of brand based on role
-              if (mounted) setState(() {});
-            },
-            decoration: _inputDecoration(''),
+    return SizedBox(
+      width: Responsive.isDesktop(context) ? 350 : double.infinity,
+      child: AppLabeledField(
+        label: 'Role',
+        child: FormBuilderDropdown<String>(
+          name: 'role',
+          items: _roles
+              .map<DropdownMenuItem<String>>(
+                (r) => DropdownMenuItem(
+                  value: r['roleid'].toString(),
+                  child: Text(r['rolename'].toString()),
+                ),
+              )
+              .toList(),
+          validator: FormBuilderValidators.required(
+            errorText: 'Please select role',
           ),
+          onChanged: (value) {
+            // Handle visibility of brand based on role
+            if (mounted) setState(() {});
+          },
+          decoration: AppFormStyles.inputDecoration(),
         ),
-      ],
+      ),
     );
   }
 
@@ -292,7 +236,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionLabel('Brand'),
+        AppFormStyles.fieldLabel('Brand'),
         Container(
           width: Responsive.isDesktop(context)
               ? MediaQuery.of(context).size.width * 0.45
@@ -526,67 +470,42 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
             children: [
               SizedBox(
                 width: 320,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Template Name',
-                        style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: templateNameController,
-                      readOnly: true,
-                      enabled: false,
-                      decoration: InputDecoration(
-                        hintText: '',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                        filled: true,
-                        fillColor: const Color(0xFFEEEEEE),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                      ),
+                child: AppLabeledField(
+                  label: 'Template Name',
+                  child: TextField(
+                    controller: templateNameController,
+                    readOnly: true,
+                    enabled: false,
+                    decoration: AppFormStyles.inputDecoration().copyWith(
+                      fillColor: const Color(0xFFEEEEEE),
                     ),
-                  ],
+                  ),
                 ),
               ),
               const SizedBox(width: 24),
               SizedBox(
                 width: 320,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Brand',
-                        style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedClientId,
-                      isExpanded: true,
-                      items: _clientList
-                          .map<DropdownMenuItem<String>>((client) =>
-                              DropdownMenuItem(
-                                value: client['clientid']?.toString(),
-                                child: Text(
-                                    client['clientname']?.toString() ?? ''),
-                              ))
-                          .toList(),
-                      onChanged: null,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4),
-                            borderSide: const BorderSide(color: Color(0xFFBDBDBD))),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4),
-                            borderSide: const BorderSide(color: Color(0xFFBDBDBD))),
-                        disabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4),
-                            borderSide: const BorderSide(color: Color(0xFFBDBDBD))),
-                        filled: true,
-                        fillColor: const Color(0xFFEEEEEE),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                      ),
+                child: AppLabeledField(
+                  label: 'Brand',
+                  child: DropdownButtonFormField<String>(
+                    value: selectedClientId,
+                    isExpanded: true,
+                    items: _clientList
+                        .map<DropdownMenuItem<String>>((client) =>
+                            DropdownMenuItem(
+                              value: client['clientid']?.toString(),
+                              child: Text(
+                                  client['clientname']?.toString() ?? ''),
+                            ))
+                        .toList(),
+                    onChanged: null,
+                    decoration: AppFormStyles.inputDecoration().copyWith(
+                      fillColor: const Color(0xFFEEEEEE),
+                      disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFBDBDBD))),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],

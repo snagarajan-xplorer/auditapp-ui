@@ -16,6 +16,7 @@ import 'package:latlong2/latlong.dart';
 import '../../controllers/usercontroller.dart';
 import '../../localization/app_translations.dart';
 import '../../models/my_files.dart';
+import '../../widget/app_form_field.dart';
 import './../../responsive.dart';
 import 'package:flutter/material.dart';
 
@@ -583,59 +584,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                 Visibility(
                     visible: true,
-                    child: Container(
-                      height: 40,
-                      width: 120,
-                      child: FormBuilderDropdown<String>(
-                        name: "year",
-                        initialValue: zone,
-                        items: ["All", "North", "East", "West", "South"]
-                            .map<DropdownMenuItem<String>>(
-                                (toElement) => DropdownMenuItem(
-                                      value: toElement.toString(),
-                                      child: Text(toElement.toString()),
-                                    ))
-                            .toList(),
-                        onChanged: (value) async {
-                          zone = value.toString();
-                          setState(() {});
-                          await getClientReport(client_id);
-                        },
-                        validator: FormBuilderValidators.compose([
-                          FormBuilderValidators.required(
-                              errorText: AppTranslations.of(context)!.text("key_error_01"))
-                        ]),
-                        decoration: InputDecoration(
-                          label: RichText(
-                            text: TextSpan(
-                              text:
-                                  AppTranslations.of(context)!.text("key_zone"),
-                              children: [],
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
+                    child: SizedBox(
+                      width: 160,
+                      child: AppLabeledField(
+                        label: AppTranslations.of(context)!.text("key_zone"),
+                        child: SizedBox(
+                          height: 40,
+                          child: FormBuilderDropdown<String>(
+                            name: "year",
+                            initialValue: zone,
+                            items: ["All", "North", "East", "West", "South"]
+                                .map<DropdownMenuItem<String>>(
+                                    (toElement) => DropdownMenuItem(
+                                          value: toElement.toString(),
+                                          child: Text(toElement.toString()),
+                                        ))
+                                .toList(),
+                            onChanged: (value) async {
+                              zone = value.toString();
+                              setState(() {});
+                              await getClientReport(client_id);
+                            },
+                            validator: FormBuilderValidators.compose([
+                              FormBuilderValidators.required(
+                                  errorText: AppTranslations.of(context)!.text("key_error_01"))
+                            ]),
+                            decoration: AppFormStyles.inputDecoration(),
                           ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: EdgeInsets.only(left: 20, top: 10),
-                          counterText: "",
-                          errorMaxLines: 3,
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                              borderSide: BorderSide(
-                                  color: ThemeData().primaryColor, width: 1.0)),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                              borderSide: BorderSide(
-                                  color: ThemeData().primaryColor, width: 1.0)),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                              borderSide: BorderSide(
-                                  color: ThemeData().primaryColor, width: 1.0)),
-                          errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                              borderSide:
-                                  BorderSide(color: Colors.red, width: 1.0)),
-                          suffixIcon: null,
                         ),
                       ),
                     ))

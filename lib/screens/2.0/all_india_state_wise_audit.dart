@@ -415,7 +415,7 @@ class _AllIndiaStateWiseAuditState
     return LayoutScreen(
       showBackbutton: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(left: 50, right: 36),
+        padding: EdgeInsets.only(left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -462,7 +462,7 @@ class _AllIndiaStateWiseAuditState
               child: BoxContainer(
                 width: double.infinity,
                 height: 500,
-                padding: 0,
+                padding: 10,
                 isBGTransparent: true,
                 child: polygons.isEmpty
                     ? Center(child: CircularProgressIndicator())
@@ -474,7 +474,7 @@ class _AllIndiaStateWiseAuditState
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(0),
                           child: Stack(
                             children: [
                               SizedBox(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/usercontroller.dart';
 import '../../services/api_service.dart';
+import '../../widget/app_form_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,9 +32,10 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
             Image.asset(
               'assets/images/can_logo.png',  
               width: 330,
@@ -48,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 color: Color(0xFF505050),
               ),
             ),
-            const SizedBox(height: 38),
+            const SizedBox(height: 18),
             Container(
               width: MediaQuery.of(context).size.width,
               padding: const EdgeInsets.only(top: 36, bottom: 36),
@@ -69,192 +71,87 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 18),
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 360, minHeight: 50),
-                      child: TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Email',
-                          labelStyle: const TextStyle(
-                            color: Color(0xFF505050),
+                      child: AppLabeledField(
+                        label: 'Email',
+                        child: TextFormField(
+                          decoration: AppFormStyles.inputDecoration(),
+                          style: const TextStyle(
                             fontSize: 14,
+                            color: Color(0xFF505050),
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
+                          onChanged: (value) {
+                            setState(() {
+                              email = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your email';
+                            }
+                            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                            if (!emailRegex.hasMatch(value)) {
+                              return 'Please enter a valid email address';
+                            }
+                            return null;
+                          },
                         ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF505050),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            email = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your email';
-                          }
-                          final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                          if (!emailRegex.hasMatch(value)) {
-                            return 'Please enter a valid email address';
-                          }
-                          return null;
-                        },
                       ),
                     ),
                     const SizedBox(height: 10),
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 360, minHeight: 50),
-                      child: TextFormField(
-                        obscureText: true,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          labelStyle: const TextStyle(
-                            color: Color(0xFF505050),
+                      child: AppLabeledField(
+                        label: 'Password',
+                        child: TextFormField(
+                          obscureText: true,
+                          decoration: AppFormStyles.inputDecoration(),
+                          style: const TextStyle(
                             fontSize: 14,
+                            color: Color(0xFF505050),
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
+                          onChanged: (value) {
+                            setState(() {
+                              password = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            return null;
+                          },
                         ),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF505050),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            password = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter your password';
-                          }
-                          return null;
-                        },
                       ),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
                       width: 360,
-                      child: DropdownButtonFormField<String>(
-                        value: roleMap.containsKey(selectedRole) ? selectedRole : null,
-                        decoration: InputDecoration(
-                          labelText: 'Role',
-                          labelStyle: const TextStyle(
-                            color: Color(0xFF505050),
-                            fontSize: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFC9C9C9),
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                          focusedErrorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Colors.red,
-                            ),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
+                      child: AppLabeledField(
+                        label: 'Role',
+                        child: DropdownButtonFormField<String>(
+                          value: roleMap.containsKey(selectedRole) ? selectedRole : null,
+                          decoration: AppFormStyles.inputDecoration(),
+                          items: roleMap.entries.map((entry) {
+                            return DropdownMenuItem(
+                              value: entry.key,
+                              child: Text(entry.value),
+                            );
+                          }).toList(),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please select a role';
+                            }
+                            return null;
+                          },
+                          onChanged: (value) {
+                            setState(() {
+                              selectedRole = value ?? roleMap.keys.first;
+                            });
+                          },
                         ),
-                        items: roleMap.entries.map((entry) {
-                          return DropdownMenuItem(
-                            value: entry.key,
-                            child: Text(entry.value),
-                          );
-                        }).toList(),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please select a role';
-                          }
-                          return null;
-                        },
-                        onChanged: (value) {
-                          setState(() {
-                            selectedRole = value ?? roleMap.keys.first;
-                          });
-                        },
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -307,7 +204,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-          ],
+            ],
+          ),
         ),
       ),
     );

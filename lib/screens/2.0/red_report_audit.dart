@@ -317,7 +317,7 @@ class _RedReportScreenState extends State<RedReportScreen>
     return LayoutScreen(
       showBackbutton: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(left: 50, right: 36),
+        padding: EdgeInsets.only(left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -370,7 +370,7 @@ class _RedReportScreenState extends State<RedReportScreen>
               child: BoxContainer(
                 width: double.infinity,
                 height: 500,
-                padding: 0,
+                padding: 10,
                 isBGTransparent: true,
                 child: (redMarkers.isEmpty && polygons.isEmpty)
                     ? Center(child: CircularProgressIndicator())

@@ -1,6 +1,7 @@
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
+import 'package:audit_app/widget/app_form_field.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
@@ -329,28 +330,12 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                         color: Color(0xFF333333))),
                 SizedBox(height: 16),
                 // Reason label
-                Text("What is the reason ?",
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF666666))),
-                SizedBox(height: 8),
+                AppFormStyles.fieldLabel('What is the reason ?'),
                 // Text input
                 TextField(
                   maxLines: 5,
                   onChanged: (val) => reason = val,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFFE0E0E0))),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFFE0E0E0))),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFFBBBBBB))),
-                    contentPadding: EdgeInsets.all(12),
-                  ),
+                  decoration: AppFormStyles.inputDecoration(),
                 ),
                 SizedBox(height: 20),
                 // Buttons

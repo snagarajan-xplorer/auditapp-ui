@@ -1,6 +1,7 @@
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
+import 'package:audit_app/widget/app_form_field.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
@@ -122,30 +123,11 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF505050))),
                 SizedBox(height: 16),
-                Text("What is the reason?",
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF898989))),
-                SizedBox(height: 8),
+                AppFormStyles.fieldLabel('What is the reason?'),
                 TextField(
                   maxLines: 5,
                   onChanged: (val) => reason = val,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hoverColor: Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFFC9C9C9))),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFFC9C9C9))),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Color(0xFFC9C9C9))),
-                    contentPadding: EdgeInsets.all(12),
-                  ),
+                  decoration: AppFormStyles.inputDecoration(),
                 ),
                 SizedBox(height: 20),
                 Row(

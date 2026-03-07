@@ -5,6 +5,7 @@ import '../../models/screenarguments.dart';
 import 'package:file_picker/file_picker.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
+import '../../widget/app_form_field.dart';
 import '../../widget/reusable_table.dart';
 import 'package:jiffy/jiffy.dart';
 import 'dart:js' as js;
@@ -284,62 +285,37 @@ void _downloadTemplate(String templateId) {
             children: [
               SizedBox(
                 width: 320,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Template Name',
-                        style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: templateNameController,
-                      decoration: InputDecoration(
-                        hintText: '',
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                      ),
-                    ),
-                  ],
+                child: AppLabeledField(
+                  label: 'Template Name',
+                  child: TextField(
+                    controller: templateNameController,
+                    decoration: AppFormStyles.inputDecoration(),
+                  ),
                 ),
               ),
               const SizedBox(width: 24),
               SizedBox(
                 width: 320,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Brand',
-                        style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: selectedClientId,
-                      isExpanded: true,
-                      items: clientList
-                          .map<DropdownMenuItem<String>>((client) =>
-                              DropdownMenuItem(
-                                value: client['clientid']?.toString(),
-                                child: Text(
-                                    client['clientname']?.toString() ?? ''),
-                              ))
-                          .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          selectedClientId = value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                      ),
-                    ),
-                  ],
+                child: AppLabeledField(
+                  label: 'Brand',
+                  child: DropdownButtonFormField<String>(
+                    value: selectedClientId,
+                    isExpanded: true,
+                    items: clientList
+                        .map<DropdownMenuItem<String>>((client) =>
+                            DropdownMenuItem(
+                              value: client['clientid']?.toString(),
+                              child: Text(
+                                  client['clientname']?.toString() ?? ''),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        selectedClientId = value;
+                      });
+                    },
+                    decoration: AppFormStyles.inputDecoration(),
+                  ),
                 ),
               ),
             ],

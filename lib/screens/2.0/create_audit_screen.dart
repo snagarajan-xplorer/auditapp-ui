@@ -12,6 +12,7 @@ import '../../controllers/usercontroller.dart';
 import '../../localization/app_translations.dart';
 import '../../models/screenarguments.dart';
 import '../../responsive.dart';
+import '../../widget/app_form_field.dart';
 import '../main/layoutscreen.dart';
 
 /// ---------------------------------------------------------------------------
@@ -79,50 +80,6 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   ];
 
   // ── helpers ──────────────────────────────────────────────────────────────
-  InputDecoration _inputDecoration(String label, {bool required = true}) {
-    return InputDecoration(
-      filled: true,
-      fillColor: Colors.white,
-      label: RichText(
-        text: TextSpan(
-          text: label,
-          children: required
-              ? [
-                  const TextSpan(
-                    text: ' *',
-                    style: TextStyle(color: Colors.red),
-                  )
-                ]
-              : [],
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      ),
-      contentPadding: const EdgeInsets.only(left: 20, top: 10),
-      counterText: '',
-      errorMaxLines: 3,
-      hoverColor: Colors.transparent,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: BorderSide(color: ThemeData().primaryColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: BorderSide(color: ThemeData().primaryColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: BorderSide(color: ThemeData().primaryColor),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-    );
-  }
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
   @override
@@ -346,56 +303,64 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   List<Widget> _rowCompanyTemplate() => [
         Flexible(
           flex: 1,
-          child: FormBuilderDropdown<String>(
-            name: 'client_id',
-            items: _clientList
-                .map<DropdownMenuItem<String>>(
-                  (c) => DropdownMenuItem(
-                    value: c['clientid'].toString(),
-                    child: Text(c['clientname']),
-                  ),
-                )
-                .toList(),
-            validator: _selectedAuditType == 'Scheduled'
-                ? FormBuilderValidators.required(
-                    errorText:
-                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'Company Name',
+            required: _selectedAuditType == 'Scheduled',
+            child: FormBuilderDropdown<String>(
+              name: 'client_id',
+              items: _clientList
+                  .map<DropdownMenuItem<String>>(
+                    (c) => DropdownMenuItem(
+                      value: c['clientid'].toString(),
+                      child: Text(c['clientname']),
+                    ),
                   )
-                : null,
-            onChanged: (value) {
-              if (value == null || _isPrefilling) return;
-              _uc.getTemplateList(
-                context,
-                clientid: value,
-                callback: (templates) {
-                  _templateList = templates;
-                  if (mounted) setState(() {});
-                },
-              );
-            },
-            decoration: _inputDecoration('Company Name', required: _selectedAuditType == 'Scheduled'),
+                  .toList(),
+              validator: _selectedAuditType == 'Scheduled'
+                  ? FormBuilderValidators.required(
+                      errorText:
+                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    )
+                  : null,
+              onChanged: (value) {
+                if (value == null || _isPrefilling) return;
+                _uc.getTemplateList(
+                  context,
+                  clientid: value,
+                  callback: (templates) {
+                    _templateList = templates;
+                    if (mounted) setState(() {});
+                  },
+                );
+              },
+              decoration: AppFormStyles.inputDecoration(),
+            ),
           ),
         ),
         _hSpace,
         Flexible(
           flex: 1,
-          child: FormBuilderDropdown<String>(
-            name: 'template_id',
-            items: _templateList
-                .map<DropdownMenuItem<String>>(
-                  (t) => DropdownMenuItem(
-                    value: t['id'].toString(),
-                    child: Text(t['templatename']),
-                  ),
-                )
-                .toList(),
-            validator: _selectedAuditType == 'Scheduled'
-                ? FormBuilderValidators.required(
-                    errorText:
-                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'Template Name',
+            required: _selectedAuditType == 'Scheduled',
+            child: FormBuilderDropdown<String>(
+              name: 'template_id',
+              items: _templateList
+                  .map<DropdownMenuItem<String>>(
+                    (t) => DropdownMenuItem(
+                      value: t['id'].toString(),
+                      child: Text(t['templatename']),
+                    ),
                   )
-                : null,
-            decoration: _inputDecoration('Template Name', required: _selectedAuditType == 'Scheduled'),
+                  .toList(),
+              validator: _selectedAuditType == 'Scheduled'
+                  ? FormBuilderValidators.required(
+                      errorText:
+                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    )
+                  : null,
+              decoration: AppFormStyles.inputDecoration(),
+            ),
           ),
         ),
       ];
@@ -408,21 +373,25 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   }
 
   /// Full-width: Company Name (for un-scheduled form – no template loading)
-  Widget _fieldCompanyNameOnly() => FormBuilderDropdown<String>(
-        name: 'client_id',
-        items: _clientList
-            .map<DropdownMenuItem<String>>(
-              (c) => DropdownMenuItem(
-                value: c['clientid'].toString(),
-                child: Text(c['clientname']),
-              ),
-            )
-            .toList(),
-        validator: FormBuilderValidators.required(
-          errorText:
-              AppTranslations.of(context)!.text('key_error_01') ?? '',
+  Widget _fieldCompanyNameOnly() => AppLabeledField(
+        label: 'Company Name',
+        required: true,
+        child: FormBuilderDropdown<String>(
+          name: 'client_id',
+          items: _clientList
+              .map<DropdownMenuItem<String>>(
+                (c) => DropdownMenuItem(
+                  value: c['clientid'].toString(),
+                  child: Text(c['clientname']),
+                ),
+              )
+              .toList(),
+          validator: FormBuilderValidators.required(
+            errorText:
+                AppTranslations.of(context)!.text('key_error_01') ?? '',
+          ),
+          decoration: AppFormStyles.inputDecoration(),
         ),
-        decoration: _inputDecoration('Company Name'),
       );
 
   // ── initialValue helpers (safe getter from prefill data) ────────────────
@@ -435,102 +404,122 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   }
 
   /// Full-width: Audit Name
-  Widget _fieldAuditName() => FormBuilderTextField(
-        name: 'auditname',
-        initialValue: _isEditMode ? _prefillString('auditname', 'audit_name') : null,
-        style: Theme.of(context).textTheme.bodyMedium,
-        validator: FormBuilderValidators.required(
-          errorText:
-              AppTranslations.of(context)!.text('key_error_01') ?? '',
+  Widget _fieldAuditName() => AppLabeledField(
+        label: 'Audit Name',
+        required: true,
+        child: FormBuilderTextField(
+          name: 'auditname',
+          initialValue: _isEditMode ? _prefillString('auditname', 'audit_name') : null,
+          style: Theme.of(context).textTheme.bodyMedium,
+          validator: FormBuilderValidators.required(
+            errorText:
+                AppTranslations.of(context)!.text('key_error_01') ?? '',
+          ),
+          decoration: AppFormStyles.inputDecoration(),
         ),
-        decoration: _inputDecoration('Audit Name'),
       );
 
   /// Full-width: Audit Branch Name
-  Widget _fieldBranchName() => FormBuilderTextField(
-        name: 'branch',
-        initialValue: _prefillString('branch'),
-        style: Theme.of(context).textTheme.bodyMedium,
-        validator: _selectedAuditType == 'Scheduled'
-            ? FormBuilderValidators.required(
-                errorText:
-                    AppTranslations.of(context)!.text('key_error_01') ?? '',
-              )
-            : null,
-        decoration: _inputDecoration('Audit Branch Name', required: _selectedAuditType == 'Scheduled'),
+  Widget _fieldBranchName() => AppLabeledField(
+        label: 'Audit Branch Name',
+        required: _selectedAuditType == 'Scheduled',
+        child: FormBuilderTextField(
+          name: 'branch',
+          initialValue: _prefillString('branch'),
+          style: Theme.of(context).textTheme.bodyMedium,
+          validator: _selectedAuditType == 'Scheduled'
+              ? FormBuilderValidators.required(
+                  errorText:
+                      AppTranslations.of(context)!.text('key_error_01') ?? '',
+                )
+              : null,
+          decoration: AppFormStyles.inputDecoration(),
+        ),
       );
 
   /// Row: Zone | Pincode | State
   List<Widget> _rowZonePincodeState() => [
         Flexible(
           flex: 1,
-          child: FormBuilderDropdown<String>(
-            name: 'zone',
-            items: _zones
-                .map<DropdownMenuItem<String>>(
-                  (z) => DropdownMenuItem(value: z, child: Text(z)),
-                )
-                .toList(),
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'Zone',
+            required: true,
+            child: FormBuilderDropdown<String>(
+              name: 'zone',
+              items: _zones
+                  .map<DropdownMenuItem<String>>(
+                    (z) => DropdownMenuItem(value: z, child: Text(z)),
+                  )
+                  .toList(),
+              validator: FormBuilderValidators.required(
+                errorText:
+                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+              ),
+              decoration: AppFormStyles.inputDecoration(),
             ),
-            decoration: _inputDecoration('Zone'),
           ),
         ),
         _hSpace,
         Flexible(
           flex: 1,
-          child: FormBuilderTextField(
-            name: 'pincode',
-            initialValue: _prefillString('pincode'),
-            style: Theme.of(context).textTheme.bodyMedium,
-            maxLength: 6,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: false),
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'Pincode',
+            required: true,
+            child: FormBuilderTextField(
+              name: 'pincode',
+              initialValue: _prefillString('pincode'),
+              style: Theme.of(context).textTheme.bodyMedium,
+              maxLength: 6,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: false),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              validator: FormBuilderValidators.required(
+                errorText:
+                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+              ),
+              onChanged: (value) {
+                if (value != null && value.length == 6) {
+                  _uc.getPinCode(
+                    context,
+                    pincode: value,
+                    callback: (res) {
+                      _cityList = res;
+                      if (mounted) setState(() {});
+                      _formKey.currentState?.patchValue({
+                        'state': res.isNotEmpty ? res[0]['State'] : '',
+                      });
+                      // auto-select first city if available
+                      if (res.isNotEmpty) {
+                        Future.delayed(
+                          const Duration(milliseconds: 300),
+                          () => _formKey.currentState
+                              ?.patchValue({'city': res[0]['Name']}),
+                        );
+                      }
+                    },
+                  );
+                }
+              },
+              decoration: AppFormStyles.inputDecoration(),
             ),
-            onChanged: (value) {
-              if (value != null && value.length == 6) {
-                _uc.getPinCode(
-                  context,
-                  pincode: value,
-                  callback: (res) {
-                    _cityList = res;
-                    if (mounted) setState(() {});
-                    _formKey.currentState?.patchValue({
-                      'state': res.isNotEmpty ? res[0]['State'] : '',
-                    });
-                    // auto-select first city if available
-                    if (res.isNotEmpty) {
-                      Future.delayed(
-                        const Duration(milliseconds: 300),
-                        () => _formKey.currentState
-                            ?.patchValue({'city': res[0]['Name']}),
-                      );
-                    }
-                  },
-                );
-              }
-            },
-            decoration: _inputDecoration('Pincode'),
           ),
         ),
         _hSpace,
         Flexible(
           flex: 1,
-          child: FormBuilderTextField(
-            name: 'state',
-            initialValue: _prefillString('state'),
-            style: Theme.of(context).textTheme.bodyMedium,
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'State',
+            required: true,
+            child: FormBuilderTextField(
+              name: 'state',
+              initialValue: _prefillString('state'),
+              style: Theme.of(context).textTheme.bodyMedium,
+              validator: FormBuilderValidators.required(
+                errorText:
+                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+              ),
+              decoration: AppFormStyles.inputDecoration(),
             ),
-            decoration: _inputDecoration('State'),
           ),
         ),
       ];
@@ -539,57 +528,66 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   List<Widget> _rowCityLocationTypeOf() => [
         Flexible(
           flex: 1,
-          child: FormBuilderDropdown<String>(
-            name: 'city',
-            items: _cityList
-                .map<DropdownMenuItem<String>>(
-                  (c) => DropdownMenuItem(
-                    value: c['Name'].toString(),
-                    child: Text(c['Name'].toString()),
-                  ),
-                )
-                .toList(),
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'City',
+            required: true,
+            child: FormBuilderDropdown<String>(
+              name: 'city',
+              items: _cityList
+                  .map<DropdownMenuItem<String>>(
+                    (c) => DropdownMenuItem(
+                      value: c['Name'].toString(),
+                      child: Text(c['Name'].toString()),
+                    ),
+                  )
+                  .toList(),
+              validator: FormBuilderValidators.required(
+                errorText:
+                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+              ),
+              decoration: AppFormStyles.inputDecoration(),
             ),
-            decoration: _inputDecoration('City'),
           ),
         ),
         _hSpace,
         Flexible(
           flex: 1,
-          child: FormBuilderTextField(
-            name: 'location',
-            initialValue: _prefillString('location'),
-            style: Theme.of(context).textTheme.bodyMedium,
-            validator: _selectedAuditType == 'Un-scheduled'
-                ? FormBuilderValidators.required(
-                    errorText:
-                        AppTranslations.of(context)!.text('key_error_01') ?? '', 
-                  )
-                : null,
-            decoration: _inputDecoration(
-              'Location',
-              required: _selectedAuditType == 'Un-scheduled',
+          child: AppLabeledField(
+            label: 'Location',
+            required: _selectedAuditType == 'Un-scheduled',
+            child: FormBuilderTextField(
+              name: 'location',
+              initialValue: _prefillString('location'),
+              style: Theme.of(context).textTheme.bodyMedium,
+              validator: _selectedAuditType == 'Un-scheduled'
+                  ? FormBuilderValidators.required(
+                      errorText:
+                          AppTranslations.of(context)!.text('key_error_01') ?? '', 
+                    )
+                  : null,
+              decoration: AppFormStyles.inputDecoration(),
             ),
           ),
         ),
         _hSpace,
         Flexible( 
           flex: 1,
-          child: FormBuilderDropdown<String>(
-            name: 'type_of_location', 
-            items: _locationTypes
-                .map<DropdownMenuItem<String>>(
-                  (t) => DropdownMenuItem(value: t, child: Text(t)),
-                )
-                .toList(),
-            validator: FormBuilderValidators.required(
-              errorText:
-                  AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'Type of Location',
+            required: true,
+            child: FormBuilderDropdown<String>(
+              name: 'type_of_location', 
+              items: _locationTypes
+                  .map<DropdownMenuItem<String>>(
+                    (t) => DropdownMenuItem(value: t, child: Text(t)),
+                  )
+                  .toList(),
+              validator: FormBuilderValidators.required(
+                errorText:
+                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+              ),
+              decoration: AppFormStyles.inputDecoration(),
             ),
-            decoration: _inputDecoration('Type of Location'),
           ),
         ),
       ];
@@ -598,80 +596,96 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   List<Widget> _rowAssignedDatetime() => [
         Flexible(
           flex: 1,
-          child: FormBuilderDropdown<String>(
-            name: 'assigned_user',
-            items: _auditorList
-                .map<DropdownMenuItem<String>>(
-                  (u) => DropdownMenuItem(
-                    value: u['id'].toString(),
-                    child: Text(u['name']),
-                  ),
-                )
-                .toList(),
-            validator: _selectedAuditType == 'Scheduled'
-                ? FormBuilderValidators.required(
-                    errorText:
-                        AppTranslations.of(context)!.text('key_error_01') ?? '',
+          child: AppLabeledField(
+            label: 'Assigned To',
+            required: _selectedAuditType == 'Scheduled',
+            child: FormBuilderDropdown<String>(
+              name: 'assigned_user',
+              items: _auditorList
+                  .map<DropdownMenuItem<String>>(
+                    (u) => DropdownMenuItem(
+                      value: u['id'].toString(),
+                      child: Text(u['name']),
+                    ),
                   )
-                : null,
-            decoration: _inputDecoration('Assigned To', required: _selectedAuditType == 'Scheduled'),
-          ),
-        ),
-        _hSpace,
-        Flexible(
-          flex: 1,
-          child: FormBuilderDateTimePicker(
-            name: 'start_date',
-            initialDate: _initialDate,
-            firstDate: _firstDate,
-            lastDate: _lastDate,
-            inputType: InputType.date,
-            style: Theme.of(context).textTheme.bodyMedium,
-            validator: _selectedAuditType == 'Scheduled'
-                ? FormBuilderValidators.required(
-                    errorText:
-                        AppTranslations.of(context)!.text('key_error_01') ?? '',
-                  )
-                : null,
-            decoration: _inputDecoration('Date', required: _selectedAuditType == 'Scheduled').copyWith(
-              suffixIcon: const Icon(CupertinoIcons.calendar, size: 20),
+                  .toList(),
+              validator: _selectedAuditType == 'Scheduled'
+                  ? FormBuilderValidators.required(
+                      errorText:
+                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    )
+                  : null,
+              decoration: AppFormStyles.inputDecoration(),
             ),
           ),
         ),
         _hSpace,
         Flexible(
           flex: 1,
-          child: FormBuilderDateTimePicker(
-            name: 'start_time',
-            inputType: InputType.time,
-            format: DateFormat.jm(),
-            timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
-            style: Theme.of(context).textTheme.bodyMedium,
-            validator: _selectedAuditType == 'Scheduled'
-                ? FormBuilderValidators.required(
-                    errorText:
-                        AppTranslations.of(context)!.text('key_error_01') ?? '',
-                  )
-                : null,
-            decoration: _inputDecoration('Time', required: _selectedAuditType == 'Scheduled').copyWith(
-              suffixIcon: const Icon(CupertinoIcons.clock, size: 20),
+          child: AppLabeledField(
+            label: 'Date',
+            required: _selectedAuditType == 'Scheduled',
+            child: FormBuilderDateTimePicker(
+              name: 'start_date',
+              initialDate: _initialDate,
+              firstDate: _firstDate,
+              lastDate: _lastDate,
+              inputType: InputType.date,
+              style: Theme.of(context).textTheme.bodyMedium,
+              validator: _selectedAuditType == 'Scheduled'
+                  ? FormBuilderValidators.required(
+                      errorText:
+                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    )
+                  : null,
+              decoration: AppFormStyles.inputDecoration(
+                suffixIcon: const Icon(CupertinoIcons.calendar, size: 20),
+              ),
+            ),
+          ),
+        ),
+        _hSpace,
+        Flexible(
+          flex: 1,
+          child: AppLabeledField(
+            label: 'Time',
+            required: _selectedAuditType == 'Scheduled',
+            child: FormBuilderDateTimePicker(
+              name: 'start_time',
+              inputType: InputType.time,
+              format: DateFormat.jm(),
+              timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
+              style: Theme.of(context).textTheme.bodyMedium,
+              validator: _selectedAuditType == 'Scheduled'
+                  ? FormBuilderValidators.required(
+                      errorText:
+                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    )
+                  : null,
+              decoration: AppFormStyles.inputDecoration(
+                suffixIcon: const Icon(CupertinoIcons.clock, size: 20),
+              ),
             ),
           ),
         ),
       ];
 
   /// Full-width: Information (multiline)
-  Widget _fieldInformation() => FormBuilderTextField(
-        name: 'remarks',
-        initialValue: _isEditMode ? _prefillString('remarks') : null,
-        maxLines: 4,
-        autovalidateMode: _autovalidateMode,
-        validator: FormBuilderValidators.required(
-          errorText: 'Information is required',
-        ),
-        style: Theme.of(context).textTheme.bodyMedium,
-        decoration: _inputDecoration('Information', required: true).copyWith(
-          contentPadding: const EdgeInsets.only(left: 20, top: 25),
+  Widget _fieldInformation() => AppLabeledField(
+        label: 'Information',
+        required: true,
+        child: FormBuilderTextField(
+          name: 'remarks',
+          initialValue: _isEditMode ? _prefillString('remarks') : null,
+          maxLines: 4,
+          autovalidateMode: _autovalidateMode,
+          validator: FormBuilderValidators.required(
+            errorText: 'Information is required',
+          ),
+          style: Theme.of(context).textTheme.bodyMedium,
+          decoration: AppFormStyles.inputDecoration(
+            contentPadding: const EdgeInsets.only(left: 16, top: 20),
+          ),
         ),
       );
 
@@ -820,25 +834,29 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                           const SizedBox(height: defaultPadding),
                           SizedBox(
                             width: Responsive.isDesktop(context) ? 400 : double.infinity,
-                            child: FormBuilderDropdown<String>(
-                              name: 'audit_type',
-                              initialValue: 'Scheduled',
-                              enabled: !_lockScheduled,
-                              items: _auditTypes
-                                  .map<DropdownMenuItem<String>>(
-                                    (t) => DropdownMenuItem(value: t, child: Text(t)),
-                                  )
-                                  .toList(),
-                              validator: FormBuilderValidators.required(
-                                errorText:
-                                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+                            child: AppLabeledField(
+                              label: 'Select Audit Type',
+                              required: true,
+                              child: FormBuilderDropdown<String>(
+                                name: 'audit_type',
+                                initialValue: 'Scheduled',
+                                enabled: !_lockScheduled,
+                                items: _auditTypes
+                                    .map<DropdownMenuItem<String>>(
+                                      (t) => DropdownMenuItem(value: t, child: Text(t)),
+                                    )
+                                    .toList(),
+                                validator: FormBuilderValidators.required(
+                                  errorText:
+                                      AppTranslations.of(context)!.text('key_error_01') ?? '',
+                                ),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedAuditType = value ?? 'Scheduled';
+                                  });
+                                },
+                                decoration: AppFormStyles.inputDecoration(),
                               ),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedAuditType = value ?? 'Scheduled';
-                                });
-                              },
-                              decoration: _inputDecoration('Select Audit Type'),
                             ),
                           ),
                           const SizedBox(height: defaultPadding * 1.5),

@@ -20,6 +20,7 @@ import '../services/utility.dart';
 class UserController extends GetxController {
   UserData userData = UserData();
   int selectedIndex = 0;
+  String selectedMenuKey = 'dashboard';
   String selectedClientId = "";
   List<DynamicField> formArray = [];
   List<dynamic> role = [];
@@ -186,14 +187,20 @@ class UserController extends GetxController {
   }
 
   void checkUserAuditAssignment(context,
-      {required int userId, required Function(bool assigned, int auditCount) callback}) {
+      {required int userId, required Function(bool assigned, int auditCount, bool hasActiveAudits, int activeAuditCount, int completedAuditCount) callback}) {
     APIService(context)
         .postData("checkUserAuditAssignment", {"user_id": userId}, true, loader: false)
         .then((resvalue) {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (!res.containsKey("type")) {
-          callback(res["assigned"] ?? false, res["audit_count"] ?? 0);
+          callback(
+            res["assigned"] ?? false,
+            res["audit_count"] ?? 0,
+            res["has_active_audits"] ?? false,
+            res["active_audit_count"] ?? 0,
+            res["completed_audit_count"] ?? 0,
+          );
         }
       }
     });

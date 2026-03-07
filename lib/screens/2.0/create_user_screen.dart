@@ -11,6 +11,7 @@ import '../../controllers/usercontroller.dart';
 import '../../models/screenarguments.dart';
 import '../../responsive.dart';
 import '../../services/api_service.dart';
+import '../../widget/app_form_field.dart';
 import '../main/layoutscreen.dart';
 
 
@@ -47,7 +48,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   // Active/Inactive status
   bool _isActive = true;
   bool _isAssignedToAudit = false;
-  int _assignedAuditCount = 0;
+  bool _hasActiveAudits = false;
+  int _activeAuditCount = 0;
+  int _completedAuditCount = 0;
 
   // Indian states list for the State dropdown
   static const List<String> _indianStates = [
@@ -90,42 +93,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   ];
 
   // ── helpers ──────────────────────────────────────────────────────────────
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      filled: true,
-      fillColor: Colors.white,
-      labelText: label,
-      labelStyle: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w400,
-        color: Color(0xFF505050),
-      ),
-      contentPadding: const EdgeInsets.only(left: 16, top: 12, bottom: 12),
-      counterText: '',
-      errorMaxLines: 3,
-      hoverColor: Colors.transparent,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Color(0xFFBDBDBD)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Color(0xFF4DB6AC)),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-    );
-  }
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
   @override
@@ -154,11 +121,13 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
           _uc.checkUserAuditAssignment(
             context,
             userId: int.tryParse(_editData!['id'].toString()) ?? 0,
-            callback: (assigned, auditCount) {
+            callback: (assigned, auditCount, hasActiveAudits, activeAuditCount, completedAuditCount) {
               if (mounted) {
                 setState(() {
                   _isAssignedToAudit = assigned;
-                  _assignedAuditCount = auditCount;
+                  _hasActiveAudits = hasActiveAudits;
+                  _activeAuditCount = activeAuditCount;
+                  _completedAuditCount = completedAuditCount;
                 });
               }
             },
@@ -254,19 +223,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   // ── section label ─────────────────────────────────────────────────────────
-  Widget _sectionLabel(String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF505050),
-        ),
-      ),
-    );
-  }
+
 
   // ── spacing helpers ───────────────────────────────────────────────────────
   Widget get _hSpace => SizedBox(
@@ -327,148 +284,127 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   }
 
   Widget _fieldUsername() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Username'),
-        FormBuilderTextField(
-          name: 'name',
-          style: Theme.of(context).textTheme.bodyMedium,
-          textCapitalization: TextCapitalization.words,
-          validator: FormBuilderValidators.required(
-            errorText: 'Please enter username',
-          ),
-          decoration: _inputDecoration(''),
+    return AppLabeledField(
+      label: 'Username',
+      child: FormBuilderTextField(
+        name: 'name',
+        style: Theme.of(context).textTheme.bodyMedium,
+        textCapitalization: TextCapitalization.words,
+        validator: FormBuilderValidators.required(
+          errorText: 'Please enter username',
         ),
-      ],
+        decoration: AppFormStyles.inputDecoration(),
+      ),
     );
   }
 
   Widget _fieldEmail() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Email ID'),
-        FormBuilderTextField(
-          name: 'email',
-          style: Theme.of(context).textTheme.bodyMedium,
-          keyboardType: TextInputType.emailAddress,
-          validator: FormBuilderValidators.compose([
-            FormBuilderValidators.required(errorText: 'Please enter email'),
-            FormBuilderValidators.email(errorText: 'Please enter valid email'),
-          ]),
-          decoration: _inputDecoration(''),
-        ),
-      ],
+    return AppLabeledField(
+      label: 'Email ID',
+      child: FormBuilderTextField(
+        name: 'email',
+        style: Theme.of(context).textTheme.bodyMedium,
+        keyboardType: TextInputType.emailAddress,
+        validator: FormBuilderValidators.compose([
+          FormBuilderValidators.required(errorText: 'Please enter email'),
+          FormBuilderValidators.email(errorText: 'Please enter valid email'),
+        ]),
+        decoration: AppFormStyles.inputDecoration(),
+      ),
     );
   }
 
   Widget _fieldMobile() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Mobile No.'),
-        FormBuilderTextField(
-          name: 'mobile',
-          style: Theme.of(context).textTheme.bodyMedium,
-          keyboardType: TextInputType.phone,
-          maxLength: 10,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          validator: FormBuilderValidators.required(
-            errorText: 'Please enter mobile number',
-          ),
-          decoration: _inputDecoration(''),
+    return AppLabeledField(
+      label: 'Mobile No.',
+      child: FormBuilderTextField(
+        name: 'mobile',
+        style: Theme.of(context).textTheme.bodyMedium,
+        keyboardType: TextInputType.phone,
+        maxLength: 10,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        validator: FormBuilderValidators.required(
+          errorText: 'Please enter mobile number',
         ),
-      ],
+        decoration: AppFormStyles.inputDecoration(),
+      ),
     );
   }
 
   Widget _fieldJoiningDate() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Joining Date'),
-        FormBuilderDateTimePicker(
-          name: 'joiningdate',
-          inputType: InputType.date,
-          style: Theme.of(context).textTheme.bodyMedium,
-          firstDate: Jiffy.now().subtract(years: 10).dateTime,
-          lastDate: Jiffy.now().add(years: 1).dateTime,
-          decoration: _inputDecoration('').copyWith(
-            suffixIcon: const Icon(Icons.calendar_today, size: 18),
-          ),
+    return AppLabeledField(
+      label: 'Joining Date',
+      child: FormBuilderDateTimePicker(
+        name: 'joiningdate',
+        inputType: InputType.date,
+        style: Theme.of(context).textTheme.bodyMedium,
+        firstDate: Jiffy.now().subtract(years: 10).dateTime,
+        lastDate: Jiffy.now().add(years: 1).dateTime,
+        decoration: AppFormStyles.inputDecoration(
+          suffixIcon: const Icon(Icons.calendar_today, size: 18),
         ),
-      ],
+      ),
     );
   }
 
   Widget _fieldState() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('State'),
-        FormBuilderDropdown<String>(
-          name: 'state',
-          items: _indianStates
-              .map<DropdownMenuItem<String>>(
-                (s) => DropdownMenuItem(value: s, child: Text(s)),
-              )
-              .toList(),
-          onChanged: (value) {
-            _selectedState = value;
-            // Reset city when state changes
-            _formKey.currentState?.fields['city']?.didChange(null);
-            if (mounted) setState(() {});
-          },
-          decoration: _inputDecoration(''),
-        ),
-      ],
+    return AppLabeledField(
+      label: 'State',
+      child: FormBuilderDropdown<String>(
+        name: 'state',
+        items: _indianStates
+            .map<DropdownMenuItem<String>>(
+              (s) => DropdownMenuItem(value: s, child: Text(s)),
+            )
+            .toList(),
+        onChanged: (value) {
+          _selectedState = value;
+          // Reset city when state changes
+          _formKey.currentState?.fields['city']?.didChange(null);
+          if (mounted) setState(() {});
+        },
+        decoration: AppFormStyles.inputDecoration(),
+      ),
     );
   }
 
   Widget _fieldCity() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('City'),
-        FormBuilderTextField(
-          name: 'city',
-          style: Theme.of(context).textTheme.bodyMedium,
-          decoration: _inputDecoration(''),
-        ),
-      ],
+    return AppLabeledField(
+      label: 'City',
+      child: FormBuilderTextField(
+        name: 'city',
+        style: Theme.of(context).textTheme.bodyMedium,
+        decoration: AppFormStyles.inputDecoration(),
+      ),
     );
   }
 
   /// Role dropdown
   Widget _fieldRole() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _sectionLabel('Role'),
-        SizedBox(
-          width: Responsive.isDesktop(context) ? 350 : double.infinity,
-          child: FormBuilderDropdown<String>(
-            name: 'role',
-            items: _roles
-                .map<DropdownMenuItem<String>>(
-                  (r) => DropdownMenuItem(
-                    value: r['roleid'].toString(),
-                    child: Text(r['rolename'].toString()),
-                  ),
-                )
-                .toList(),
-            validator: FormBuilderValidators.required(
-              errorText: 'Please select role',
-            ),
-            onChanged: (value) {
-              // Handle visibility of brand based on role
-              if (mounted) setState(() {});
-            },
-            decoration: _inputDecoration(''),
+    return SizedBox(
+      width: Responsive.isDesktop(context) ? 350 : double.infinity,
+      child: AppLabeledField(
+        label: 'Role',
+        child: FormBuilderDropdown<String>(
+          name: 'role',
+          items: _roles
+              .map<DropdownMenuItem<String>>(
+                (r) => DropdownMenuItem(
+                  value: r['roleid'].toString(),
+                  child: Text(r['rolename'].toString()),
+                ),
+              )
+              .toList(),
+          validator: FormBuilderValidators.required(
+            errorText: 'Please select role',
           ),
+          onChanged: (value) {
+            // Handle visibility of brand based on role
+            if (mounted) setState(() {});
+          },
+          decoration: AppFormStyles.inputDecoration(),
         ),
-      ],
+      ),
     );
   }
 
@@ -487,7 +423,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _sectionLabel('Brand'),
+        AppFormStyles.fieldLabel('Brand'),
         Container(
           width: Responsive.isDesktop(context)
               ? MediaQuery.of(context).size.width * 0.45
@@ -635,12 +571,12 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
             Switch(
               value: _isActive,
               onChanged: (value) {
-                // Prevent deactivation if user is assigned to an audit
-                if (!value && _isAssignedToAudit) {
+                // Only prevent deactivation if user has active (non-completed) audits
+                if (!value && _hasActiveAudits) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Cannot deactivate this user. The user is assigned to $_assignedAuditCount audit(s).',
+                        'Cannot deactivate this user. The user is assigned to $_activeAuditCount active audit(s) (In-Progress or Upcoming).',
                       ),
                       backgroundColor: Colors.red,
                     ),
@@ -663,13 +599,23 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                 color: Color(0xFF505050),
               ),
             ),
-            if (!_isActive && _isAssignedToAudit) ...[
+            if (_isAssignedToAudit && _hasActiveAudits) ...[
               const SizedBox(width: 16),
               Text(
-                '*Note that the user has been assigned an audit.',
+                '*User has $_activeAuditCount active audit(s). Cannot deactivate.',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.red.shade700,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ] else if (_isAssignedToAudit && !_hasActiveAudits) ...[
+              const SizedBox(width: 16),
+              Text(
+                'User has $_completedAuditCount completed audit(s) only. Can be deactivated.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.green.shade700,
                   fontStyle: FontStyle.italic,
                 ),
               ),

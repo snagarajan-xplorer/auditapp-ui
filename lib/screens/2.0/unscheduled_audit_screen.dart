@@ -189,7 +189,7 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
     return LayoutScreen(
       showBackbutton: false,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 50, right: 36),
+        padding: const EdgeInsets.only(left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

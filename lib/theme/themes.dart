@@ -42,6 +42,9 @@ class AppThemeData {
         backgroundColor: kPrimaryColor,
         foregroundColor: Colors.white,
       ),
+      hoverColor: Colors.transparent,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
       canvasColor: Colors.white,
       elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -125,6 +128,9 @@ class AppThemeData {
   ThemeData dark() {
     final themeData = ThemeData.dark(useMaterial3: false).copyWith(
         drawerTheme: const DrawerThemeData(backgroundColor: Color(0xFF343A40)),
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
         canvasColor: secondaryColor,
         scaffoldBackgroundColor: bgColor,
         iconTheme: IconThemeData(color: Colors.white),

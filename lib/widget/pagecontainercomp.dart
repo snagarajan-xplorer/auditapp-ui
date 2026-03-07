@@ -58,7 +58,7 @@ class PageContainerComp extends StatelessWidget {
         Flexible(
           flex: 12,
             child: Container(
-              margin: EdgeInsets.only(left: 46, right: 36),
+              margin: EdgeInsets.only(left: 20, right: 20),
               child: Padding(
                 padding: EdgeInsets.all(padding!),
                 child: BoxContainer(

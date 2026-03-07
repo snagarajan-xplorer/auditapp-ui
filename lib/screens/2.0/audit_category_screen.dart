@@ -18,6 +18,7 @@ import 'package:jiffy/jiffy.dart';
 import '../../constants.dart';
 import '../../controllers/usercontroller.dart';
 import '../../theme/themes.dart';
+import '../../widget/app_form_field.dart';
 import '../main/layoutscreen.dart';
 import 'dart:js' as js;
 
@@ -399,46 +400,12 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
 
   /// Builds a labeled field: label text above, then the child widget.
   Widget _labeledField(String label, Widget child) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87)),
-        SizedBox(height: 8),
-        child,
-      ],
-    );
+    return AppLabeledField(label: label, child: child);
   }
 
-  /// Plain field decoration (no floating label) matching the screenshot.
+  /// Plain field decoration (no floating label) matching the design system.
   InputDecoration _plainFieldDecoration({Widget? suffixIcon}) {
-    return InputDecoration(
-      filled: true,
-      fillColor: Colors.white,
-      hoverColor: Colors.white,
-      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      counterText: "",
-      errorMaxLines: 3,
-      border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5.0),
-          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.0)),
-      enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5.0),
-          borderSide: BorderSide(color: Colors.grey.shade300, width: 1.0)),
-      focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5.0),
-          borderSide: BorderSide(color: Colors.grey.shade400, width: 1.0)),
-      errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5.0),
-          borderSide: BorderSide(color: Colors.red, width: 1.0)),
-      focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5.0),
-          borderSide: BorderSide(color: Colors.red, width: 1.0)),
-      suffixIcon: suffixIcon,
-    );
+    return AppFormStyles.inputDecoration(suffixIcon: suffixIcon);
   }
 
   Widget branchDetailsChild() {
