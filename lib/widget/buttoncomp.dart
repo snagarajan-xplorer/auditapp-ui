@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
-import '../responsive.dart';
 
 class ButtonComp extends StatelessWidget {
   final Icon? icon;
@@ -11,7 +10,7 @@ class ButtonComp extends StatelessWidget {
   final double? height;
   final Color? color;
   final bool? disabled;
-  const ButtonComp({super.key, this.icon=null, required this.label, required this.onPressed, this.width=200, this.height=buttonHeight, this.color = const Color(0xFF0376d8), this.disabled=false});
+  const ButtonComp({super.key, this.icon, required this.label, required this.onPressed, this.width=200, this.height=buttonHeight, this.color = const Color(0xFF0376d8), this.disabled=false});
 
   @override
   Widget build(BuildContext context) {

@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
-import 'dart:js' as js;
+import 'package:url_launcher/url_launcher.dart';
 
 class AuditDetailsScreen extends StatefulWidget {
   const AuditDetailsScreen({super.key});
@@ -196,7 +196,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     );
   }
 
-  void _deleteAudit() {
+  /* void _deleteAudit() {
     final auditId = auditData["id"] ?? rowData["id"] ?? rowData["audit_id"];
     if (auditId == null) return;
 
@@ -213,7 +213,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
         });
       },
     );
-  }
+  } */
 
   void _downloadAuditSheet() {
     final reportUrl = auditData["reporturl"] ?? rowData["reporturl"] ?? "";
@@ -221,8 +221,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       APIService(context).showToastMgs("No audit sheet available");
       return;
     }
-    js.context
-        .callMethod('open', ["${API_URL}export?type=1&id=$reportUrl", "_blank"]);
+    launchUrl(Uri.parse("${API_URL}export?type=1&id=$reportUrl"));
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

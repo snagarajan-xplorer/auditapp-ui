@@ -1,15 +1,8 @@
-import 'dart:convert';
-import '../constants.dart';
-import '../dropdown/drop_down.dart';
-import '../models/selected_list_item.dart';
-import 'package:get/get.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
 import '../models/dynamicfield.dart';
 import '../models/selectionobj.dart';
-import '../services/api_service.dart';
 
 class SelectInputComp extends StatefulWidget {
   final GlobalKey<FormBuilderState> formKey;
@@ -19,7 +12,7 @@ class SelectInputComp extends StatefulWidget {
   final DynamicField fieldObj;
   final Function(SelectionObj) onSaved;
   final Function(SelectionObj) selectionChange;
-  const SelectInputComp({Key? key, required this.fieldName, this.id, this.mid, required this.fieldObj, required this.onSaved, required this.selectionChange, required this.formKey}) : super(key: key);
+  const SelectInputComp({super.key, required this.fieldName, this.id, this.mid, required this.fieldObj, required this.onSaved, required this.selectionChange, required this.formKey});
 
   @override
   State<SelectInputComp> createState() => _SelectInputCompState();
@@ -28,9 +21,7 @@ class SelectInputComp extends StatefulWidget {
 class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderStateMixin, AutomaticKeepAliveClientMixin{
   late double width;
   late double height;
-  TextEditingController txtController = new TextEditingController(text: "");
-
-  SelectedListItem? _selectedListItem;
+  TextEditingController txtController = TextEditingController(text: "");
 
   @override
   void dispose() {
@@ -42,7 +33,7 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
   @override
   void initState() {
     super.initState();
-    if(widget.fieldObj.options!.length != 0){
+    if(widget.fieldObj.options!.isNotEmpty){
       //selectItem();
     }
 
@@ -79,7 +70,6 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
 
 
   Widget newSearch(){
-    var width = (MediaQuery.of(context).size.width-kFieldWidth)/2;
     return Visibility(
         visible: widget.fieldObj.visibility == "Y"?true:false,
         child: Container(
@@ -87,7 +77,7 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
           child: FormBuilderDropdown<String>(
 
             name: widget.fieldObj.fieldName!,
-            validator: widget.fieldObj.validator == null ? null: widget.fieldObj.validator,
+            validator: widget.fieldObj.validator,
             // initialValue: "",
             //initialValue: widget.fieldObj.fieldValue == null ? "":widget.fieldObj.fieldValue.toString(),
             style: Theme.of(context).textTheme.bodyMedium,
@@ -115,7 +105,7 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
             decoration:  InputDecoration(
               label: widget.fieldObj.mandatory! == "Y"?RichText(
                 text: TextSpan(
-                  text: widget.fieldObj.labelName! ?? "",
+                  text: widget.fieldObj.labelName!,
                   children: [
                     TextSpan(
                         style: TextStyle(color: Colors.red),
@@ -124,7 +114,7 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
                   ],
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-              ):Text(widget.fieldObj.labelName! ?? "",style: Theme.of(context).textTheme.bodyMedium,),
+              ):Text(widget.fieldObj.labelName!,style: Theme.of(context).textTheme.bodyMedium,),
               contentPadding: EdgeInsets.only(left: 20),
               hintText:"",
 
@@ -144,6 +134,7 @@ class _SelectInputCompState extends State<SelectInputComp>  with TickerProviderS
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return newSearch();
   }
   Widget getItemContainer(context,item,str){

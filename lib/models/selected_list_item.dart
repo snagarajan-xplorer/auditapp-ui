@@ -2,7 +2,7 @@
 class SelectedListItem {
   bool? isSelected;
   String name;
-  dynamic? value;
+  dynamic value;
   String? idvalue;
 
   SelectedListItem({

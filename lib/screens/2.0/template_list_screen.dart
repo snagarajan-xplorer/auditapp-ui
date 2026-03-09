@@ -8,8 +8,7 @@ import '../../constants.dart';
 import '../../widget/app_form_field.dart';
 import '../../widget/reusable_table.dart';
 import 'package:jiffy/jiffy.dart';
-import 'dart:js' as js;
-import 'dart:html' as html;
+import 'package:url_launcher/url_launcher.dart';
 
 class TemplateScreen extends StatefulWidget {
   const TemplateScreen({super.key});
@@ -261,9 +260,7 @@ void _downloadTemplate(String templateId) {
     callback: (res) {
       if (res != null && res['url'] != null) {
         // For Flutter Web
-        html.AnchorElement(href: res['url'].toString())
-          ..setAttribute('download', 'template_$templateId.xlsx')
-          ..click();
+        launchUrl(Uri.parse(res['url'].toString()));
       } else if (res != null && res['message'] != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(res['message'].toString())),
@@ -299,7 +296,7 @@ void _downloadTemplate(String templateId) {
                 child: AppLabeledField(
                   label: 'Brand',
                   child: DropdownButtonFormField<String>(
-                    value: selectedClientId,
+                    initialValue: selectedClientId,
                     isExpanded: true,
                     items: clientList
                         .map<DropdownMenuItem<String>>((client) =>
@@ -440,7 +437,7 @@ void _downloadTemplate(String templateId) {
       previousScreenName: 'Settings',
       showBackbutton: true,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 50, right: 36),
+        padding: const EdgeInsets.only(left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -456,10 +453,9 @@ void _downloadTemplate(String templateId) {
                   ),
                   ElevatedButton.icon(
                     onPressed: () {
-                      js.context.callMethod('open', [
+                      launchUrl(Uri.parse(
                         '${API_URL}templateexport?id=s2hgpasn0chndggqv0saht48b6lv25d8dkxulj9u8bgcosomappaiezrnc6kh6kgb8vbh2aqjplh78nk7r8caf3pq2f0bzckhf9ukv3y2g493w288e83preg',
-                        '_blank'
-                      ]);
+                      ));
                     },
                     label: const Text(
                       'Download Template Format',

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:audit_app/responsive.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
@@ -22,7 +21,7 @@ class APIService {
   APIService(this.context);
   UserController usercontroller = Get.put(UserController());
 
-  showWindowAlert({String? title,
+  void showWindowAlert({String? title,
     String? desc,
     Widget? child,
     VoidCallback? callback,
@@ -37,23 +36,23 @@ class APIService {
     if (title!.isEmpty) {
       title = AppTranslations.of(context)!.text("key_info").capitalize;
     }
-    ButtonComp btn1 = ButtonComp(color: okButtonColor ?? Color(0xFF0376d8), width:90,label: okbutton == null ? AppTranslations.of(context)!.text("key_btn_yes").toUpperCase() : okbutton,
+    ButtonComp btn1 = ButtonComp(color: okButtonColor ?? Color(0xFF0376d8), width:90,label: okbutton ?? AppTranslations.of(context)!.text("key_btn_yes").toUpperCase(),
       onPressed: () {
         if(allowClosePopup!){
           Navigator.pop(context);
         }
 
         if (callback != null) {
-          callback!();
+          callback();
         }
       },);
     buttons.add(btn1);
     if (showCancelBtn!) {
-      ButtonComp btn2 = ButtonComp(color:Color(0xFF002651),width:90,label: cancelbutton == null? AppTranslations.of(context)!.text("key_btn_no").toUpperCase():cancelbutton,
+      ButtonComp btn2 = ButtonComp(color:Color(0xFF002651),width:90,label: cancelbutton ?? AppTranslations.of(context)!.text("key_btn_no").toUpperCase(),
         onPressed: () {
           Navigator.pop(context);
           if (cancelcallback != null) {
-            cancelcallback!();
+            cancelcallback();
           }
         },);
 
@@ -65,9 +64,9 @@ class APIService {
       builder: (BuildContext context) {
         return AlertDialog(
           title: hideTitle == true ? null : Text(title ?? "",style: headTextStyle,),
-          content: Container(
+          content: SizedBox(
             width: Responsive.isMobile(context)?350:500,
-            child: child == null ? Text(desc ?? "",style: paragraphTextStyle,):child,
+            child: child ?? Text(desc ?? "",style: paragraphTextStyle,),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: buttons,
@@ -75,11 +74,10 @@ class APIService {
       },
     );
   }
-  showWindowContentAlert({
+  void showWindowContentAlert({
     Widget? child,
     String? title,
     bool? allowClosePopup = true}){
-    List<Widget> buttons = [];
 
 
     showDialog(
@@ -90,7 +88,7 @@ class APIService {
         return AlertDialog(
           backgroundColor: Colors.white,
           title: Text(title ?? "",style: headingTextStyle,),
-          content: Container(
+          content: SizedBox(
             width: Responsive.isMobile(context)?350:500,
             child: child,
           ),
@@ -99,7 +97,7 @@ class APIService {
       },
     );
   }
-  loaderShow() {
+  void loaderShow() {
     // Check if widget is mounted and build is complete
     try {
       OverlayLoadingProgress.start(context,
@@ -120,14 +118,14 @@ class APIService {
           ));
     } catch (e) {
       // Silently fail if overlay cannot be shown (e.g., during build)
-      print("Warning: Cannot show loader overlay: $e");
+      debugPrint("Warning: Cannot show loader overlay: $e");
     }
   }
 
-  loaderHide() {
+  void loaderHide() {
     OverlayLoadingProgress.stop();
   }
-  showToastMgs(message) {
+  void showToastMgs(message) {
     showToast(message,context:context,position: StyledToastPosition.center);
     // Fluttertoast.showToast(
     //     msg: message,
@@ -143,7 +141,6 @@ class APIService {
   Future<String> getData(dynamic url, bool token,
       {bool loader = true, bool? showError = true}) async {
     try {
-      bool internetActive = true;
       if (loader) {
         loaderShow();
       }
@@ -154,12 +151,12 @@ class APIService {
         'Content-Type': 'application/json; charset=UTF-8',
         'Channel': "M"
       };
-      String mtoken = usercontroller.userData?.token ?? "";
+      String mtoken = usercontroller.userData.token ?? "";
       if (token) {
         header = <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'Channel': "M",
-          'Authorization': 'Bearer ' + mtoken
+          'Authorization': 'Bearer $mtoken'
         };
       }
 
@@ -197,7 +194,7 @@ class APIService {
 
         // Map<String,dynamic> res = JsonDecoder().convert(response.body);
         // if(res["responseBody"] != null){
-        //   print(res["responseBody"].runtimeType);
+        //   debugPrint(res["responseBody"].runtimeType);
         //   if((res["responseBody"].runtimeType) == String){
         //     showToast(res["responseBody"]);
         //     //Toast.show(res["responseBody"]['errorMessage'], duration: Toast.lengthLong, gravity:  Toast.center);
@@ -208,7 +205,7 @@ class APIService {
         //return response.body;
       }
 
-    } on TimeoutException catch (e) {
+    } on TimeoutException {
       if (loader) {
         OverlayLoadingProgress.stop();
       }
@@ -223,7 +220,7 @@ class APIService {
         OverlayLoadingProgress.stop();
       }
       showToastMgs("Cannot connect to server. Please check if backend is running on port 8000.");
-      print("ClientException: ${e.message} - ${e.uri}");
+      debugPrint("ClientException: ${e.message} - ${e.uri}");
       dynamic mapdata = {};
       mapdata["type"] = "error";
       mapdata["status"] = 0;
@@ -256,11 +253,11 @@ class APIService {
     loaderShow();
     var durl = API_URL+url;
 
-    String mtoken = usercontroller.userData?.token ?? "";
+    String mtoken = usercontroller.userData.token ?? "";
     var header = <String, String>{
       'Content-Type': 'application/octet-stream; charset=UTF-8',
       'Channel': "M",
-      'Authorization': 'Bearer ' + mtoken
+      'Authorization': 'Bearer $mtoken'
     };
     var request = http.MultipartRequest('POST', Uri.parse(durl));
     data.forEach((key, value) {
@@ -270,13 +267,13 @@ class APIService {
         request.fields[key] = "";
       }
     });
-    request.files.add(await http.MultipartFile.fromBytes(fileKey,bytes,filename: filename,));
+    request.files.add(http.MultipartFile.fromBytes(fileKey,bytes,filename: filename,));
 
     request.headers.addAll(header);
     //var res = await request.send();
     http.StreamedResponse response = await request.send();
     // response.stream.transform(utf8.decoder).listen((value) {
-    //   print(value);
+    //   debugPrint(value);
     // });
 
     if (response.statusCode == 200) {
@@ -291,11 +288,11 @@ class APIService {
     loaderShow();
     var durl = API_URL+url;
 
-    String mtoken = usercontroller.userData?.token ?? "";
+    String mtoken = usercontroller.userData.token ?? "";
     var header = <String, String>{
       'Content-Type': 'application/octet-stream; charset=UTF-8',
       'Channel': "M",
-      'Authorization': 'Bearer ' + mtoken
+      'Authorization': 'Bearer $mtoken'
     };
     var request = http.MultipartRequest('POST', Uri.parse(durl));
     data.forEach((key, value) {
@@ -305,13 +302,13 @@ class APIService {
         request.fields[key] = "";
       }
     });
-    request.files.add(await http.MultipartFile.fromBytes(fileKey,bytes,filename: filename,));
+    request.files.add(http.MultipartFile.fromBytes(fileKey,bytes,filename: filename,));
 
     request.headers.addAll(header);
     //var res = await request.send();
     http.StreamedResponse response = await request.send();
     // response.stream.transform(utf8.decoder).listen((value) {
-    //   print(value);
+    //   debugPrint(value);
     // });
 
     if (response.statusCode == 200) {
@@ -338,7 +335,7 @@ class APIService {
 
           break;
       }
-      print(mapdata);
+      debugPrint(mapdata.toString());
       return jsonEncode(mapdata);
     }
   }
@@ -349,13 +346,12 @@ class APIService {
         bool showMsg = true,
       bool? showError = true}) async {
     try {
-      bool internetActive = true;
 
       if (loader) {
         loaderShow();
       }
       var durl = API_URL+url;
-      String mtoken = usercontroller.userData?.token ?? "";
+      String mtoken = usercontroller.userData.token ?? "";
 
       String channel = "M";
       if (url.contains("generateCustomerLoginOtp")) {
@@ -370,12 +366,12 @@ class APIService {
         header = <String, String>{
           'Content-Type': 'application/json',
           'Channel': channel,
-          'Authorization': 'Bearer ' + mtoken
+          'Authorization': 'Bearer $mtoken'
         };
       }
-      var encoder = new JsonEncoder.withIndent("  ");
+      var encoder = JsonEncoder.withIndent("  ");
       var datastr = encoder.convert(data);
-      print(datastr);
+      debugPrint(datastr);
       final response = await http.post(Uri.parse(durl),
           headers: header, body: isJSON == false ? datastr : data);
 
@@ -390,7 +386,7 @@ class APIService {
       //   }
       //   response = value;
       // });
-      print(response.statusCode);
+      debugPrint(response.statusCode.toString());
       if (response.statusCode == 200) {
         if (loader) {
           OverlayLoadingProgress.stop();
@@ -422,12 +418,12 @@ class APIService {
             }
             break;
         }
-        print(mapdata);
+        debugPrint(mapdata.toString());
         return jsonEncode(mapdata);
 
         // dynamic res = JsonDecoder().convert(response.body);
         // if(res["responseBody"] != null){
-        //   print(res["responseBody"].runtimeType);
+        //   debugPrint(res["responseBody"].runtimeType);
         //   if((res["responseBody"].runtimeType) == String){
         //     showToast(res["responseBody"]);
         //     //Toast.show(res["responseBody"]['errorMessage'], duration: Toast.lengthLong, gravity:  Toast.center);
@@ -442,7 +438,7 @@ class APIService {
       }
 
 
-    } on TimeoutException catch (e) {
+    } on TimeoutException {
       if (loader) {
         OverlayLoadingProgress.stop();
       }
@@ -453,7 +449,7 @@ class APIService {
         OverlayLoadingProgress.stop();
       }
       showToastMgs("Cannot connect to server. Please check if backend is running on port 8000.");
-      print("ClientException: ${e.message} - ${e.uri}");
+      debugPrint("ClientException: ${e.message} - ${e.uri}");
       dynamic mapdata = {};
       mapdata["type"] = "error";
       mapdata["status"] = 0;

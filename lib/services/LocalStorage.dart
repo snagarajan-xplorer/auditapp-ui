@@ -1,5 +1,4 @@
-import 'package:encryptor/encryptor.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 class LocalStorage{
 
@@ -18,12 +17,11 @@ class LocalStorage{
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? output = prefs.getString(name);
 
-    print(output);
+    debugPrint(output);
     return output;
   }
   static Future<bool> setStringData(String name,dynamic obj) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String data = Encryptor.encrypt(key, obj);
     return prefs.setString(name,obj);
   }
 

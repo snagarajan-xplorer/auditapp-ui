@@ -339,10 +339,10 @@ class _AllIndiaStateWiseAuditState
         .endRecording()
         .toImage(width.toInt(), height.toInt());
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
-    return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
+    return BitmapDescriptor.bytes(data!.buffer.asUint8List());
   }
 
-  void _setMapStyle(GoogleMapController controller) {
+  /* void _setMapStyle(GoogleMapController controller) {
     String mapStyle = '''
     [
       {
@@ -402,7 +402,7 @@ class _AllIndiaStateWiseAuditState
     ]
     ''';
     controller.setMapStyle(mapStyle);
-  }
+  } */
 
   List<LatLng> _convertCoords(List coords) {
     return coords
@@ -456,7 +456,7 @@ class _AllIndiaStateWiseAuditState
             ),
 
             // India Map Container
-            Container(
+            SizedBox(
               width: double.infinity,
               height: 500,
               child: BoxContainer(
@@ -468,7 +468,7 @@ class _AllIndiaStateWiseAuditState
                     ? Center(child: CircularProgressIndicator())
                     : Material(
                         elevation: 12,
-                        shadowColor: Colors.black.withOpacity(0.25),
+                        shadowColor: Colors.black.withValues(alpha: 0.25),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(0),
                         ),
@@ -626,7 +626,7 @@ class _AllIndiaStateWiseAuditState
           elevation: 3,
           child: InkWell(
             onTap: () => _zoomIn(),
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
               child: Icon(Icons.add, size: 20, color: Color(0xFF505050)),
@@ -640,7 +640,7 @@ class _AllIndiaStateWiseAuditState
           elevation: 3,
           child: InkWell(
             onTap: () => _zoomOut(),
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
               child: Icon(Icons.remove, size: 20, color: Color(0xFF505050)),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../constants.dart';
-import '../responsive.dart';
 
 class OutlineButtonComp extends StatelessWidget {
   final String? label;
@@ -13,7 +12,7 @@ class OutlineButtonComp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return OutlinedButton(
-      child: Container(
+      child: SizedBox(
         width: width,
         height: height,
         child: Center(

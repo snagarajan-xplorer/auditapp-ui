@@ -13,7 +13,7 @@ class AppDataTableTheme extends ThemeExtension<AppDataTableTheme> {
     return AppDataTableTheme(
      
       dataTableThemeData: themeData.dataTableTheme.copyWith(
-        headingRowColor: MaterialStateProperty.all(themeData.colorScheme.primary),
+        headingRowColor: WidgetStateProperty.all(themeData.colorScheme.primary),
         headingTextStyle: TextStyle(color: themeData.colorScheme.onPrimary),
       ), cardTheme: CardTheme(),
     );

@@ -1,11 +1,7 @@
 
-import 'dart:io';
 
 import 'package:audit_app/models/dynamicfield.dart';
-import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/services/utility.dart';
-import 'package:audit_app/widget/boxcontainer.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -20,9 +16,7 @@ import '../controllers/usercontroller.dart';
 import '../dynamicform/dynamicform.dart';
 import '../localization/app_translations.dart';
 import '../models/screenarguments.dart';
-import '../responsive.dart';
 import '../services/LocalStorage.dart';
-import '../widget/buttoncomp.dart';
 import 'main/layoutscreen.dart';
 
 class AddDataScreen extends StatefulWidget {
@@ -99,13 +93,13 @@ class _AddDataScreenState extends State<AddDataScreen> {
                 _imageName = pageargument?.editData!["image"];
                 mode = "Edit";
                 status = pageargument?.editData!["status"];
-                if(pageargument?.editData!["client"].toString().indexOf(",") != -1){
+                if(pageargument?.editData!["client"].toString().contains(",") == true){
                   pageargument?.editData!["client"] = pageargument?.editData!["client"].toString().split(",");
                 }else{
                   pageargument?.editData!["client"] = pageargument?.editData!["client"].toString();
                 }
                 formKey.currentState?.patchValue(pageargument?.editData ?? {});
-                print(usercontroller.formArray);
+                debugPrint(usercontroller.formArray.toString());
               }
             });
             showActive = true;
@@ -118,8 +112,8 @@ class _AddDataScreenState extends State<AddDataScreen> {
 
 
   Widget getRoleData(){
-    return usercontroller.role.length == 0 ?Container()
-    :Container(
+    return usercontroller.role.isEmpty ?Container()
+    :SizedBox(
       height: usercontroller.role.length*60,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -171,7 +165,7 @@ class _AddDataScreenState extends State<AddDataScreen> {
           child: Padding(
             padding: const EdgeInsets.all(defaultPadding),
             child: PageContainerComp(
-                showTitle: true,
+                showTitle: true, title: pageTitle,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -200,7 +194,7 @@ class _AddDataScreenState extends State<AddDataScreen> {
                                       }
                                       setState(() {});
                                     },
-                                    child: Container(
+                                    child: SizedBox(
                                       width: 100,
                                       height: 100,
 
@@ -247,7 +241,7 @@ class _AddDataScreenState extends State<AddDataScreen> {
                   if(obj.fieldname == "pincode"){
                     usercontroller.getPinCode(context, pincode: obj.fieldvalue, callback:(res){
                       List<DynamicField> arr = usercontroller.formArray.where((element)=>element.fieldName == "city").toList();
-                      if(arr.length != 0){
+                      if(arr.isNotEmpty){
                         arr[0].options = res.map<DropdownMenuItem<String>>((toElement)=>DropdownMenuItem(
                           value: toElement["Name"].toString(),
                           child: Text(toElement["Name"]),
@@ -260,11 +254,11 @@ class _AddDataScreenState extends State<AddDataScreen> {
                       });
                     });
                   }else if(obj.fieldname == "role"){
-                    print(obj.fieldvalue );
+                    debugPrint(obj.fieldvalue.toString());
                     List<DynamicField> clientid = usercontroller.formArray.where((element) => element.fieldName == "client").toList();
                     List<DynamicField> parentid = usercontroller.formArray.where((element) => element.fieldName == "parentid").toList();
                     if(obj.fieldvalue == "AD"){
-                      if(clientid.length != 0 && parentid.length != 0){
+                      if(clientid.isNotEmpty && parentid.isNotEmpty){
                         clientid[0].mandatory = "N";
                         parentid[0].mandatory = "N";
                         clientid[0].disabledYN = "Y";
@@ -277,7 +271,7 @@ class _AddDataScreenState extends State<AddDataScreen> {
                         parentid[0].validator = FormBuilderValidators.compose([]);
                       }
                     }else if(obj.fieldvalue == "JrA"){
-                      if(clientid.length != 0 && parentid.length != 0){
+                      if(clientid.isNotEmpty && parentid.isNotEmpty){
                         clientid[0].mandatory = "N";
                         parentid[0].mandatory = "N";
                         clientid[0].disabledYN = "Y";
@@ -290,7 +284,7 @@ class _AddDataScreenState extends State<AddDataScreen> {
                         parentid[0].validator = FormBuilderValidators.compose([]);
                       }
                     }else if(obj.fieldvalue == "SrA"){
-                      if(clientid.length != 0  && parentid.length != 0){
+                      if(clientid.isNotEmpty  && parentid.isNotEmpty){
                         clientid[0].mandatory = "Y";
                         clientid[0].visibility = "Y";
                         clientid[0].rules = [];
@@ -305,13 +299,13 @@ class _AddDataScreenState extends State<AddDataScreen> {
                   }
                 },
                 callback: (form){
-                  print(form["formdata"]);
+                  debugPrint(form["formdata"].toString());
 
                   if(pageargument?.mode == "Edit"){
                     form["formdata"]["id"] = pageargument?.editData!["id"];
                   }
-                  print(form["formdata"]);
-                  print(pageargument?.editData);
+                  debugPrint(form["formdata"].toString());
+                  debugPrint(pageargument?.editData.toString());
                   form["formdata"]["status"] = status;
 
                   if(pageargument?.argument == ArgumentData.USER){
@@ -343,8 +337,8 @@ class _AddDataScreenState extends State<AddDataScreen> {
                   }else{
                     String idvalue = form["formdata"]["client"].toString();
                     List<dynamic> objArr = usercontroller.clinetArr.where((element)=>element["clientid"].toString() == idvalue).toList();
-                    if(objArr.length != 0){
-                      print(objArr[0]);
+                    if(objArr.isNotEmpty){
+                      debugPrint(objArr[0].toString());
                       form["formdata"]["image"] = objArr[0]["logo"];
                       form["formdata"]["companyname"] = objArr[0]["clientname"];
                     }
@@ -364,10 +358,9 @@ class _AddDataScreenState extends State<AddDataScreen> {
               ),
                   ],
                 )
-                , title: pageTitle
             ),
           ),
         )
-    );;
+    );
   }
 }

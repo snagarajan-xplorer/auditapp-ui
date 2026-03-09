@@ -1,20 +1,16 @@
 
-import 'dart:convert';
 import 'package:audit_app/constants.dart';
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/services/utility.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/wavebackgroundanimation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:jiffy/jiffy.dart';
-import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import '../controllers/menu_app_controller.dart';
 import '../controllers/usercontroller.dart';
 import '../responsive.dart';
 import '../widget/input.dart';
@@ -61,7 +57,6 @@ class _LoginscreenState extends State<Loginscreen> {
 
       UtilityService().parseJsonFromAssets(filename)
           .then((res){
-        Map<String,dynamic> obj = jsonDecode(res);
         usercontroller.geoJsonParser.parseGeoJsonAsString(res);
       });
     });
@@ -86,9 +81,9 @@ class _LoginscreenState extends State<Loginscreen> {
                       child: Input(
                         validator: FormBuilderValidators.compose([
                           FormBuilderValidators.required(
-                              errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                              errorText: AppTranslations.of(context)!.text("key_error_01")),
                           // FormBuilderValidators.email(
-                          //     errorText: AppTranslations.of(context)!.text("key_error_02") ?? "")
+                          //     errorText: AppTranslations.of(context)!.text("key_error_02"))
                         ]),
                         prefixIcon: Icon(CupertinoIcons.person),
                         borderColor: Colors.white60,
@@ -104,7 +99,7 @@ class _LoginscreenState extends State<Loginscreen> {
                       child: Input(
                         validator: FormBuilderValidators.compose([
                           FormBuilderValidators.required(
-                              errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                              errorText: AppTranslations.of(context)!.text("key_error_01")),
                         ]),
                         borderColor: Colors.white60,
                         autofocus: false,
@@ -119,7 +114,7 @@ class _LoginscreenState extends State<Loginscreen> {
                             setState(() {
 
                             });
-                            print(showPassword);
+                            debugPrint(showPassword.toString());
                           },
                           child: Icon(showPassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash),
                         ),
@@ -151,7 +146,7 @@ class _LoginscreenState extends State<Loginscreen> {
                                   });
                                 }
                               },
-                              child: Container(
+                              child: SizedBox(
                                 height: 140,
                                 child: Form(
                                   key: passwordKey,
@@ -161,7 +156,7 @@ class _LoginscreenState extends State<Loginscreen> {
                                       Input(
                                         validator: FormBuilderValidators.compose([
                                           FormBuilderValidators.required(
-                                              errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                                              errorText: AppTranslations.of(context)!.text("key_error_01")),
 
                                         ]),
                                         prefixIcon: Icon(CupertinoIcons.person),
@@ -191,14 +186,14 @@ class _LoginscreenState extends State<Loginscreen> {
                           usercontroller.login(context, data: obj, callback:(){
                             if(Responsive.isDesktop(context)){
                               if(usercontroller.userData.changepass == "N"){
-                                Get.offNamed("/changepassword/"+usercontroller.userData.mvalue.toString()!);
+                                Get.offNamed("/changepassword/${usercontroller.userData.mvalue.toString()}");
                               }else{
                                 Get.offNamed("/dashboard");
                               }
                             }else if(Responsive.isMobile(context)){
-                              if(["CL","JrA"].indexOf(usercontroller.userData.role!) != -1){
+                              if(["CL","JrA"].contains(usercontroller.userData.role!)){
                                 if(usercontroller.userData.changepass == "N"){
-                                  Get.offNamed("/changepassword/"+usercontroller.userData.mvalue.toString()!);
+                                  Get.offNamed("/changepassword/${usercontroller.userData.mvalue.toString()}");
                                 }else{
                                   Get.offNamed("/dashboard");
                                 }

@@ -1,16 +1,9 @@
 
-import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:intl/intl.dart';
 
-import 'package:audit_app/models/dynamicfield.dart';
-import 'package:audit_app/screens/dashboard/components/storage_info_card.dart';
 import 'package:audit_app/services/api_service.dart';
-import 'package:audit_app/services/utility.dart';
-import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
-import 'package:audit_app/widget/outlinebutton.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,11 +11,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:jiffy/jiffy.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
-import '../dynamicform/dynamicform.dart';
 import '../localization/app_translations.dart';
 import '../models/screenarguments.dart';
 import '../responsive.dart';
@@ -56,7 +47,6 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
   DateTime firstDate = Jiffy.now().dateTime;
   DateTime lastDate = Jiffy.now().add(months: 8).dateTime;
   String? _image; // To store the image data
-  String? _imageName; // To store the image file name
 
   var req = {
     "validationInfoId": 0,
@@ -90,7 +80,6 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
               usercontroller.getZone(context, callback: (res2){
                 zone = res2.map((toElement)=>toElement.toString()).toList();
                 if(pageargument?.mode == "Edit"){
-                  _imageName = pageargument?.editData!["image"];
                   mode = "Edit";
                   pageargument?.editData!["client_id"] = pageargument?.editData!["client_id"].toString();
                   pageargument?.editData!["start_date"] = Jiffy.parse(pageargument?.editData!["start_date"]).dateTime;
@@ -125,7 +114,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
           child: FormBuilderTextField(
             name: "branch",
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             style: Theme.of(context).textTheme.bodyMedium,
             onChanged: (value){
 
@@ -168,7 +157,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
               child: Text(toElement["name"]),
             )).toList(),
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             decoration:  InputDecoration(
               label: RichText(
                 text: TextSpan(
@@ -211,7 +200,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
             firstDate: firstDate,
             lastDate: lastDate,
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
             style: Theme.of(context).textTheme.bodyMedium,
             inputType: InputType.date,
@@ -253,7 +242,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
           child: FormBuilderDateTimePicker(
             name: "start_time",
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
             style: Theme.of(context).textTheme.bodyMedium,
             inputType: InputType.time,
@@ -305,7 +294,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
               child: Text(toElement),
             )).toList(),
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             decoration:  InputDecoration(
               label: RichText(
                 text: TextSpan(
@@ -343,7 +332,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
             keyboardType: TextInputType.numberWithOptions(signed: true, decimal: false),
             maxLength: 6,
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             style: Theme.of(context).textTheme.bodyMedium,
             onChanged: (value){
               if(value.toString().length == 6){
@@ -424,7 +413,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
           child: FormBuilderTextField(
             name: "district",
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             style: Theme.of(context).textTheme.bodyMedium,
 
             decoration:  InputDecoration(
@@ -470,7 +459,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
           child: Text(toElement["Name"]),
         )).toList(),
         validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-            errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+            errorText: AppTranslations.of(context)!.text("key_error_01"))]),
         onChanged: (value){
 
         },
@@ -508,7 +497,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
           child: FormBuilderTextField(
             name: "state",
             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
             style: Theme.of(context).textTheme.bodyMedium,
 
             decoration:  InputDecoration(
@@ -577,8 +566,8 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
               editObj["start_date"] = Jiffy.parse(data["start_date"]).dateTime.toIso8601String();
               editObj["start_time"] = Jiffy.parse(data["start_time"]).dateTime.toIso8601String();
               editObj["created_user"] = usercontroller.userData.userId;
-              print(editObj);
-              print(data);
+              debugPrint(editObj.toString());
+              debugPrint(data.toString());
               if(deepEquality.equals(editObj, data)){
                 usercontroller.saveAudit(context, data: data, callback: (){
                   Navigator.pushNamed(context, "/auditlist",arguments: pageargument);
@@ -694,7 +683,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
                         title: AppTranslations.of(context)!.text("key_createaudit"),
                         child:Column(
                           children: [
-                            Container(
+                            SizedBox(
                               width: 150,
                               height: 100,
                               child: Container(
@@ -723,10 +712,10 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
                                                 child: Text(toElement["clientname"]),
                                               )).toList(),
                                               validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                                  errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                                  errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                               onChanged: (value){
                                                 List<dynamic> selectCompany = clientlist.where((element)=>element["clientid"].toString() == value.toString()).toList();
-                                                if(selectCompany.length != 0){
+                                                if(selectCompany.isNotEmpty){
                                                   _image = IMG_URL+selectCompany[0]["logo"];
                                                   loadImage = true;
                                                   setState(() {
@@ -795,7 +784,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
                                               child: Text(toElement["templatename"]),
                                             )).toList(),
                                             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                             decoration:  InputDecoration(
                                               label: RichText(
                                                 text: TextSpan(
@@ -830,7 +819,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
                                     FormBuilderTextField(
                                       name: "auditname",
                                       validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                          errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                          errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                       style: Theme.of(context).textTheme.bodyMedium,
                                       onChanged: (value){
 
@@ -881,7 +870,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
                                       name: "remarks",
                                       maxLines: 4,
                                       validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                          errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                          errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                       style: Theme.of(context).textTheme.bodyMedium,
                                       decoration:  InputDecoration(
                                         label: RichText(

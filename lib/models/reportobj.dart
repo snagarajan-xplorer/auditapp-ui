@@ -23,23 +23,23 @@ class ReportObj {
     if (json['children'] != null) {
       children = <Children>[];
       json['children'].forEach((v) {
-        children!.add(new Children.fromJson(v));
+        children!.add(Children.fromJson(v));
       });
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['zone'] = this.zone;
-    data['state'] = this.state;
-    data['total'] = this.total;
-    data['city'] = this.city;
-    data['auditname'] = this.auditname;
-    data['score'] = this.score;
-    data['length'] = this.length;
-    data['percentage'] = this.percentage;
-    if (this.children != null) {
-      data['children'] = this.children!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['zone'] = zone;
+    data['state'] = state;
+    data['total'] = total;
+    data['city'] = city;
+    data['auditname'] = auditname;
+    data['score'] = score;
+    data['length'] = length;
+    data['percentage'] = percentage;
+    if (children != null) {
+      data['children'] = children!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -61,11 +61,11 @@ class Children {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['key'] = this.key;
-    data['value'] = this.value;
-    data['scorevalue'] = this.scorevalue;
-    data['totalvalue'] = this.totalvalue;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['key'] = key;
+    data['value'] = value;
+    data['scorevalue'] = scorevalue;
+    data['totalvalue'] = totalvalue;
     return data;
   }
 }

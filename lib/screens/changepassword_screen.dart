@@ -6,10 +6,8 @@ import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 
-import '../controllers/menu_app_controller.dart';
 import '../controllers/usercontroller.dart';
 import '../widget/input.dart';
 class ChangepasswordScreen extends StatefulWidget {
@@ -95,7 +93,7 @@ class _ChangepasswordScreenState extends State<ChangepasswordScreen> {
                             Input(
                               validator: FormBuilderValidators.compose([
                                 FormBuilderValidators.required(
-                                    errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                                    errorText: AppTranslations.of(context)!.text("key_error_01")),
                               ]),
                               borderColor: Colors.white60,
                               prefixIcon: Icon(CupertinoIcons.lock),
@@ -109,7 +107,7 @@ class _ChangepasswordScreenState extends State<ChangepasswordScreen> {
                                   setState(() {
 
                                   });
-                                  print(showPassword);
+                                  debugPrint(showPassword.toString());
                                 },
                                 child: Icon(showPassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash),
                               ),
@@ -122,7 +120,7 @@ class _ChangepasswordScreenState extends State<ChangepasswordScreen> {
                             Input(
                               validator: FormBuilderValidators.compose([
                                 FormBuilderValidators.required(
-                                    errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                                    errorText: AppTranslations.of(context)!.text("key_error_01")),
                               ]),
                               borderColor: Colors.white60,
                               prefixIcon: Icon(CupertinoIcons.lock),

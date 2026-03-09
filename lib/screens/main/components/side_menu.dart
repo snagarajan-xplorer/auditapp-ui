@@ -59,8 +59,6 @@ class _SideMenuState extends State<SideMenu> {
 
     // Dynamically determine which sections should be expanded based on selected menu key
     const auditStatusKeys = ['dashboard', 'scheduled', 'unscheduled'];
-    const heatMapActivityKeys = ['heatmap-allindia', 'heatmap-region'];
-    const heatMapMapKeys = ['map-allindia-state', 'map-red-report'];
     const reportsActivityWiseKeys = ['heatmap-allindia', 'heatmap-region'];
     const reportsMapWiseKeys = ['map-allindia-state', 'map-red-report'];
     const reportsSubKeys = ['reports-published', 'reports-red', 'reports-ncc'];
@@ -68,9 +66,6 @@ class _SideMenuState extends State<SideMenu> {
     const auditKeys = ['audit-create', 'audit-list'];
 
     bool isAuditStatusExpanded = auditStatusKeys.contains(menuKey);
-    bool isHeatMapActivityExpanded = heatMapActivityKeys.contains(menuKey);
-    bool isHeatMapMapExpanded = heatMapMapKeys.contains(menuKey);
-    bool isHeatMapExpanded = isHeatMapActivityExpanded || isHeatMapMapExpanded;
     bool isReportsActivityWiseExpanded = reportsActivityWiseKeys.contains(menuKey);
     bool isReportsMapWiseExpanded = reportsMapWiseKeys.contains(menuKey);
     bool isReportsSubExpanded = reportsSubKeys.contains(menuKey);
@@ -303,8 +298,7 @@ class _SideMenuState extends State<SideMenu> {
                         collapsedBackgroundColor: Color(0xFF505050),
                         children: [
                           if (menuAccessRole
-                                  .indexOf(usercontroller.userData.role!) !=
-                              -1)
+                                  .contains(usercontroller.userData.role!))
                             DrawerListTile(
                               menuKey: 'reports-published',
                               selectedMenuKey: menuKey,
@@ -375,8 +369,7 @@ class _SideMenuState extends State<SideMenu> {
                     collapsedBackgroundColor: Color(0xFF505050),
                     children: [
                       if (menuAccessRole
-                              .indexOf(usercontroller.userData.role!) !=
-                          -1)
+                              .contains(usercontroller.userData.role!))
                         DrawerListTile(
                           menuKey: 'settings-users',
                           selectedMenuKey: menuKey,
@@ -394,8 +387,7 @@ class _SideMenuState extends State<SideMenu> {
                           },
                         ),
                       if (menuAccessRole
-                              .indexOf(usercontroller.userData.role!) !=
-                          -1)
+                              .contains(usercontroller.userData.role!))
                         DrawerListTile(
                           menuKey: 'settings-template',
                           selectedMenuKey: menuKey,
@@ -413,8 +405,7 @@ class _SideMenuState extends State<SideMenu> {
                           },
                         ),
                       if (menuAccessRoleAdmin
-                              .indexOf(usercontroller.userData.role!) !=
-                          -1)
+                              .contains(usercontroller.userData.role!))
                         DrawerListTile(
                           menuKey: 'settings-brand',
                           selectedMenuKey: menuKey,
@@ -451,8 +442,7 @@ class _SideMenuState extends State<SideMenu> {
                     collapsedBackgroundColor: Color(0xFF505050),
                     children: [
                       if (menuAccessRole
-                              .indexOf(usercontroller.userData.role!) !=
-                          -1)
+                              .contains(usercontroller.userData.role!))
                         DrawerListTile(
                           menuKey: 'audit-create',
                           selectedMenuKey: menuKey,
@@ -498,14 +488,14 @@ class _SideMenuState extends State<SideMenu> {
 
 class DrawerListTile extends StatefulWidget {
   const DrawerListTile({
-    Key? key,
+    super.key,
     required this.title,
     required this.menuKey,
     required this.selectedMenuKey,
     this.svgSrc,
     required this.press,
     this.titleStyle,
-  }) : super(key: key);
+  });
   final String menuKey;
   final String selectedMenuKey;
   final String title;

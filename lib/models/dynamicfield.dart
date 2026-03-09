@@ -1,9 +1,6 @@
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'selectionobj.dart';
-import 'selected_list_item.dart';
 import 'package:flutter/services.dart';
 
 
@@ -15,7 +12,7 @@ class DynamicField {
   String? lobNameBl1;
   String? prodCode;
   String? prodName;
-  dynamic? prodNameBl1;
+  dynamic prodNameBl1;
   String? blockCategory;
   String? blockName;
   bool? showMic;
@@ -24,30 +21,30 @@ class DynamicField {
   String? blockNameBl1;
   int? blockOrder;
   String? fieldName;
-  dynamic? minLimit;
-  dynamic? maxLimit;
+  dynamic minLimit;
+  dynamic maxLimit;
   int? maxLen;
   bool? isMobile;
   bool? allowPaste;
-  dynamic? keystate;
+  dynamic keystate;
   String? labelName;
   String? labelNameBl1;
-  dynamic? premiaColumnName;
+  dynamic premiaColumnName;
   int? fieldDisplayOrder;
-  dynamic? blockId;
+  dynamic blockId;
   String? fieldType;
   String? dataType;
-  dynamic? serviceName;
+  dynamic serviceName;
   Map<String,dynamic>? requestObj;
   String? visibility;
   String? mandatory;
   bool? isPassword;
   bool? allowSpecialCharactor;
-  dynamic? defaultYN;
-  dynamic? disabledYN;
-  dynamic? minDate;
-  dynamic? maxDate;
-  dynamic? errorObj;
+  dynamic defaultYN;
+  dynamic disabledYN;
+  dynamic minDate;
+  dynamic maxDate;
+  dynamic errorObj;
   int? minLength;
   int? maxLength;
   int? exactLength;
@@ -57,8 +54,8 @@ class DynamicField {
   String? optvalue;
   String? caseType;
   String? widgetType;
-  dynamic? eventName;
-  dynamic? calendarStartView;
+  dynamic eventName;
+  dynamic calendarStartView;
   List<Rules>? rules;
   List<Rules>? backupRules;
   List<TextInputFormatter>? inputFormatters;
@@ -66,9 +63,9 @@ class DynamicField {
   List<DropdownMenuItem<String>>? options;
   List<dynamic>? lovData;
   FormFieldValidator? validator;
-  dynamic? fieldValue;
-  dynamic? selectedValue;
-  dynamic? currencyValue;
+  dynamic fieldValue;
+  dynamic selectedValue;
+  dynamic currencyValue;
   bool? enableTime;
   bool? isCurrency;
 
@@ -140,7 +137,7 @@ class DynamicField {
     blockName = json['blockName'];
     lovData = [];
     allowPaste = json['allowPaste'] ?? false;
-    widgetType = json["widgetType"] == null? "Column":json["widgetType"];
+    widgetType = json["widgetType"] ?? "Column";
     blockNameBl1 = json['blockNameBl1'];
     blockOrder = json['blockOrder'];
     fieldName = json['fieldName'];
@@ -154,7 +151,7 @@ class DynamicField {
     enableTime = json['enableTime'];
     optkey = json.containsKey("optkey") ? json["optkey"] : "";
     optvalue = json.containsKey("optvalue") ? json["optvalue"] : "";
-    showMic = json["showMic"] == null ? false : json["showMic"];
+    showMic = json["showMic"] ?? false;
     premiaColumnName = json['premiaColumnName'];
     fieldDisplayOrder = int.tryParse(json['fieldDisplayOrder'].toString());
     blockId = json['blockId'];
@@ -164,19 +161,19 @@ class DynamicField {
     }else{
       requestObj = null;
     }
-    isCurrency = json['isCurrency'] == null ? false:json['isCurrency'];
-    isMobile = json['isMobile'] == null ? false:json['isMobile'];
+    isCurrency = json['isCurrency'] ?? false;
+    isMobile = json['isMobile'] ?? false;
     errorObj = {
       "cont":false,
       "msg":""
     };
-    isPassword = json["isPassword"] == null?false:json["isPassword"];
+    isPassword = json["isPassword"] ?? false;
     dataType = json['dataType'];
     serviceName = json['serviceName'];
     visibility = json['visibility'];
     mandatory = json['mandatory'];
     defaultYN = json['defaultYN'];
-    disabledYN = json['disabledYN'] == null ? "N":json['disabledYN'];
+    disabledYN = json['disabledYN'] ?? "N";
     minDate = json['minDate'];
     maxDate = json['maxDate'];
     minLength = json['minLength'];
@@ -193,8 +190,8 @@ class DynamicField {
       rules = <Rules>[];
       backupRules = <Rules>[];
       json['rules'].forEach((v) {
-        rules!.add(new Rules.fromJson(v));
-        backupRules!.add(new Rules.fromJson(v));
+        rules!.add(Rules.fromJson(v));
+        backupRules!.add(Rules.fromJson(v));
       });
     }
     inputFormatters = [];
@@ -202,52 +199,52 @@ class DynamicField {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['fieldInfoId'] = this.fieldInfoId;
-    data['lobCode'] = this.lobCode;
-    data['lobName'] = this.lobName;
-    data['lobNameBl1'] = this.lobNameBl1;
-    data['prodCode'] = this.prodCode;
-    data["widgetType"] = this.widgetType;
-    data['enableTime']= this.enableTime;
-    data['prodName'] = this.prodName;
-    data["showMic"] = this.showMic;
-    data['prodNameBl1'] = this.prodNameBl1;
-    data['blockCategory'] = this.blockCategory;
-    data['blockName'] = this.blockName;
-    data['fieldValue'] = this.fieldValue;
-    data["caseType"] = this.caseType;
-    data["isCurrency"] = this.isCurrency;
-    data["isMobile"] = this.isMobile;
-    data["maxLen"] = this.maxLen;
-    data["allowSpecialCharactor"]= this.allowSpecialCharactor;
-    data['blockNameBl1'] = this.blockNameBl1;
-    data['blockOrder'] = this.blockOrder;
-    data['fieldName'] = this.fieldName;
-    data["isPassword"] = this.isPassword;
-    data['labelName'] = this.labelName;
-    data['labelNameBl1'] = this.labelNameBl1;
-    data['premiaColumnName'] = this.premiaColumnName;
-    data['fieldDisplayOrder'] = this.fieldDisplayOrder;
-    data['blockId'] = this.blockId;
-    data['fieldType'] = this.fieldType;
-    data['dataType'] = this.dataType;
-    data['serviceName'] = this.serviceName;
-    data['visibility'] = this.visibility;
-    data['mandatory'] = this.mandatory;
-    data['defaultYN'] = this.defaultYN;
-    data['disabledYN'] = this.disabledYN;
-    data['minDate'] = this.minDate;
-    data['maxDate'] = this.maxDate;
-    data['minLength'] = this.minLength;
-    data['maxLength'] = this.maxLength;
-    data['exactLength'] = this.exactLength;
-    data['applicableChannel'] = this.applicableChannel;
-    data['applicableTo'] = this.applicableTo;
-    data['eventName'] = this.eventName;
-    data['calendarStartView'] = this.calendarStartView;
-    if (this.rules != null) {
-      data['rules'] = this.rules!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['fieldInfoId'] = fieldInfoId;
+    data['lobCode'] = lobCode;
+    data['lobName'] = lobName;
+    data['lobNameBl1'] = lobNameBl1;
+    data['prodCode'] = prodCode;
+    data["widgetType"] = widgetType;
+    data['enableTime']= enableTime;
+    data['prodName'] = prodName;
+    data["showMic"] = showMic;
+    data['prodNameBl1'] = prodNameBl1;
+    data['blockCategory'] = blockCategory;
+    data['blockName'] = blockName;
+    data['fieldValue'] = fieldValue;
+    data["caseType"] = caseType;
+    data["isCurrency"] = isCurrency;
+    data["isMobile"] = isMobile;
+    data["maxLen"] = maxLen;
+    data["allowSpecialCharactor"]= allowSpecialCharactor;
+    data['blockNameBl1'] = blockNameBl1;
+    data['blockOrder'] = blockOrder;
+    data['fieldName'] = fieldName;
+    data["isPassword"] = isPassword;
+    data['labelName'] = labelName;
+    data['labelNameBl1'] = labelNameBl1;
+    data['premiaColumnName'] = premiaColumnName;
+    data['fieldDisplayOrder'] = fieldDisplayOrder;
+    data['blockId'] = blockId;
+    data['fieldType'] = fieldType;
+    data['dataType'] = dataType;
+    data['serviceName'] = serviceName;
+    data['visibility'] = visibility;
+    data['mandatory'] = mandatory;
+    data['defaultYN'] = defaultYN;
+    data['disabledYN'] = disabledYN;
+    data['minDate'] = minDate;
+    data['maxDate'] = maxDate;
+    data['minLength'] = minLength;
+    data['maxLength'] = maxLength;
+    data['exactLength'] = exactLength;
+    data['applicableChannel'] = applicableChannel;
+    data['applicableTo'] = applicableTo;
+    data['eventName'] = eventName;
+    data['calendarStartView'] = calendarStartView;
+    if (rules != null) {
+      data['rules'] = rules!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -260,7 +257,7 @@ class dropDownModel{
   dropDownModel.fromJson(Map<String, dynamic> json) {
     key = json['key'];
     value = json['value'];
-    mandatory = json['mandatory']==null?"0":json['mandatory'];
+    mandatory = json['mandatory'] ?? "0";
   }
 }
 class Rules {
@@ -289,13 +286,13 @@ class Rules {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['validationInfoId'] = this.validationInfoId;
-    data['name'] = this.name;
-    data['type'] = this.type;
-    data['errorMsg'] = this.errorMsg;
-    data['errorMsgBl1'] = this.errorMsgBl1;
-    data['script'] = this.script;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['validationInfoId'] = validationInfoId;
+    data['name'] = name;
+    data['type'] = type;
+    data['errorMsg'] = errorMsg;
+    data['errorMsgBl1'] = errorMsgBl1;
+    data['script'] = script;
     return data;
   }
 }

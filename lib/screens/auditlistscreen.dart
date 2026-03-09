@@ -1,10 +1,8 @@
-import 'package:audit_app/dynamicform/selectinput.dart';
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
 import 'package:audit_app/widget/norecordcomp.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:audit_app/widget/statuscomp.dart';
@@ -13,12 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:jiffy/jiffy.dart';
 import 'package:pluto_grid_plus/pluto_grid_plus.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
-import '../models/dynamicfield.dart';
 import '../responsive.dart';
 import 'main/layoutscreen.dart';
 
@@ -166,7 +162,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
       column = [];
       auditList = [];
       setState(() {});
-      dataObj.forEach((element){
+      for (var element in dataObj) {
         PlutoColumn col = PlutoColumn(
           title: element["lable"],
           field: element["key"],
@@ -206,7 +202,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
               type: PlutoColumnType.text(),
               renderer: (PlutoColumnRendererContext context2) {
                 Widget w = Container();
-                if(["CL"].indexOf(usercontroller.userData.role.toString()) == -1 && ["P","CL"].indexOf(context2.row.data["status"].toString()) == -1){
+                if(!["CL"].contains(usercontroller.userData.role.toString()) && !["P","CL"].contains(context2.row.data["status"].toString())){
                   w = Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -234,7 +230,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                   w = ButtonComp(label: AppTranslations.of(context)!.text("key_remarks"), onPressed: (){
                     usercontroller.getAuditRemarks(context, data: {"audit_id":context2.row.data["id"]}, callback:(res){
                       List<dynamic> arr = res.where((element)=>element["type"] == "Cancel Audit").toList();
-                      if(arr.length != 0){
+                      if(arr.isNotEmpty){
                         APIService(context).showWindowAlert(title: arr[0]["type"],desc: arr[0]["remarks"],callback: (){});
                       }
                     });
@@ -246,12 +242,12 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
           );
         }
         column.add(col);
-      });
+      }
       List<dynamic> dataArr = res;
       auditList = dataArr.map((e) => e as Map<String, dynamic>).toList();
-      auditList.forEach((element){
+      for (var element in auditList) {
         Map<String, PlutoCell> obj = {};
-        dataObj.forEach((dataobjval){
+        for (var dataobjval in dataObj) {
           if(dataobjval["key"] == "status"){
             obj[dataobjval["key"]]= PlutoCell(value: element[dataobjval["key"]]);
           }else if(dataobjval["key"] == "action"){
@@ -261,13 +257,13 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
           }else{
             obj[dataobjval["key"]]= PlutoCell(value: element[dataobjval["key"]]);
           }
-        });
-        print("status ${status} - ${element["status"]}");
+        }
+        debugPrint("status $status - ${element["status"]}");
         if(status == "P" && element["status"] == "P"){
           rows.add(PlutoRow(cells: obj,data: element));
-        }else if(status == "IP" && ["IP","PG"].indexOf(element["status"]) != -1){
+        }else if(status == "IP" && ["IP","PG"].contains(element["status"])){
           rows.add(PlutoRow(cells: obj,data: element));
-        }else if(status == "CL" && ["CL"].indexOf(element["status"]) != -1){
+        }else if(status == "CL" && ["CL"].contains(element["status"])){
           rows.add(PlutoRow(cells: obj,data: element));
         }if(status == "S" && element["status"] == "S"){
           rows.add(PlutoRow(cells: obj,data: element));
@@ -275,19 +271,17 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
           rows.add(PlutoRow(cells: obj,data: element));
         }
 
-      });
+      }
       refreshGridWithNewData(rows);
       setState(() {});
     });
 
   }
    void refreshGridWithNewData(List<PlutoRow> newRows) {
-    if(stateManager != null){
-      stateManager.removeAllRows();
-      stateManager.appendRows(newRows);
-      stateManager.notifyListeners();
-    }
-   }
+    stateManager.removeAllRows();
+    stateManager.appendRows(newRows);
+    stateManager.notifyListeners();
+     }
 
   Widget mobileView(fileInfo) {
     return BoxContainer(
@@ -446,7 +440,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
               ),
               SizedBox(height: 15,),
               Visibility(
-                visible: ["P","CL"].indexOf(element["status"]) == -1 ? true : false,
+                visible: !["P","CL"].contains(element["status"]) ? true : false,
                 //   visible: false,
                   child: Center(
                     child: ButtonComp(
@@ -564,7 +558,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                     child: ButtonComp(label: AppTranslations.of(context)!.text("key_remarks"), onPressed: (){
                       usercontroller.getAuditRemarks(context, data: {"audit_id":element["id"]}, callback:(res){
                         List<dynamic> arr = res.where((element)=>element["type"] == "Cancel Audit").toList();
-                        if(arr.length != 0){
+                        if(arr.isNotEmpty){
                           APIService(context).showWindowAlert(title: arr[0]["type"],desc: arr[0]["remarks"],callback: (){});
                         }
                       });
@@ -580,7 +574,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                         width: 200,
                         label: AppTranslations.of(context)!.text("key_report"),
                         onPressed: (){
-                          print("element ${element}");
+                          debugPrint("element $element");
                           Navigator.pushNamed(context, "/auditdetails",arguments: ScreenArgument(argument: ArgumentData.USER,mapData: element));
                         }
                     ),
@@ -609,7 +603,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
           child: PageContainerComp(
             header: Row(
               children: [
-                Container(height: 40,width: 180,child: FormBuilderDropdown<dynamic>(
+                SizedBox(height: 40,width: 180,child: FormBuilderDropdown<dynamic>(
                   name: "status",
                   initialValue: status,
                   items: statusArr.map<DropdownMenuItem<String>>((toElement)=>DropdownMenuItem(
@@ -622,7 +616,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                     getAuditList();
                   },
                   validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                      errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                   decoration:  InputDecoration(
                     label: RichText(
                       text: TextSpan(
@@ -651,7 +645,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                   ),
                 )),
                 SizedBox(width: 10,),
-                Container(height: 40,width: 120,child: FormBuilderDropdown<String>(
+                SizedBox(height: 40,width: 120,child: FormBuilderDropdown<String>(
                   name: "year",
                   initialValue: year,
                   items: usercontroller.year.map<DropdownMenuItem<String>>((toElement)=>DropdownMenuItem(
@@ -664,7 +658,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                     getAuditList();
                   },
                   validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                      errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                   decoration:  InputDecoration(
                     label: RichText(
                       text: TextSpan(
@@ -693,7 +687,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                   ),
                 ),),
                 SizedBox(width: 10,),
-                Container(height: 40,width: 120,child: FormBuilderDropdown<dynamic>(
+                SizedBox(height: 40,width: 120,child: FormBuilderDropdown<dynamic>(
                   name: "month",
                   initialValue: month,
                   items: monthArr.map<DropdownMenuItem<String>>((toElement)=>DropdownMenuItem(
@@ -706,7 +700,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                     getAuditList();
                   },
                   validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                      errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                   decoration:  InputDecoration(
                     label: RichText(
                       text: TextSpan(
@@ -741,7 +735,12 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
             enableScroll: false,
             showTitle: true,
             padding: 0,
-            child: auditList.length == 0 ?
+            title: AppTranslations.of(context)!.text("key_auditlist"),
+            showButton: menuAccessRole.contains(usercontroller.userData.role!)?true:false,
+            callback: (){
+              Navigator.pushNamed(context, "/addaudit",arguments: ScreenArgument(argument: ArgumentData.USER,mapData: auditList));
+            },
+            child: auditList.isEmpty ?
             Norecordcomp()
                 :Center(
               child: SizedBox(
@@ -762,7 +761,7 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                     setState(() {});// Set rows per page
                   },
                   onChanged: (PlutoGridOnChangedEvent event) {
-                    print(event);
+                    debugPrint(event.toString());
                   },
                   createFooter: (stateManager) {
                     stateManager.setPageSize(10,notify: false);
@@ -777,11 +776,6 @@ class _AuditlistscreenState extends State<Auditlistscreen> {
                 ),
               ),
             ),
-            title: AppTranslations.of(context)!.text("key_auditlist"),
-            showButton: menuAccessRole.indexOf(usercontroller.userData.role!) != -1?true:false,
-            callback: (){
-              Navigator.pushNamed(context, "/addaudit",arguments: ScreenArgument(argument: ArgumentData.USER,mapData: auditList));
-            },
           ),
         ),
     );

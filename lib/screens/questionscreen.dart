@@ -1,24 +1,13 @@
 
-import 'dart:io';
 
-import 'package:audit_app/models/dynamicfield.dart';
-import 'package:audit_app/services/api_service.dart';
-import 'package:audit_app/services/utility.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
 import 'package:audit_app/widget/outlinebutton.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:jiffy/jiffy.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
-import '../dynamicform/dynamicform.dart';
 import '../localization/app_translations.dart';
 import '../models/screenarguments.dart';
 import '../responsive.dart';
@@ -40,8 +29,7 @@ class _QuestionscreenState extends State<Questionscreen> {
   List<dynamic> categorylist = [];
   List<dynamic> dropdownlist = [];
   ScreenArgument? pageargument;
-  Uint8List? _imageBytes; // To store the image data
-  String? _imageName; // To store the image file name
+
 
   var req = {
     "validationInfoId": 0,

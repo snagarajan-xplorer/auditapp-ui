@@ -1,10 +1,6 @@
-import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
 import '../../../controllers/usercontroller.dart';
-import '../../../localization/app_translations.dart';
 import '../../../models/screenarguments.dart';
-import './../../../models/my_files.dart';
 import './../../../responsive.dart';
 import 'package:flutter/material.dart';
 
@@ -18,23 +14,23 @@ class MyFiles extends StatelessWidget {
   final String role;
   final Function(String) callback;
   const MyFiles({
-    Key? key, required this.droparr, required this.selectedItem, required this.valueKey, required this.callback, required this.role,
-  }) : super(key: key);
+    super.key, required this.droparr, required this.selectedItem, required this.valueKey, required this.callback, required this.role,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final Size _size = MediaQuery.of(context).size;
+    final Size size = MediaQuery.of(context).size;
     return Column(
       children: [
 
         Responsive(
           mobile: FileInfoCardGridView(
-            crossAxisCount: _size.width < 650 ? 2 : 4,
-            childAspectRatio: _size.width < 650 && _size.width > 350 ? 1.3 : 1,
+            crossAxisCount: size.width < 650 ? 2 : 4,
+            childAspectRatio: size.width < 650 && size.width > 350 ? 1.3 : 1,
           ),
           tablet: FileInfoCardGridView(),
           desktop: FileInfoCardGridView(
-            childAspectRatio: _size.width < 1400 ? 1.1 : 1.4,
+            childAspectRatio: size.width < 1400 ? 1.1 : 1.4,
           ),
         ),
       ],
@@ -44,15 +40,15 @@ class MyFiles extends StatelessWidget {
 
 class FileInfoCardGridView extends StatelessWidget {
    FileInfoCardGridView({
-    Key? key,
+    super.key,
     this.crossAxisCount = 4,
     this.childAspectRatio = 1,
-  }) : super(key: key);
+  });
 
   final int crossAxisCount;
   final double childAspectRatio;
 
-  UserController usercontroller = Get.put(UserController());
+  final UserController usercontroller = Get.put(UserController());
 //Navigator.pushNamed(context, "/auditlist",arguments: ScreenArgument(argument: ArgumentData.USER,mapData: {}));
   @override
   Widget build(BuildContext context) {

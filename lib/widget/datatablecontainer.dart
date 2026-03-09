@@ -1,16 +1,11 @@
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/services/api_service.dart';
-import 'package:audit_app/widget/norecordcomp.dart';
-import 'package:audit_app/widget/statuscomp.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:get/get.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
-import '../responsive.dart';
 import '../utils/datatablesource.dart';
-import 'buttoncomp.dart';
 class DataTableContainer extends StatefulWidget {
   final List<Map<String,dynamic>> dataArr;
   final List<Map<String,dynamic>> fieldArr;
@@ -25,7 +20,6 @@ class DataTableContainer extends StatefulWidget {
 }
 
 class _DataTableContainerState extends State<DataTableContainer> {
-  ScrollController _horizantal = ScrollController();
   late AppDataTableSource dataTableSource ;
   UserController usercontroller = Get.put(UserController());
   bool loadCont = false;
@@ -70,9 +64,9 @@ class _DataTableContainerState extends State<DataTableContainer> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      child: widget.fieldArr.length != 0 && loadCont == true ? PaginatedDataTable(
+      child: widget.fieldArr.isNotEmpty && loadCont == true ? PaginatedDataTable(
         columnSpacing: defaultPadding,
         horizontalMargin: 12,
         columns: widget.fieldArr.map((element)=>DataColumn2(

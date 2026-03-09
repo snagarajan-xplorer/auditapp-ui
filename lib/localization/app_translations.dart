@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
@@ -27,14 +26,10 @@ class AppTranslations {
     return appTranslations;
   }
 
-  get currentLanguage => locale.languageCode;
+  String get currentLanguage => locale.languageCode;
 
   String text(String key) {
 
-    if(_localisedValues != null){
-      return _localisedValues[key] ?? "$key not found";
-    }else{
-      return "";
+    return _localisedValues[key] ?? "$key not found";
     }
-  }
 }

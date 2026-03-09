@@ -55,22 +55,22 @@ class UserData {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['messgae'] = this.messgae;
-    data['token'] = this.token;
-    data['logintime'] = this.logintime;
-    data['user_id'] = this.userId;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['messgae'] = messgae;
+    data['token'] = token;
+    data['logintime'] = logintime;
+    data['user_id'] = userId;
     // Store as comma-separated string so fromJson can always parse it correctly
-    data['clientid'] = this.clientid?.join(",") ?? "";
-    data['parentid'] = this.parentid;
-    data['mvalue'] = this.mvalue;
-    data['name'] = this.name;
-    data['image'] = this.image;
-    data['mobile'] = this.mobile;
-    data['email'] = this.email;
-    data['changepass'] = this.changepass;
-    data['role'] = this.role;
-    data['rolename'] = this.rolename;
+    data['clientid'] = clientid?.join(",") ?? "";
+    data['parentid'] = parentid;
+    data['mvalue'] = mvalue;
+    data['name'] = name;
+    data['image'] = image;
+    data['mobile'] = mobile;
+    data['email'] = email;
+    data['changepass'] = changepass;
+    data['role'] = role;
+    data['rolename'] = rolename;
     return data;
   }
 }

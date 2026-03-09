@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
 import 'package:audit_app/constants.dart';
 import 'package:flutter/services.dart';
@@ -81,7 +80,7 @@ class UserController extends GetxController {
       defaultPolygonBorderColor: Colors.red,
       defaultPolygonFillColor: Colors.red.withAlpha(10),
       defaultPolylineStroke: 1);
-  loadInitData() async {
+  Future<void> loadInitData() async {
     String? str = await LocalStorage.getStringData("userdata");
     if (str != null && str.isNotEmpty) {
       userData = UserData.fromJson(jsonDecode(str));
@@ -103,7 +102,6 @@ class UserController extends GetxController {
     }
 
     UtilityService().parseJsonFromAssets(filename).then((res) {
-      Map<String, dynamic> obj = jsonDecode(res);
       geoJsonParser.parseGeoJsonAsString(res);
     });
   }
@@ -115,7 +113,7 @@ class UserController extends GetxController {
     APIService(context).postData("login", data, false).then((resvalue) async {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
-        print("login response ${res}");
+        debugPrint("login response $res");
         if (!res.containsKey("type")) {
           // Clear any stale session from a previous user before saving new one
           await LocalStorage.clearData("userdata");
@@ -123,7 +121,7 @@ class UserController extends GetxController {
           userData = UserData.fromJson(res);
           callback(); 
         } else {
-          print(res["message"]);
+          debugPrint(res["message"]);
           if (res.containsKey("message")) {
             onFail(res["message"]);
           }
@@ -164,7 +162,7 @@ class UserController extends GetxController {
         .then((resvalue) {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
-        print(res);
+        debugPrint(res.toString());
         if (!res.containsKey("type")) {
           callback(res);
         }
@@ -234,7 +232,7 @@ class UserController extends GetxController {
       data,
     )
         .then((resvalue) {
-      print("resvalue ${resvalue}");
+      debugPrint("resvalue $resvalue");
       if (resvalue != null && resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (res.containsKey("message")) {
@@ -281,7 +279,7 @@ class UserController extends GetxController {
   void getPinCode(context,
       {required String pincode, required Function(List<dynamic>) callback}) {
     APIService(context)
-        .getData("searchPincode?pincode=" + pincode, true)
+        .getData("searchPincode?pincode=$pincode", true)
         .then((resvalue) {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
@@ -309,7 +307,7 @@ class UserController extends GetxController {
   void getTemplateList(context,
       {required String clientid, required Function(List<dynamic>) callback}) {
     APIService(context)
-        .getData("getTemplate?clientid=" + clientid, true)
+        .getData("getTemplate?clientid=$clientid", true)
         .then((resvalue) {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
@@ -459,7 +457,7 @@ class UserController extends GetxController {
         ? Map<String, dynamic>.from(statusRaw)
         : _normalizeAuditStatusMap(statusRaw?.toString() ?? '');
     return {
-      'audit_id':         item['audit_no'] ?? item['audit_id'] ?? ('AD-' + (item['id']?.toString() ?? '')),
+      'audit_id':         item['audit_no'] ?? item['audit_id'] ?? ('AD-${item['id']?.toString() ?? ''}'),
       'audit_name':       item['audit_name'] ?? item['auditname'] ?? '-',
       'sched_date':       _formatAuditDate(item['sched_date'] ?? item['start_date']),
       'start_date':       _formatAuditDate(item['start_date']),
@@ -1146,7 +1144,7 @@ class UserController extends GetxController {
         obj.isPassword = false;
         obj.showMic = false;
         obj.isCurrency = false;
-        obj.disabledYN = obj.disabledYN == null ? "N" : obj.disabledYN;
+        obj.disabledYN = obj.disabledYN ?? "N";
         obj.enableTime = false;
         obj.fieldValue = "";
         obj.selectedValue = "";
@@ -1163,7 +1161,7 @@ class UserController extends GetxController {
           obj.caseType = "U";
         }
         if (type == ArgumentData.CLIENT) {
-          if ([
+          if (![
                 "parentid",
                 "role",
                 "joiningdate",
@@ -1174,8 +1172,7 @@ class UserController extends GetxController {
                 "address",
                 "district",
                 "companyname"
-              ].indexOf(obj.fieldName!) ==
-              -1) {
+              ].contains(obj.fieldName!)) {
             obj.visibility = "Y";
             if (obj.fieldName == "client") {
               obj.fieldDisplayOrder = 0;
@@ -1184,7 +1181,7 @@ class UserController extends GetxController {
             formArray.add(obj);
           }
         } else {
-          if (["companyname"].indexOf(obj.fieldName!) == -1) {
+          if (!["companyname"].contains(obj.fieldName!)) {
             if (obj.fieldName == "client") {
               obj.fieldDisplayOrder = 10;
               obj.fieldType = "CheckBoxGroup";
@@ -1202,7 +1199,7 @@ class UserController extends GetxController {
               List<DynamicField> rolefield = formArray
                   .where((element) => element.fieldName == "role")
                   .toList();
-              if (rolefield.length != 0) {
+              if (rolefield.isNotEmpty) {
                 rolefield[0].options = role
                     .map<DropdownMenuItem<String>>((toElement) =>
                         DropdownMenuItem(
@@ -1222,7 +1219,7 @@ class UserController extends GetxController {
                 List<DynamicField> clientfield = formArray
                     .where((element) => element.fieldName == "client_data")
                     .toList();
-                if (rolefield.length != 0) {
+                if (rolefield.isNotEmpty) {
                   rolefield[0].lovData = mapdata;
                   rolefield[0].options = mapdata
                       .map<DropdownMenuItem<String>>(
@@ -1232,7 +1229,7 @@ class UserController extends GetxController {
                               ))
                       .toList();
                 }
-                if (clientfield.length != 0) {
+                if (clientfield.isNotEmpty) {
                   clientfield[0].lovData = mapdata;
                   clientfield[0].options = mapdata
                       .map<DropdownMenuItem<String>>(

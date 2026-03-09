@@ -82,7 +82,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
     });
   }
 
-  void _prefillForEdit(Map<String, dynamic> row) {
+  /* void _prefillForEdit(Map<String, dynamic> row) {
     _brandNameController.text = row['clientname']?.toString() ?? '';
     _clientNameController.text = row['contactname']?.toString() ?? '';
     _mobileController.text = row['clientmobile']?.toString() ?? '';
@@ -93,7 +93,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
       _existingLogoPath = row['clientlogo']?.toString();
       _logoFile = null;
     });
-  }
+  } */
 
   void _submit() {
     if (_brandNameController.text.trim().isEmpty) {
@@ -496,7 +496,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
       previousScreenName: 'Settings',
       showBackbutton: true,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 50, right: 36),
+        padding: const EdgeInsets.only(left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

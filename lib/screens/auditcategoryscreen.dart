@@ -3,9 +3,6 @@ import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
-import 'package:audit_app/widget/norecordcomp.dart';
-import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:easy_stepper/easy_stepper.dart';
 import 'package:expandable_page_view/expandable_page_view.dart';
@@ -17,16 +14,13 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:jiffy/jiffy.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
 import '../responsive.dart';
-import '../widget/outlinebutton.dart';
-import '../widget/scrollviewcomp.dart';
 import '../widget/statuscomp.dart';
 import 'main/layoutscreen.dart';
-import 'dart:js' as js;
+import 'package:url_launcher/url_launcher.dart';
 
 class AuditCategoryScreen extends StatefulWidget {
   const AuditCategoryScreen({super.key});
@@ -42,10 +36,10 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
   double wdt = 950;
   ScreenArgument? pageargument;
   UserController usercontroller = Get.put(UserController());
-  final _controller = new PageController(
+  final _controller = PageController(
       keepPage: false
   );
-  final _questioncontroller = new PageController(
+  final _questioncontroller = PageController(
       keepPage: false
   );
   int answerQuest = 0;
@@ -58,10 +52,10 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
   bool acknowlodgeBtn = false;
   List<int> childs = [1,0,0,0];
   static const _kCurve = Curves.ease;
-  List<GlobalKey> _pageKeys = [GlobalKey(),GlobalKey(),GlobalKey(),GlobalKey()];
+  final List<GlobalKey> _pageKeys = [GlobalKey(),GlobalKey(),GlobalKey(),GlobalKey()];
   double _currentPageHeight = 460; // Default height
 
-  static const _kDuration = const Duration(milliseconds: 300);
+  static const _kDuration = Duration(milliseconds: 300);
 
   dynamic auditObj = {};
   dynamic categoryObj = {};
@@ -85,8 +79,6 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
   List<String> extension = [".doc",".docx",".xls",".xlsx",".ppt",".pptx",".pdf",".png",".jpeg",".jpg"];
 
   Future<void> processAuditCategories() async {
-    num ans = 0;
-    num totalans = 0;
     int ansValue = 0;
     int totalValue = 0;
     await Future.forEach(auditObj["categorys"], (ele) async {
@@ -111,14 +103,14 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
       // }
       List<dynamic> attendQuestion = element["questions"].where((quest)=>quest["answer"].toString().trim().toString().isNotEmpty).toList();
 
-      attendQuestion.forEach((ele){
+      for (var ele in attendQuestion) {
         if(ele["answer"] != "N/A"){
           String str = (ele["answer"] ?? "0");
           int d = int.tryParse(str) ?? 0;
           ansValue = ansValue + d;
           totalValue = totalValue + 4;
         }
-      });
+      }
     });
     totalMark = totalValue.toString();
     answerMark = ansValue.toString();
@@ -177,7 +169,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
           }
           List<dynamic> attendQuestion = element["questions"].where((quest)=>quest["answer"].toString().trim().toString().isNotEmpty).toList();
 
-          attendQuestion.forEach((ele){
+          for (var ele in attendQuestion) {
             if(ele["answer"] != "N/A"){
               String str = (ele["answer"] ?? "0");
               int d = int.tryParse(str) ?? 0;
@@ -185,7 +177,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
               totalValue = totalValue + 4;
 
             }
-          });
+          }
 
           setCategoryStatus(element);
         });
@@ -216,7 +208,6 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
   }
   void _updatePageHeight(int index) {
     if (_pageKeys[index].currentContext != null) {
-      final RenderBox renderBox = _pageKeys[index].currentContext!.findRenderObject() as RenderBox;
 
     }
     setState(() {
@@ -228,16 +219,14 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
       }else if(index == 3){
         _currentPageHeight = 520;
       }
-      print("index ${index} / ${_currentPageHeight}");
+      debugPrint("index $index / $_currentPageHeight");
     });
   }
-  setCategoryStatus(dynamic element){
+  void setCategoryStatus(dynamic element){
     element["complete"] = false;
     if(element["total"].toString().trim().isNotEmpty){
-      num total = num.tryParse(element["total"].toString()) ?? 0;
-      num count = total/4;
       List<dynamic> arr = element["questions"].where((eleobj)=>eleobj["answer"].toString().trim().isNotEmpty).toList();
-      print("cont ${arr.length} == ${element['questions'].length}");
+      debugPrint("cont ${arr.length} == ${element['questions'].length}");
       if(arr.length == element["questions"].length){
         element["complete"] = true;
       }
@@ -251,7 +240,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
         child: Container(height: 150,)
     );
   }
-  gotoPage(){
+  void gotoPage(){
     _controller.animateToPage(
         activeStep,
         duration: _kDuration,
@@ -262,27 +251,19 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
     });
   }
   Widget getAuditComp(element){
-    String status = AppTranslations.of(context)!.text("key_start");
-    if(element["status"] == "IP"){
-      status = AppTranslations.of(context)!.text("key_progress");
-    }else if(element["status"] == "C"){
-      status = AppTranslations.of(context)!.text("key_complete");
-    }else if(element["status"] == "P"){
-      status = AppTranslations.of(context)!.text("key_publish");
-    }
 
     String totalQuestion = element["questions"].length.toString();
     List<dynamic> attendQuestion = element["questions"].where((quest)=>quest["answer"].toString().trim().toString().isNotEmpty).toList();
     int ansValue = 0;
     int totalValue = 0;
-    attendQuestion.forEach((ele){
+    for (var ele in attendQuestion) {
       if(ele["answer"] != "N/A"){
         String str = (ele["answer"] ?? "0");
         int d = int.tryParse(str) ?? 0;
         ansValue = ansValue + d;
         totalValue = totalValue + 4;
       }
-    });
+    }
     element["answer"] = ansValue.toString();
     element["total"] = totalValue.toString();
 
@@ -294,7 +275,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
       value = avarge.toString();
     }
 
-    String answeredQuestion = attendQuestion.length == 0 ? "0" : attendQuestion.length.toString();
+    String answeredQuestion = attendQuestion.isEmpty ? "0" : attendQuestion.length.toString();
     return BoxContainer(
         padding: 10,
         width: 320,
@@ -307,7 +288,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
             children: [
               Flexible(
                 flex: 1,
-                child: Container(
+                child: SizedBox(
                   height: 70,
                   child: Text(element["categoryname"],style: headingTextStyle,textAlign: TextAlign.center,),
                 ),
@@ -330,7 +311,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                       color: Colors.grey,
                                       fontSize: 14
                                   ),),
-                                  SizedBox(width:50,child: value.toString().trim().isEmpty?Container():StatusComp(status: "",statusvalue: value.toString()+"%",percentage: int.tryParse((value.toString() ?? "0")),))
+                                  SizedBox(width:50,child: value.toString().trim().isEmpty?Container():StatusComp(status: "",statusvalue: "$value%",percentage: int.tryParse((value.toString())),))
                                 ],
                               )
                           ),
@@ -375,7 +356,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                           child: Center(child: Icon(Icons.circle_sharp,size: 20,color: Colors.grey,)),
                         ),
                         SizedBox(width: 8,),
-                        Center(child: Text(answeredQuestion+"/"+totalQuestion,style: headingSmallTextStyle,))
+                        Center(child: Text("$answeredQuestion/$totalQuestion",style: headingSmallTextStyle,))
                       ],
                     )),
                   ),
@@ -408,7 +389,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                   }
                   pageStep = 0;
                   int d = questionArray.indexWhere((element)=>element["answer"].toString().trim().isNotEmpty);
-                  print("dfsdfsd ${d}");
+                  debugPrint("dfsdfsd $d");
                   if(d != -1){
                     pageStep = d+1;
                   }
@@ -425,7 +406,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                     selectedColor = Colors.transparent;
                   }else{
                     List<dynamic> arr = usercontroller.scoreArr.where((e)=>e["value"] == questionArray[pageStep]["submitAns"].toString().trim()).toList();
-                    if(arr.length != 0){
+                    if(arr.isNotEmpty){
                       selectedColor = arr[0]["color"];
                     }
                   }
@@ -498,13 +479,13 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
       ],
     );
   }
-  fileUploadProcess(question){
+  void fileUploadProcess(question){
     Map<String,dynamic> dataObj = {
       "type":"audit",
       "audit_id":question["audit_id"],
       "questionid":question["questionid"]
     };
-    usercontroller.uploadImage(context,bytes: _imageBytesList![countFile], filename: _imageNameList![countFile] ?? "", data: dataObj, callback:(res01){
+    usercontroller.uploadImage(context,bytes: _imageBytesList![countFile], filename: _imageNameList![countFile], data: dataObj, callback:(res01){
       if(res01.containsKey("data")){
         question["proofdocuments"].add(res01["data"]);
       }
@@ -573,7 +554,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                           child: InkWell(
                             onTap: (){
                               question["answer"] = element["value"];
-                              print(question);
+                              debugPrint(question.toString());
 
                               selectedColor = element["color"];
                               enableAction = false;
@@ -645,7 +626,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
               maxLines: 5,
               initialValue: question["reviews"],
               validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                  errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                  errorText: AppTranslations.of(context)!.text("key_error_01"))]),
               style: Theme.of(context).textTheme.bodyMedium,
               onChanged: (value){
                 question["reviews"] = value;
@@ -685,7 +666,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
               maxLines: 5,
               initialValue: question["clientremarks"],
               validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                  errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                  errorText: AppTranslations.of(context)!.text("key_error_01"))]),
               style: Theme.of(context).textTheme.bodyMedium,
               onChanged: (value){
                 question["clientremarks"] = value;
@@ -734,9 +715,9 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                       child: Text(toElement["optionvalue"]),
                     )).toList(),
                     onChanged: (value){
-                      print(value);
+                      debugPrint(value.toString());
                       List<dynamic> arr = question["selecteddropdown"].where((item)=>item["dropdownid"] == element2["dropdownid"]).toList();
-                      if(arr.length == 0){
+                      if(arr.isEmpty){
                         var obj = {
                           "dropdownid": element2["dropdownid"],
                           "dropdownname":element2["dropdownname"],
@@ -748,7 +729,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                       }
                     },
                     validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                        errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                        errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                     decoration:  InputDecoration(
                       label: RichText(
                         text: TextSpan(
@@ -810,7 +791,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                             var file = result.files[kid];
                             var index = file.name.lastIndexOf(".");
                             var ext = file.name.substring(index,file.name.length);
-                             if(extension.indexOf(ext) == -1){
+                             if(!extension.contains(ext)){
                                APIService(context).showWindowAlert(title: "",desc: AppTranslations.of(context)!.text("key_message_28"),callback: (){});
                                return;
                              }
@@ -864,7 +845,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                   top:0,
                                   child: InkWell(
                                     onTap: (){
-                                      js.context.callMethod('open', [IMG_URL+imgelement["image"].toString(),"_blank"]);
+                                      launchUrl(Uri.parse(IMG_URL+imgelement["image"].toString()));
                                     },
                                     child: Container(
                                       width: 90,
@@ -937,7 +918,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
   }
   Widget questionChild(){
     int id = 0;
-    return Container(
+    return SizedBox(
       height: _currentPageHeight,
       child: Center(
         child: Column(
@@ -963,7 +944,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                       flex: 1,
                       child: Padding(
                         padding: const EdgeInsets.only(right: 5),
-                        child: Text((answerQuest).toString()+"/"+questionArray.length.toString(),style: TextStyle(
+                        child: Text("$answerQuest/${questionArray.length}",style: TextStyle(
                             color: Theme.of(context).colorScheme.primary,fontSize: 15,fontWeight: FontWeight.w600
                         ),),
                       )
@@ -979,7 +960,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                 flex: 10,
                 child: SizedBox(
                   width: wdt+40,
-                  child: questionArray.length != 0 ? Row(
+                  child: questionArray.isNotEmpty ? Row(
                     mainAxisSize:MainAxisSize.min,
                     children: [
                       Flexible(
@@ -1016,11 +997,11 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                           selectedColor = Colors.transparent;
                                         }else{
                                           List<dynamic> arr = usercontroller.scoreArr.where((e)=>e["value"] == questionArray[pageStep]["answer"].toString().trim()).toList();
-                                          if(arr.length != 0){
+                                          if(arr.isNotEmpty){
                                             selectedColor = arr[0]["color"];
                                           }
                                         }
-                                        print(questionArray[pageStep]);
+                                        debugPrint(questionArray[pageStep].toString());
                                         _questioncontroller.animateToPage(
                                             pageStep,
                                             duration: _kDuration,
@@ -1038,11 +1019,11 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                   selectedColor = Colors.transparent;
                                 }else{
                                   List<dynamic> arr = usercontroller.scoreArr.where((e)=>e["value"] == questionArray[pageStep]["answer"].toString().trim()).toList();
-                                  if(arr.length != 0){
+                                  if(arr.isNotEmpty){
                                     selectedColor = arr[0]["color"];
                                   }
                                 }
-                                print(questionArray[pageStep]);
+                                debugPrint(questionArray[pageStep].toString());
                                 _questioncontroller.animateToPage(
                                     pageStep,
                                     duration: _kDuration,
@@ -1078,7 +1059,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
     );
   }
   Widget basicChild(){
-    return Container(
+    return SizedBox(
       height: 400,
 
       child: Center(
@@ -1086,7 +1067,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
             width: wdt,
             height: double.infinity,
             child: Center(
-              child: Container(
+              child: SizedBox(
                 width: wdt,
 
                 child: FormBuilder(
@@ -1098,7 +1079,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                           child: FormBuilderTextField(
                             name: "managername",
                             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                             style: Theme.of(context).textTheme.bodyMedium,
                             onChanged: (value){
 
@@ -1143,7 +1124,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                               child: FormBuilderTextField(
                                 name: "idcardno",
                                 validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                    errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                    errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                 style: Theme.of(context).textTheme.bodyMedium,
                                 onChanged: (value){
 
@@ -1184,7 +1165,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                 firstDate: Jiffy.now().subtract(years: 40).dateTime,
                                 lastDate: Jiffy.now().dateTime,
                                 validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                    errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                    errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                 timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
                                 style: Theme.of(context).textTheme.bodyMedium,
                                 inputType: InputType.date,
@@ -1238,11 +1219,11 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                 keyboardType: TextInputType.numberWithOptions(signed: true, decimal: false),
                                 validator: FormBuilderValidators.compose([
                                   FormBuilderValidators.required(
-                                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                                      errorText: AppTranslations.of(context)!.text("key_error_01")),
                                   FormBuilderValidators.minLength(10,
-                                      errorText: AppTranslations.of(context)!.text("key_error_03") ?? ""),
+                                      errorText: AppTranslations.of(context)!.text("key_error_03")),
                                   FormBuilderValidators.maxLength(10,
-                                      errorText: AppTranslations.of(context)!.text("key_error_03") ?? "")
+                                      errorText: AppTranslations.of(context)!.text("key_error_03"))
                                 ]),
                                 style: Theme.of(context).textTheme.bodyMedium,
                                 onChanged: (value){
@@ -1283,9 +1264,9 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                 validator: FormBuilderValidators.compose(
                                     [
                                       FormBuilderValidators.required(
-                                          errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                                          errorText: AppTranslations.of(context)!.text("key_error_01")),
                                       FormBuilderValidators.email(
-                                          errorText: AppTranslations.of(context)!.text("key_error_02") ?? "")
+                                          errorText: AppTranslations.of(context)!.text("key_error_02"))
                                     ]),
                                 style: Theme.of(context).textTheme.bodyMedium,
                                 onChanged: (value){
@@ -1331,7 +1312,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                             obj["audit_id"] = auditObj["id"];
                             usercontroller.saveAuditBranch(context, data: obj, callback:(){
                               List<dynamic> catearr = auditObj["categorys"].where((eleobj)=>eleobj["complete"] == true).toList();
-                              print(" second ${auditObj["categorys"].length} == ${catearr.length}");
+                              debugPrint(" second ${auditObj["categorys"].length} == ${catearr.length}");
                               if(auditObj["categorys"].length == catearr.length){
                                 childs[2] = 0;
                                 childs[0] = 2;
@@ -1373,7 +1354,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
     );
   }
   Widget acknowledgeChild(){
-    return Container(
+    return SizedBox(
         width: wdt,
         height: 460,
         child: Column(
@@ -1395,7 +1376,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                             name: "name",
                             enabled: false,
                             validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                             style: Theme.of(context).textTheme.bodyMedium,
                             onChanged: (value){
 
@@ -1434,9 +1415,9 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                             validator: FormBuilderValidators.compose(
                                 [
                                   FormBuilderValidators.required(
-                                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                                      errorText: AppTranslations.of(context)!.text("key_error_01")),
                                   FormBuilderValidators.email(
-                                      errorText: AppTranslations.of(context)!.text("key_error_02") ?? "")
+                                      errorText: AppTranslations.of(context)!.text("key_error_02"))
                                 ]),
                             style: Theme.of(context).textTheme.bodyMedium,
                             onChanged: (value){
@@ -1479,11 +1460,11 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                             keyboardType: TextInputType.numberWithOptions(signed: true, decimal: false),
                             validator: FormBuilderValidators.compose([
                               FormBuilderValidators.required(
-                                  errorText: AppTranslations.of(context)!.text("key_error_01") ?? ""),
+                                  errorText: AppTranslations.of(context)!.text("key_error_01")),
                               FormBuilderValidators.minLength(10,
-                                  errorText: AppTranslations.of(context)!.text("key_error_03") ?? ""),
+                                  errorText: AppTranslations.of(context)!.text("key_error_03")),
                               FormBuilderValidators.maxLength(10,
-                                  errorText: AppTranslations.of(context)!.text("key_error_03") ?? "")
+                                  errorText: AppTranslations.of(context)!.text("key_error_03"))
                             ]),
                             style: Theme.of(context).textTheme.bodyMedium,
                             onChanged: (value){
@@ -1517,7 +1498,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                             ),
                           ),
                           SizedBox(height: defaultPadding,),
-                          Container(
+                          SizedBox(
                             width: 300,
                             height: 120,
                             child: Row(
@@ -1546,7 +1527,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                       color: Colors.white
                                   ),)),
                                 ),
-                                Container(
+                                SizedBox(
                                   width: 90,
                                   child: acknowlodgeImage == true ? Image.memory(
                                     _imageBytes!,
@@ -1612,10 +1593,10 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
       List<dynamic> qarray = questionArray.where((eleobj)=>eleobj["answer"].toString().trim().isNotEmpty && !eleobj["answer"].toString().trim().contains("N/A")).toList();
       num total = 0;
       num ans = 0;
-      qarray.forEach((eleobj){
+      for (var eleobj in qarray) {
         ans = ans+(num.tryParse(eleobj["answer"].toString()) ?? 0);
         total = total+4;
-      });
+      }
       categoryObj["answer"] = ans.toString();
       categoryObj["total"] = total.toString();
       await processAuditCategories();
@@ -1627,7 +1608,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
         setCategoryStatus(categoryObj);
         List<dynamic> catearr = auditObj["categorys"].where((obj)=>obj["complete"] == true).toList();
         String categoryname = categoryObj["categoryname"];
-        Widget child = Container(
+        Widget child = SizedBox(
           height: 80,
           child: Column(
             children: [
@@ -1676,7 +1657,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
               height: 90,
               child: DataTableTheme(
                   data:  DataTableThemeData(
-                      dataRowHeight: 30.0,
+                      dataRowMinHeight: 30.0, dataRowMaxHeight: 30.0,
                       horizontalMargin: 8,
                       headingRowAlignment:MainAxisAlignment.spaceBetween,
                       headingRowHeight: 30// Adjust row height
@@ -1696,7 +1677,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                     DataRow(cells: [
                       DataCell(Container(child: Center(child: Text(answerMark,style: paragTextStyle,)))),
                       DataCell(Container(child: Center(child: Text(totalMark,style: paragTextStyle,)))),
-                      DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: totalPer.toString()+"%",percentage: int.tryParse(totalPer.toString()),)))))
+                      DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: "$totalPer%",percentage: int.tryParse(totalPer.toString()),)))))
                     ])
                   ]
                   )
@@ -1706,7 +1687,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
             Flexible(
               flex: 12,
               fit: FlexFit.loose,
-              child: Container(
+              child: SizedBox(
                 height: double.infinity,
                 // constraints: BoxConstraints(
                 //   minHeight: 0,
@@ -1878,7 +1859,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                         selectedColor = Colors.transparent;
                                       }else{
                                         List<dynamic> arr = usercontroller.scoreArr.where((e)=>e["value"] == questionArray[pageStep]["answer"].toString().trim()).toList();
-                                        if(arr.length != 0){
+                                        if(arr.isNotEmpty){
                                           selectedColor = arr[0]["color"];
                                         }
                                       }
@@ -1900,7 +1881,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                   selectedColor = Colors.transparent;
                                 }else{
                                   List<dynamic> arr = usercontroller.scoreArr.where((e)=>e["value"] == questionArray[pageStep]["answer"].toString().trim()).toList();
-                                  if(arr.length != 0){
+                                  if(arr.isNotEmpty){
                                     selectedColor = arr[0]["color"];
                                   }
                                 }
@@ -2088,7 +2069,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                         child: childs[0] == 2?Icon(CupertinoIcons.check_mark):SizedBox(),
                       ),
 
-                      topTitle: false,
+                      placeTitleAtStart: false,
                       title: AppTranslations.of(context)!.text("key_basicinfo"),
                       customTitle:  SizedBox(
                         width: double.infinity,
@@ -2099,10 +2080,10 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                       enabled: childs[1] != 0,
                       customStep: CircleAvatar(
                         radius: 25,
-                        child: childs[1] == 2?Icon(CupertinoIcons.check_mark):SizedBox(),
                         backgroundColor: childs[1] != 0 ? childs[1]==1?Theme.of(context).colorScheme.primary:Colors.green : Color(0xFF002651),
+                        child: childs[1] == 2?Icon(CupertinoIcons.check_mark):SizedBox(),
                       ),
-                      topTitle: false,
+                      placeTitleAtStart: false,
                       title: AppTranslations.of(context)!.text("key_question"),
                       customTitle:  SizedBox(
                         width: double.infinity,
@@ -2113,10 +2094,10 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                       enabled: childs[2] != 0,
                       customStep: CircleAvatar(
                         radius: 25,
-                        child: childs[2] == 2?Icon(CupertinoIcons.check_mark):SizedBox(),
                         backgroundColor: childs[2] != 0 ? childs[2]==1?Theme.of(context).colorScheme.primary:Colors.green : Color(0xFF002651),
+                        child: childs[2] == 2?Icon(CupertinoIcons.check_mark):SizedBox(),
                       ),
-                      topTitle: false,
+                      placeTitleAtStart: false,
                       title: AppTranslations.of(context)!.text("key_acknowledgment"),
                       customTitle:  SizedBox(
                         width: double.infinity,

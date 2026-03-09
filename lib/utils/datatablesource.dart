@@ -1,13 +1,9 @@
 import 'package:audit_app/constants.dart';
-import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:audit_app/widget/statuscomp.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 
-import '../controllers/usercontroller.dart';
 
 class AppDataTableSource extends DataTableSource{
   final List<Map<String,dynamic>> dataArr;
@@ -26,11 +22,11 @@ class AppDataTableSource extends DataTableSource{
     if(index >= dataArr.length) return null;
     Map<String,dynamic> obj = dataArr[index];
     List<DataCell> cell = [];
-    fieldArr.forEach((element){
+    for (var element in fieldArr) {
       if(element["type"] == "string"){
         DataCell e = DataCell(Text(obj[element["key"]].toString()));
         if(element["key"] == "description"){
-          e = DataCell(Container(width:150,child: Text(obj[element["key"]].toString()),));
+          e = DataCell(SizedBox(width:150,child: Text(obj[element["key"]].toString()),));
         }
         if(element["key"] == "statusvalue"){
            e = DataCell(Row(
@@ -47,7 +43,7 @@ class AppDataTableSource extends DataTableSource{
                     notifyListeners(); // Important to refresh the UI
                    onChanged(obj);
                  },
-                 activeColor: Colors.green,
+                 activeThumbColor: Colors.green,
                  inactiveThumbColor: Colors.grey.shade400,
                  inactiveTrackColor: Colors.grey.shade400,
                ):SizedBox()
@@ -65,14 +61,14 @@ class AppDataTableSource extends DataTableSource{
         ));
         cell.add(e);
       }
-    });
+    }
 
     return DataRow2(cells: cell);
 
   }
   void updateData(Map<String, dynamic> obj) {
-    List<Map<String,dynamic>> arr = dataArr.where((_element)=>_element["id"] == obj["id"]).toList();
-    if(arr.length != 0){
+    List<Map<String,dynamic>> arr = dataArr.where((element)=>element["id"] == obj["id"]).toList();
+    if(arr.isNotEmpty){
       arr[0]["status"] = "A";
       arr[0]["statusvalue"] = arr[0]["status"] == "A"? "Active" : "Inactive";
     }

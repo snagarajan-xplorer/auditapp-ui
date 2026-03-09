@@ -1,10 +1,6 @@
-import '../../constants.dart';
 import '../dashboard/components/header.dart';
-import './../../controllers/menu_app_controller.dart';
 import './../../responsive.dart';
-import './../../screens/dashboard/dashboard_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import 'components/side_menu.dart';
 
@@ -15,7 +11,7 @@ class LayoutScreen extends StatefulWidget {
   final VoidCallback? backEvent;
   final Function(int)? onCallback;
   final String? previousScreenName;
-  LayoutScreen({super.key, required this.child, this.showBackbutton = false,  this.previousScreenName="", this.backEvent, this.enableAction=true, this.onCallback});
+  const LayoutScreen({super.key, required this.child, this.showBackbutton = false,  this.previousScreenName="", this.backEvent, this.enableAction=true, this.onCallback});
 
   @override
   State<LayoutScreen> createState() => _LayoutscreenState();
@@ -57,7 +53,7 @@ class _LayoutscreenState extends State<LayoutScreen> {
                     backEvent: widget.backEvent,
                     previousScreenName: widget.previousScreenName,
                     callback: (){
-                    print("yes callback");
+                    debugPrint("yes callback");
 
                     _scaffoldKey.currentState?.openDrawer();
                   },),

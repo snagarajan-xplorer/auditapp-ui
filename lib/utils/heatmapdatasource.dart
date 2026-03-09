@@ -1,4 +1,3 @@
-import 'dart:math';
 
 import 'package:audit_app/models/reportobj.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +8,7 @@ class HeatmapDataSource extends DataTableSource{
   @override
   DataRow? getRow(int index) {
     ReportObj obj = data[index];
-    print(obj.toJson());
+    debugPrint(obj.toJson().toString());
     List<DataCell> cell = [];
     DataCell col_01 = DataCell(Center(child: Text(obj.zone!)));
     DataCell col_02 = DataCell(Center(child: Text(obj.state!)));
@@ -17,7 +16,7 @@ class HeatmapDataSource extends DataTableSource{
     cell.add(col_01);
     cell.add(col_02);
     cell.add(col_03);
-    obj.children!.forEach((kobj){
+    for (var _ in obj.children!) {
 
       int maxIndex = 0;
       Color col = Colors.red;
@@ -38,7 +37,7 @@ class HeatmapDataSource extends DataTableSource{
         child: Center(child: Text("")),
       ));
       cell.add(col_04);
-    });
+    }
     DataRow row = DataRow(
         cells: cell
     );

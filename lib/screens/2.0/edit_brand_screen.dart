@@ -32,10 +32,6 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
   String? _existingLogoPath;
 
   // State
-  List<Map<String, dynamic>> _brandList = [];
-  bool _isLoading = false;
-  int _currentPage = 1;
-  final int _pageSize = 10;
 
   @override
   void initState() {
@@ -61,14 +57,9 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
   }
 
   void _loadBrands() {
-    setState(() => _isLoading = true);
     userController.getBrandList(context, callback: (data) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
-          _brandList = List.from(data)
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
         });
       }
     });
@@ -310,7 +301,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
                       _isActive = value;
                     });
                   },
-                  activeColor: Colors.white,
+                  activeThumbColor: Colors.white,
                   activeTrackColor: const Color(0xFF67AC5B),
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFBDBDBD),

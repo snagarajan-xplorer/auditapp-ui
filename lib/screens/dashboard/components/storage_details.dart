@@ -2,13 +2,12 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../constants.dart';
-import 'chart.dart';
 import 'storage_info_card.dart';
 class StorageDetails extends StatefulWidget {
   final List<dynamic> data;
   const StorageDetails({
-    Key? key, required this.data,
-  }) : super(key: key);
+    super.key, required this.data,
+  });
 
 
   @override
@@ -66,7 +65,7 @@ class _StorageDetailsState extends State<StorageDetails> {
               svgSrc: "assets/icons/Documents.svg",
               color: ele["color"],
               title: ele["heading"],
-              amountOfFiles: ele["percentage"].toString()+"%",
+              amountOfFiles: "${ele["percentage"]}%",
               numOfFiles: 0,
             )).toList(),
           )
@@ -85,7 +84,7 @@ class _StorageDetailsState extends State<StorageDetails> {
       return PieChartSectionData(
         color: widget.data[i]["color"],
         value: double.tryParse(widget.data[i]["value"].toString()),
-        title: widget.data[i]["percentage"].toString()+'%',
+        title: '${widget.data[i]["percentage"]}%',
         radius: radius,
         titleStyle: TextStyle(
           fontSize: fontSize,

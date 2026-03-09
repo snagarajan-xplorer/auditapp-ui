@@ -1,11 +1,9 @@
 import 'package:audit_app/theme/themes.dart';
 import 'package:flutter/material.dart';
 
-import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
 
-import '../constants.dart';
 import '../models/dynamicfield.dart';
 import '../models/selectionobj.dart';
 
@@ -27,8 +25,8 @@ class _CheckboxGroupInputState extends State<CheckboxGroupInput> {
   late double width;
   late double height;
   GlobalKey btnKey = GlobalKey();
-  bool showPass = false!;
-  bool micOn = false!;
+  bool showPass = false;
+  bool micOn = false;
   FocusNode focusNode = FocusNode();
   late SelectionObj dataobj = SelectionObj(fieldname: widget.fieldObj.fieldName!,fieldvalue: "",keyvalue: "");
   @override
@@ -51,18 +49,18 @@ class _CheckboxGroupInputState extends State<CheckboxGroupInput> {
           },
           onChanged: (value){
             setState(() {
-              dataobj.fieldvalue = value;;
+              dataobj.fieldvalue = value;
 
             });
           },
 
           //initialValue: widget.fieldObj.fieldValue == null ? widget.fieldObj.defaultValue == null?"":widget.fieldObj.defaultValue:widget.fieldObj.fieldValue,
-          validator: widget.fieldObj.validator == null ? null: widget.fieldObj.validator,
+          validator: widget.fieldObj.validator,
 
           decoration:  InputDecoration(
             label: widget.fieldObj.mandatory! == "Y"?RichText(
               text: TextSpan(
-                text: widget.fieldObj.labelName! ?? "",
+                text: widget.fieldObj.labelName!,
                 children: [
                   TextSpan(
                       style: TextStyle(color: Colors.red),
@@ -71,7 +69,7 @@ class _CheckboxGroupInputState extends State<CheckboxGroupInput> {
                 ],
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-            ):Text(widget.fieldObj.labelName! ?? "",style: Theme.of(context).textTheme.bodyMedium,),
+            ):Text(widget.fieldObj.labelName!,style: Theme.of(context).textTheme.bodyMedium,),
 
             contentPadding: EdgeInsets.only(left: 20),
             counterText: "",
@@ -83,6 +81,6 @@ class _CheckboxGroupInputState extends State<CheckboxGroupInput> {
           ), options: widget.fieldObj.lovData!.map<FormBuilderFieldOption<String>>((ele)=>FormBuilderFieldOption(value: ele["clientid"].toString(),child: Text(ele["clientname"].toString()),)).toList(),
         ),
       ),
-    );;
+    );
   }
 }

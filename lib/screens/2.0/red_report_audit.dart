@@ -66,10 +66,7 @@ class _RedReportScreenState extends State<RedReportScreen>
     int polygonIndex = 0;
     for (var feature in geo["features"]) {
       final geometry = feature["geometry"];
-      final properties = feature["properties"];
-      String stateName = properties["st_nm"] ?? "";
       Color fillColor = Colors.transparent; // Transparent fill for better label visibility
-      Color strokeColor = Colors.black; // Black stroke for clear state outlines
 
       if (geometry["type"] == "Polygon") {
         List<LatLng> points = _convertCoords(geometry["coordinates"][0]);
@@ -122,7 +119,7 @@ class _RedReportScreenState extends State<RedReportScreen>
 
   void _addStateMarkers() {
     if (stateDataMap.isEmpty) {
-      print("State data map is empty. Cannot add state markers.");
+      debugPrint("State data map is empty. Cannot add state markers.");
       return;
     }
 
@@ -142,7 +139,7 @@ class _RedReportScreenState extends State<RedReportScreen>
           ),
         );
       } catch (e) {
-        print("Error adding marker for state $stateName: $e");
+        debugPrint("Error adding marker for state $stateName: $e");
       }
     });
 
@@ -223,7 +220,7 @@ class _RedReportScreenState extends State<RedReportScreen>
                     ),
                   );
                 } catch (e) {
-                  print("Error parsing coordinates: $e");
+                  debugPrint("Error parsing coordinates: $e");
                 }
               }
             }
@@ -236,7 +233,7 @@ class _RedReportScreenState extends State<RedReportScreen>
     });
   }
 
-  void _setMapStyle(GoogleMapController controller) {
+  /* void _setMapStyle(GoogleMapController controller) {
     String mapStyle = '''
     [
       {
@@ -296,7 +293,7 @@ class _RedReportScreenState extends State<RedReportScreen>
     ]
     ''';
     controller.setMapStyle(mapStyle);
-  }
+  } */
 
   void _zoomIn() {
     double newZoom = (currentZoom + 1).clamp(1.0, 22.0);
@@ -364,7 +361,7 @@ class _RedReportScreenState extends State<RedReportScreen>
             ),
 
             // Map Container
-            Container(
+            SizedBox(
               width: double.infinity,
               height: 500,
               child: BoxContainer(
@@ -376,7 +373,7 @@ class _RedReportScreenState extends State<RedReportScreen>
                     ? Center(child: CircularProgressIndicator())
                     : Material(
                         elevation: 12,
-                        shadowColor: Colors.black.withOpacity(0.25),
+                        shadowColor: Colors.black.withValues(alpha: 0.25),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(0),
                         ),
@@ -535,7 +532,7 @@ class _RedReportScreenState extends State<RedReportScreen>
           elevation: 3,
           child: InkWell(
             onTap: () => _zoomIn(),
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
               child: Icon(Icons.add, size: 20, color: Color(0xFF505050)),
@@ -549,7 +546,7 @@ class _RedReportScreenState extends State<RedReportScreen>
           elevation: 3,
           child: InkWell(
             onTap: () => _zoomOut(),
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
               child: Icon(Icons.remove, size: 20, color: Color(0xFF505050)),

@@ -13,7 +13,7 @@ class SwitchInputComp extends StatefulWidget {
   final DynamicField fieldObj;
   final Function(SelectionObj) onSaved;
   final Function(SelectionObj) selectionChange;
-  const SwitchInputComp({Key? key, required this.fieldName,  this.id,  this.mid, required this.fieldObj, required this.selectionChange, required this.onSaved, required this.formKey}) : super(key: key);
+  const SwitchInputComp({super.key, required this.fieldName,  this.id,  this.mid, required this.fieldObj, required this.selectionChange, required this.onSaved, required this.formKey});
 
   @override
   State<SwitchInputComp> createState() => _SwitchInputCompState();
@@ -28,6 +28,7 @@ class _SwitchInputCompState extends State<SwitchInputComp>  with TickerProviderS
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     bool switchCont = true;
     //DynamicField field = Provider.of<DynamicNotifier>(context).quote.sections[0].blocks[widget.id].dynamicField[widget.mid];
     width = MediaQuery.of(context).size.width;
@@ -37,10 +38,13 @@ class _SwitchInputCompState extends State<SwitchInputComp>  with TickerProviderS
       visible: widget.fieldObj.visibility == "Y"?true:false,
       child: Container(
 
+        padding: EdgeInsets.only(bottom :3,top: 3),
+        margin: EdgeInsets.only(top: 4, right: 4,),
+
         child: FormBuilderSwitch(
           activeColor: Colors.blue.shade900,
           name: widget.fieldObj.fieldName!,
-          title: Text(widget.fieldObj.labelName! ?? "",),
+          title: Text(widget.fieldObj.labelName!,),
           initialValue: widget.fieldObj.defaultYN ?? switchCont,
           onSaved: (value){
             SelectionObj dataobj2 = SelectionObj(fieldname: widget.fieldObj.fieldName!,fieldvalue: value);
@@ -56,8 +60,6 @@ class _SwitchInputCompState extends State<SwitchInputComp>  with TickerProviderS
           controlAffinity: ListTileControlAffinity.trailing,
           decoration: InputDecoration(border: InputBorder.none),
         ),
-        padding: EdgeInsets.only(bottom :3,top: 3),
-        margin: EdgeInsets.only(top: 4, right: 4,),
       ),
     );
   }

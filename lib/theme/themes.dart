@@ -62,8 +62,6 @@ class AppThemeData {
         onSecondary: Colors.white,
         error: kErrorColor,
         onError: Colors.white,
-        background: Colors.white,
-        onBackground: Colors.white,
         surface: Colors.white,
         onSurface: Colors.black,
       ),
@@ -84,7 +82,7 @@ class AppThemeData {
       warning: kWarningColor,
       hyperlink: const Color(0xFF002651),
       buttonTextBlack: kTextColor,
-      buttonTextDisabled: kTextColor.withOpacity(0.38),
+      buttonTextDisabled: kTextColor.withValues(alpha: 0.38),
     );
 
     final appSidebarTheme = AppSidebarTheme(
@@ -104,11 +102,11 @@ class AppThemeData {
       menuTopPadding: 2.0,
       menuRightPadding: 0.0,
       menuBottomPadding: 2.0,
-      menuHoverColor: Colors.white.withOpacity(0.2),
+      menuHoverColor: Colors.white.withValues(alpha: 0.2),
       menuSelectedFontColor: Colors.white,
       menuSelectedBackgroundColor: appColorScheme.primary,
-      menuExpandedBackgroundColor: Colors.white.withOpacity(0.1),
-      menuExpandedHoverColor: Colors.white.withOpacity(0.1),
+      menuExpandedBackgroundColor: Colors.white.withValues(alpha: 0.1),
+      menuExpandedHoverColor: Colors.white.withValues(alpha: 0.1),
       menuExpandedChildLeftPadding: 4.0,
       menuExpandedChildTopPadding: 2.0,
       menuExpandedChildRightPadding: 4.0,
@@ -169,7 +167,7 @@ class AppThemeData {
       warning: kWarningColor,
       hyperlink: const Color(0xFF6BBBF7),
       buttonTextBlack: kTextColor,
-      buttonTextDisabled: Colors.white.withOpacity(0.38),
+      buttonTextDisabled: Colors.white.withValues(alpha: 0.38),
     );
 
     final appSidebarTheme = AppSidebarTheme(
@@ -189,11 +187,11 @@ class AppThemeData {
       menuTopPadding: 2.0,
       menuRightPadding: 0.0,
       menuBottomPadding: 2.0,
-      menuHoverColor: Colors.white.withOpacity(0.2),
+      menuHoverColor: Colors.white.withValues(alpha: 0.2),
       menuSelectedFontColor: Colors.white,
       menuSelectedBackgroundColor: appColorScheme.primary,
-      menuExpandedBackgroundColor: Colors.white.withOpacity(0.1),
-      menuExpandedHoverColor: Colors.white.withOpacity(0.1),
+      menuExpandedBackgroundColor: Colors.white.withValues(alpha: 0.1),
+      menuExpandedHoverColor: Colors.white.withValues(alpha: 0.1),
       menuExpandedChildLeftPadding: 4.0,
       menuExpandedChildTopPadding: 2.0,
       menuExpandedChildRightPadding: 4.0,

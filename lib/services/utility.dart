@@ -54,7 +54,7 @@ class UtilityService{
         data["value"] = clipboardText;
       }
     }
-    return await data;
+    return data;
   }
   String removeWhiteSpace(String? input){
     return input!.split(whitespaceRE).join(" ");
@@ -63,7 +63,7 @@ class UtilityService{
     if(input != null){
       if(showMask!){
         var lastdigit = input.length-3;
-        return "*****"+input.substring(lastdigit,input.length);
+        return "*****${input.substring(lastdigit,input.length)}";
       }else{
         return input;
       }
@@ -114,7 +114,7 @@ class UtilityService{
     return (to.difference(from).inHours / 24).round();
   }
   Future<String> parseJsonFromAssets(String assetsPath) async {
-    print(assetsPath);
+    debugPrint(assetsPath);
     return rootBundle.loadString(assetsPath,cache: false).then((jsonStr) => jsonStr);
   }
   Color getRandomColor() {
@@ -128,9 +128,9 @@ class UtilityService{
   Color getRandomPrimaryColor() {
     return Colors.primaries[Random().nextInt(Colors.primaries.length)];
   }
-  addValidators(DynamicField element) {
+  void addValidators(DynamicField element) {
     List<FormFieldValidator> fieldvalidators = [];
-    element.rules!.forEach((validatefield) {
+    for (var validatefield in element.rules!) {
       switch (validatefield.name) {
         case "required":
         //fieldvalidators.add(RequiredValidator(errorText: validatefield.errorMsg!));
@@ -176,8 +176,8 @@ class UtilityService{
         default:
           break;
       }
-    });
-    if (fieldvalidators.length != 0) {
+    }
+    if (fieldvalidators.isNotEmpty) {
       element.validator = FormBuilderValidators.compose(fieldvalidators);
     }
   }

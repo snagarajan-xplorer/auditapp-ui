@@ -35,7 +35,7 @@ class _SplashscreenState extends State<Splashscreen>
         Get.offNamed('/login');
 
         //Navigator.popAndPushNamed(context, "/login");
-        print("yes");
+        debugPrint("yes");
       },
     );
   }
@@ -50,7 +50,7 @@ class _SplashscreenState extends State<Splashscreen>
   Widget build(BuildContext context) {
     return Container(
       child: Center(
-        child: Container(
+        child: SizedBox(
           height: 400,
           width: 300,
           child: Column(

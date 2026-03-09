@@ -2,11 +2,7 @@
 import 'package:audit_app/responsive.dart';
 import 'package:audit_app/services/utility.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
-import 'dart:io' show Platform;
-import '../dropdown/drop_down.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -37,8 +33,8 @@ class DynamicForm extends StatefulWidget {
   final String buttonName;
   final List<DynamicField> dynamicArr;
   final List<Widget>? buttons;
-  DynamicForm({
-    Key? key,
+  const DynamicForm({
+    super.key,
     this.width,
     required this.formKey,
     this.height,
@@ -51,7 +47,7 @@ class DynamicForm extends StatefulWidget {
     this.visibleBtn = true,
     this.buttons,
     this.enableBtn = true, this.transactionType="FQ",
-  }) : super(key: key);
+  });
 
   @override
   State<DynamicForm> createState() => _DynamicFormState();
@@ -68,7 +64,6 @@ class _DynamicFormState extends State<DynamicForm>
   List<Widget> row3Obj = [];
   List<Widget> row4Obj = [];
   List<Widget> wdtcolumn = [];
-  final FocusNode _node = FocusNode();
   List<Widget> fieldElement = [];
   Map<String, dynamic> controls = {};
   List<Widget> childs = [];
@@ -326,51 +321,49 @@ class _DynamicFormState extends State<DynamicForm>
           fieldName: element.fieldName!,
         );
       }
-      if (k != null) {
-        if (num == 0) {
-          row1Obj.add(k);
-          num = 1;
-        } else if (num == 1) {
-          row2Obj.add(k);
-          num = 2;
-        }else if (num == 2) {
-          row4Obj.add(k);
-          num = 0;
-        }
-        setState(() {});
-        if (element.widgetType == "Row") {
-          if (kid == 0) {
-            fieldElement.add(Flexible(flex: 1, child: k));
-            fieldElement.add(SizedBox(
-              width: 10,
-            ));
-
-            kid = 1;
-          } else if (kid == 1) {
-            fieldElement.add(Flexible(flex: 1, child: k));
-            column.add(Row(
-              children: fieldElement,
-            ));
-            kid = 0;
-            fieldElement = [];
-          }
-        } else {
-          column.add(k);
-          row3Obj.add(Container(
-            child: k,
-          ));
-        }
-
-        // if(mid < numValue){
-        //   row1Obj.add(k);
-        // }else{
-        //   row2Obj.add(k);
-        // }
-        //loadQuestionInTab(mid,k,element);
+      if (num == 0) {
+        row1Obj.add(k);
+        num = 1;
+      } else if (num == 1) {
+        row2Obj.add(k);
+        num = 2;
+      }else if (num == 2) {
+        row4Obj.add(k);
+        num = 0;
       }
-      mid++;
+      setState(() {});
+      if (element.widgetType == "Row") {
+        if (kid == 0) {
+          fieldElement.add(Flexible(flex: 1, child: k));
+          fieldElement.add(SizedBox(
+            width: 10,
+          ));
+
+          kid = 1;
+        } else if (kid == 1) {
+          fieldElement.add(Flexible(flex: 1, child: k));
+          column.add(Row(
+            children: fieldElement,
+          ));
+          kid = 0;
+          fieldElement = [];
+        }
+      } else {
+        column.add(k);
+        row3Obj.add(Container(
+          child: k,
+        ));
+      }
+
+      // if(mid < numValue){
+      //   row1Obj.add(k);
+      // }else{
+      //   row2Obj.add(k);
+      // }
+      //loadQuestionInTab(mid,k,element);
+          mid++;
     }).toList();
-    if (column.length != 0) {
+    if (column.isNotEmpty) {
       column.add(Flexible(child: SizedBox(
         height: 20,
       )));
@@ -426,7 +419,7 @@ class _DynamicFormState extends State<DynamicForm>
         );
       } else {
         //wdtcolumn.add(bottomMenuItem());
-        return row1Obj.length != 0
+        return row1Obj.isNotEmpty
             ?
         TabFormData()
             : Center(
@@ -536,7 +529,7 @@ class _DynamicFormState extends State<DynamicForm>
     );
   }
 
-  onSubmitData() {
+  void onSubmitData() {
     setState(() {
       if (widget.formKey.currentState!.saveAndValidate()) {
         Map<String, dynamic> dataobj = {};
@@ -608,6 +601,7 @@ class _DynamicFormState extends State<DynamicForm>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return getQuestion();
   }
 

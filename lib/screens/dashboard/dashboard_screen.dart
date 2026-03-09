@@ -109,8 +109,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         //   }
         // });
         loadData = true;
-        if (menuAccessRole.indexOf(usercontroller.userData.role!) != -1) {
-          if (clientArr.length != 0) {
+        if (menuAccessRole.contains(usercontroller.userData.role!)) {
+          if (clientArr.isNotEmpty) {
             client_id = clientArr[0]["clientid"].toString();
             await getClientReport(client_id);
           }
@@ -180,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> getClientReport(String clientid) async {
-    if (clientArr.length != 0) {
+    if (clientArr.isNotEmpty) {
       id = clientArr[0]["clientname"];
       dataArr = [];
       reportList = [];
@@ -194,7 +194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         "userid": usercontroller.userData.userId,
         "role": usercontroller.userData.role
       };
-      if (menuAccessRoleAdmin.indexOf(usercontroller.userData.role!) != -1) {
+      if (menuAccessRoleAdmin.contains(usercontroller.userData.role!)) {
         map = {
           "client_id": clientid,
           "year": year,
@@ -214,11 +214,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         rows = [];
         String perStr = (100 / totalpercentage).toStringAsFixed(2);
         double.tryParse(perStr) ?? 1;
-        reportList[0].children!.forEach((obj) {
-          if (heading.indexOf(obj.key!) == -1) {
+        for (var obj in reportList[0].children!) {
+          if (!heading.contains(obj.key!)) {
             heading.add(obj.key!);
           }
-        });
+        }
         usercontroller.getAuditCount(context, data: map, callback: (countobj) {
           dataObj = countobj;
 
@@ -303,21 +303,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  getChildObj(String zone, List<dynamic> arr, String key) {
+  void getChildObj(String zone, List<dynamic> arr, String key) {
     double scoredvalue = 0;
     double totalvalue = 0;
     int percentage = 0;
-    arr.forEach((element) {
+    for (var element in arr) {
       double scoredvalue2 = 0;
       double totalvalue2 = 0;
       int percentage2 = 0;
       List<ReportObj> robj = reportList
-          .where((_element) =>
-              _element.state == element[key] &&
-              _element.zone == element["zone"])
+          .where((report) =>
+              report.state == element[key] &&
+              report.zone == element["zone"])
           .toList();
       ReportObj obj = ReportObj();
-      if (robj.length == 0) {
+      if (robj.isEmpty) {
         scoredvalue = 0;
         totalvalue = 0;
         percentage = 0;
@@ -381,7 +381,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (per < 26) {
               element["isRed"] = true;
             }
-            if (child.length == 0) {
+            if (child.isEmpty) {
               Children child2 = Children(
                   key: eleobj["heading"],
                   scorevalue: scored,
@@ -405,25 +405,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
       var m = ((scoredvalue2 / (totalvalue2 * 4)) * 100).round();
       String img = "assets/images/low.png";
-      if (m! > 75 && m! < 99) {
+      if (m > 75 && m < 99) {
         img = "assets/images/green.png";
-      } else if (m! > 49 && m! < 75) {
+      } else if (m > 49 && m < 75) {
         img = "assets/images/medium.png";
-      } else if (m! > 20 && m! < 49) {
+      } else if (m > 20 && m < 49) {
         img = "assets/images/high.png";
-      } else if (m! < 20) {
+      } else if (m < 20) {
         img = "assets/images/extreme.png";
       }
       List<Map<String, dynamic>> colorArr = usercontroller.colorArr
           .where((ele) => ele["value"] == element["percentage"].toString())
           .toList();
-      if (colorArr.length != 0) {
+      if (colorArr.isNotEmpty) {
         element["color"] = UtilityService().getColorPercentage(m);
         element["svg"] = img;
         element["svgcolor"] = colorArr[0]["svgcolor"];
       }
       allAuditList.add(element);
-    });
+    }
   }
 
   DataRow getRow(ReportObj obj) {
@@ -438,7 +438,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        color.length == 0
+        color.isEmpty
             ? Container()
             : Container(
                 width: 8,
@@ -461,14 +461,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     cell.add(col_01);
     cell.add(col_02);
     cell.add(col_03);
-    obj.children!.forEach((kobj) {
+    for (var kobj in obj.children!) {
       List<Map<String, dynamic>> arr = usercontroller.scoreArr
           .where((ele) => ele["value"] == kobj.value.toString())
           .toList();
       var m = (kobj.scorevalue! / (kobj.totalvalue! * 4) * 100).round();
       Color color = UtilityService().getColorPercentage(m);
 
-      if (arr.length != 0) {
+      if (arr.isNotEmpty) {
         DataCell col_04 = DataCell(Container(
           decoration: BoxDecoration(
               color: color,
@@ -478,7 +478,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ));
         cell.add(col_04);
       }
-    });
+    }
     DataRow row = DataRow(cells: cell);
     return row;
   }
@@ -514,7 +514,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                 Visibility(
                     visible: true,
-                    child: Container(
+                    child: SizedBox(
                       height: 40,
                       width: 120,
                       child: FormBuilderDropdown<String>(

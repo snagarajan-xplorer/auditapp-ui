@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:jiffy/jiffy.dart';
 import 'dart:convert';
 
 import '../../constants.dart';
 import '../../controllers/usercontroller.dart';
 import '../../models/screenarguments.dart';
-import '../../responsive.dart';
 import '../../services/api_service.dart';
 import '../../widget/app_form_field.dart';
 import '../main/layoutscreen.dart';
@@ -33,20 +29,13 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   bool _isAssignedToAudit = false;
 
   // Data
-  List<dynamic> _roles = [];
   List<dynamic> _clientList = [];
-
-  // Selected brand IDs (multi-select)
-  List<String> _selectedBrandIds = [];
-  bool _allBrandsSelected = false;
-  bool _brandSectionOpen = true;
 
   // State dropdown data
   // ignore: unused_field
   String? _selectedState;
 
   // Page argument
-  ScreenArgument? _pageArgument;
   bool _isEditMode = false;
   Map<String, dynamic>? _editData;
 
@@ -67,7 +56,6 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
     // Read arguments
     final args = ModalRoute.of(context)?.settings.arguments ?? Get.arguments;
     if (args is ScreenArgument) {
-      _pageArgument = args;
       if (args.mode == "Edit" && args.editData != null) {
         _isEditMode = true;
         _editData = Map<String, dynamic>.from(args.editData!);
@@ -122,7 +110,6 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (!res.containsKey("type") && res.containsKey("data")) {
-          _roles = res["data"];
           if (mounted) setState(() {});
         }
       }
@@ -157,16 +144,16 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
 
 
   // ── spacing helpers ───────────────────────────────────────────────────────
-  Widget get _hSpace => SizedBox(
+  /* Widget get _hSpace => SizedBox(
         width: Responsive.isDesktop(context) ? defaultPadding : 0,
         height: Responsive.isDesktop(context) ? 0 : defaultPadding,
-      );
+      ); */
 
   // ── field builders ────────────────────────────────────────────────────────
 
   /// Row 1: Username | Email ID | Mobile No.
  
-  Widget _fieldUsername() {
+  /* Widget _fieldUsername() {
     return AppLabeledField(
       label: 'Username',
       child: FormBuilderTextField(
@@ -179,9 +166,9 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
         decoration: AppFormStyles.inputDecoration(),
       ),
     );
-  }
+  } */
 
-  Widget _fieldCity() {
+  /* Widget _fieldCity() {
     return AppLabeledField(
       label: 'City',
       child: FormBuilderTextField(
@@ -190,10 +177,10 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
         decoration: AppFormStyles.inputDecoration(),
       ),
     );
-  }
+  } */
 
   /// Role dropdown
-  Widget _fieldRole() {
+  /* Widget _fieldRole() {
     return SizedBox(
       width: Responsive.isDesktop(context) ? 350 : double.infinity,
       child: AppLabeledField(
@@ -219,10 +206,10 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
         ),
       ),
     );
-  }
+  } */
 
   /// Brand multi-select checkbox widget (custom)
-  Widget _fieldBrand() {
+  /* Widget _fieldBrand() {
     // Determine the current role: prefer the form field value, fall back to edit data
     String? selectedRole = _formKey.currentState?.fields['role']?.value;
     if (selectedRole == null && _isEditMode && _editData != null) {
@@ -368,10 +355,10 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
         ),
       ),
     );
-  }
+  } */
 
   // ── submit button ─────────────────────────────────────────────────────────
-  Widget _buildSubmitButton() {
+  /* Widget _buildSubmitButton() {
     return SizedBox(
       width: Responsive.isDesktop(context) ? 400 : double.infinity,
       height: 48,
@@ -394,7 +381,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
         ),
       ),
     );
-  }
+  } */
 
   // ── build ─────────────────────────────────────────────────────────────────
   @override
@@ -488,7 +475,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
                 child: AppLabeledField(
                   label: 'Brand',
                   child: DropdownButtonFormField<String>(
-                    value: selectedClientId,
+                    initialValue: selectedClientId,
                     isExpanded: true,
                     items: _clientList
                         .map<DropdownMenuItem<String>>((client) =>
@@ -535,7 +522,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
                       _isActive = value;
                     });
                   },
-                  activeColor: Colors.white,
+                  activeThumbColor: Colors.white,
                   activeTrackColor: const Color(0xFF67AC5B),
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFBDBDBD),

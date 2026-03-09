@@ -17,10 +17,9 @@ import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
 import '../../constants.dart';
 import '../../controllers/usercontroller.dart';
-import '../../theme/themes.dart';
 import '../../widget/app_form_field.dart';
 import '../main/layoutscreen.dart';
-import 'dart:js' as js;
+import 'package:url_launcher/url_launcher.dart';
 
 /// V2.0 Audit Execution Screen
 /// 4-step stepper: Branch Details → Audit Activity → Submit Review → Published
@@ -111,14 +110,14 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
           .where((quest) =>
               quest["answer"].toString().trim().toString().isNotEmpty)
           .toList();
-      attendQuestion.forEach((ele) {
+      for (var ele in attendQuestion) {
         if (ele["answer"] != "N/A") {
           String str = (ele["answer"] ?? "0");
           int d = int.tryParse(str) ?? 0;
           ansValue = ansValue + d;
           totalValue = totalValue + 4;
         }
-      });
+      }
     });
     totalMark = totalValue.toString();
     answerMark = ansValue.toString();
@@ -183,14 +182,14 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               .where((quest) =>
                   quest["answer"].toString().trim().toString().isNotEmpty)
               .toList();
-          attendQuestion.forEach((ele) {
+          for (var ele in attendQuestion) {
             if (ele["answer"] != "N/A") {
               String str = (ele["answer"] ?? "0");
               int d = int.tryParse(str) ?? 0;
               ansValue = ansValue + d;
               totalValue = totalValue + 4;
             }
-          });
+          }
           setCategoryStatus(element);
         });
 
@@ -248,7 +247,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
       });
   }
 
-  setCategoryStatus(dynamic element) {
+  void setCategoryStatus(dynamic element) {
     element["complete"] = false;
     if (element["total"].toString().trim().isNotEmpty) {
       List<dynamic> arr = element["questions"]
@@ -283,7 +282,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
     }
   }
 
-  gotoPage() {
+  void gotoPage() {
     _controller.animateToPage(activeStep,
         duration: _kDuration, curve: _kCurve);
     setState(() {});
@@ -333,10 +332,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
           .toList();
       num total = 0;
       num ans = 0;
-      qarray.forEach((eleobj) {
+      for (var eleobj in qarray) {
         ans = ans + (num.tryParse(eleobj["answer"].toString()) ?? 0);
         total = total + 4;
-      });
+      }
       categoryObj["answer"] = ans.toString();
       categoryObj["total"] = total.toString();
       await processAuditCategories();
@@ -630,7 +629,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
             padding: 5,
             child: DataTableTheme(
               data: DataTableThemeData(
-                  dataRowHeight: 30,
+                  dataRowMinHeight: 30, dataRowMaxHeight: 30,
                   horizontalMargin: 8,
                   headingRowAlignment: MainAxisAlignment.spaceBetween,
                   headingRowHeight: 30),
@@ -676,7 +675,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                                 width: 50,
                                 child: StatusComp(
                                   status: "",
-                                  statusvalue: totalPer + "%",
+                                  statusvalue: "$totalPer%",
                                   percentage:
                                       int.tryParse(totalPer),
                                 ))))),
@@ -722,14 +721,14 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
         .toList();
     int ansValue = 0;
     int totalValue = 0;
-    attendQuestion.forEach((ele) {
+    for (var ele in attendQuestion) {
       if (ele["answer"] != "N/A") {
         String str = (ele["answer"] ?? "0");
         int d = int.tryParse(str) ?? 0;
         ansValue = ansValue + d;
         totalValue = totalValue + 4;
       }
-    });
+    }
     element["answer"] = ansValue.toString();
     element["total"] = totalValue.toString();
 
@@ -743,7 +742,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
       value = avarge.toString();
     }
     String answeredQuestion =
-        attendQuestion.length == 0 ? "0" : attendQuestion.length.toString();
+        attendQuestion.isEmpty ? "0" : attendQuestion.length.toString();
 
     // Determine button status
     String btnLabel =
@@ -751,7 +750,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
     Color btnColor = Color(0xFF535353);
     // Calculate average rating per answered question
     String ratingStr = "";
-    if (attendQuestion.length > 0) {
+    if (attendQuestion.isNotEmpty) {
       int ratingVal = (ansValue / attendQuestion.length).round();
       ratingStr = ratingVal.toString();
     }
@@ -786,7 +785,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                     fontWeight: FontWeight.w400)),
             SizedBox(height: 4),
             // Category name
-            Container(
+            SizedBox(
               height: 45,
               child: Text(element["categoryname"],
                   style: TextStyle(
@@ -834,7 +833,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                                 width: 50,
                                 child: StatusComp(
                                   status: "",
-                                  statusvalue: value + "%",
+                                  statusvalue: "$value%",
                                   percentage: int.tryParse(value),
                                 )),
                       ],
@@ -934,7 +933,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               e["value"] ==
               questionArray[pageStep]["submitAns"].toString().trim())
           .toList();
-      if (arr.length != 0) {
+      if (arr.isNotEmpty) {
         selectedColor = arr[0]["color"];
       }
     }
@@ -996,7 +995,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
         Expanded(
           child: SizedBox(
             width: wdt + 40,
-            child: questionArray.length != 0
+            child: questionArray.isNotEmpty
                 ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -1177,7 +1176,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               e["value"] ==
               questionArray[pageStep]["answer"].toString().trim())
           .toList();
-      if (arr.length != 0) {
+      if (arr.isNotEmpty) {
         selectedColor = arr[0]["color"];
       }
     }
@@ -1304,7 +1303,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                     child: _labeledField(
                       element2["dropdownname"],
                       DropdownButtonFormField<dynamic>(
-                        value: _getDropdownValue(question, element2),
+                        initialValue: _getDropdownValue(question, element2),
                         items: element2["options"]
                             .map<DropdownMenuItem<dynamic>>(
                                 (toElement) => DropdownMenuItem(
@@ -1319,7 +1318,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                                   item["dropdownid"] ==
                                   element2["dropdownid"])
                               .toList();
-                          if (arr.length == 0) {
+                          if (arr.isEmpty) {
                             question["selecteddropdown"].add({
                               "dropdownid": element2["dropdownid"],
                               "dropdownname": element2["dropdownname"],
@@ -1409,7 +1408,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                               var index = file.name.lastIndexOf(".");
                               var ext = file.name
                                   .substring(index, file.name.length);
-                              if (extension.indexOf(ext) == -1) {
+                              if (!extension.contains(ext)) {
                                 APIService(context).showWindowAlert(
                                     title: "",
                                     desc: AppTranslations.of(context)!
@@ -1468,11 +1467,10 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                               top: 0,
                               child: InkWell(
                                 onTap: () {
-                                  js.context.callMethod('open', [
+                                  launchUrl(Uri.parse(
                                     IMG_URL +
                                         imgelement["image"].toString(),
-                                    "_blank"
-                                  ]);
+                                  ));
                                 },
                                 child: Container(
                                   width: 90,
@@ -1855,12 +1853,9 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
               // Download Report button
               OutlinedButton.icon(
                 onPressed: () {
-                  js.context.callMethod('open', [
-                    API_URL +
-                        "exportControl?type=1&id=" +
-                        (auditObj["reporturl"] ?? "").toString(),
-                    "_blank"
-                  ]);
+                  launchUrl(Uri.parse(
+                    "${API_URL}exportControl?type=1&id=${auditObj["reporturl"] ?? ""}",
+                  ));
                 },
 
                 label: Text("Download Report",
@@ -1884,7 +1879,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                 width: 340,
                 height: 40,
                 child: DropdownButtonFormField<String>(
-                  value: selectedClientEmail,
+                  initialValue: selectedClientEmail,
                   items: clientUsers
                       .map<DropdownMenuItem<String>>((user) {
                     return DropdownMenuItem<String>(
@@ -2175,7 +2170,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                             color: Colors.white,size: 15,)
                         : SizedBox(),
                   ),
-                  topTitle: false,
+                  placeTitleAtStart: false,
                   title: "Branch Details",
                   customTitle: SizedBox(
                       width: double.infinity,
@@ -2197,7 +2192,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                             color: Colors.white,size: 15)
                         : SizedBox(),
                   ),
-                  topTitle: false,
+                  placeTitleAtStart: false,
                   title: "Audit Activity",
                   customTitle: SizedBox(
                       width: double.infinity,
@@ -2219,7 +2214,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                             color: Colors.white,size: 15)
                         : SizedBox(),
                   ),
-                  topTitle: false,
+                  placeTitleAtStart: false,
                   title: "Submit Review",
                   customTitle: SizedBox(
                       width: double.infinity,
@@ -2241,7 +2236,7 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
                             color: Colors.white,size: 15)
                         : SizedBox(),
                   ),
-                  topTitle: false,
+                  placeTitleAtStart: false,
                   title: "Published",
                   customTitle: SizedBox(
                       width: double.infinity,

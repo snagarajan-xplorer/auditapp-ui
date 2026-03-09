@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 /// Set to true to use mock data for API responses
 const String env = 'prod';

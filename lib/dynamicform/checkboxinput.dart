@@ -12,7 +12,7 @@ class CheckboxInputComp extends StatefulWidget {
   final DynamicField fieldObj;
   final Function(SelectionObj) onSaved;
   final Function(SelectionObj) selectionChange;
-  CheckboxInputComp({Key? key, required this.fieldName,  this.id,  this.mid, required this.fieldObj, required this.selectionChange, required this.onSaved, required this.formKey}) : super(key: key);
+  const CheckboxInputComp({super.key, required this.fieldName,  this.id,  this.mid, required this.fieldObj, required this.selectionChange, required this.onSaved, required this.formKey});
 
 
   @override
@@ -30,6 +30,7 @@ class _CheckboxInputCompState extends State<CheckboxInputComp> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     //DynamicField field = Provider.of<DynamicNotifier>(context).quote.sections[0].blocks[widget.id].dynamicField[widget.mid];
     width = MediaQuery.of(context).size.width;
     height = 50.0;
@@ -37,12 +38,14 @@ class _CheckboxInputCompState extends State<CheckboxInputComp> with TickerProvid
     return Visibility(
       visible: widget.fieldObj.visibility == "Y"?true:false,
       child: Container(
+        padding: EdgeInsets.only(bottom :4),
+        margin: EdgeInsets.only(top: 4, right: 4,),
         child:  Column(
           children: [
             FormBuilderCheckbox(
               name: widget.fieldObj.fieldName!,
               //validator: widget.fieldObj.validator!,
-              initialValue: widget.fieldObj.fieldValue == null ? false:widget.fieldObj.fieldValue,
+              initialValue: widget.fieldObj.fieldValue ?? false,
               enabled: widget.fieldObj.disabledYN == "N"?true:false,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               focusNode: focusNode,
@@ -103,7 +106,7 @@ class _CheckboxInputCompState extends State<CheckboxInputComp> with TickerProvid
                   ),
               ), title: widget.fieldObj.mandatory! == "Y"?RichText(
               text: TextSpan(
-                  text: widget.fieldObj.labelName! ?? "",
+                  text: widget.fieldObj.labelName!,
                   children: [
                     TextSpan(
                         style: TextStyle(color: Colors.red),
@@ -111,12 +114,10 @@ class _CheckboxInputCompState extends State<CheckboxInputComp> with TickerProvid
                     )
                   ],
                   ),
-            ):Text(widget.fieldObj.labelName! ?? "",),
+            ):Text(widget.fieldObj.labelName!,),
             ),
           ],
         ),
-        padding: EdgeInsets.only(bottom :4),
-        margin: EdgeInsets.only(top: 4, right: 4,),
       ),
     );
   }

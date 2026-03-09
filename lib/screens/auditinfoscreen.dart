@@ -1,7 +1,5 @@
 
 
-import 'package:accordion/accordion.dart';
-import 'package:accordion/controllers.dart';
 import 'package:audit_app/theme/themes.dart';
 import 'package:audit_app/widget/containerwithbgimage.dart';
 import '../localization/app_translations.dart';
@@ -9,27 +7,17 @@ import '../models/screenarguments.dart';
 import '../services/api_service.dart';
 import '../widget/boxcontainer.dart';
 import '../widget/buttoncomp.dart';
-import '../widget/datatablecontainer.dart';
-import '../widget/norecordcomp.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
-import 'package:easy_stepper/easy_stepper.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:jiffy/jiffy.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
 import '../responsive.dart';
-import '../widget/outlinebutton.dart';
 import '../widget/statuscomp.dart';
 import 'main/layoutscreen.dart';
-import 'dart:js' as js;
+import 'package:url_launcher/url_launcher.dart';
 
 class AuditInfoScreen extends StatefulWidget {
   const AuditInfoScreen({super.key});
@@ -41,7 +29,7 @@ class AuditInfoScreen extends StatefulWidget {
 class _AuditInfoScreenState extends State<AuditInfoScreen> {
   ScreenArgument? pageargument;
   UserController usercontroller = Get.put(UserController());
-  dynamic auditObj = null;
+  dynamic auditObj;
   String modifyRemarks = "";
   bool disabledButton = true;
 
@@ -62,7 +50,7 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
       pageargument =  ModalRoute.of(context)?.settings.arguments as ScreenArgument;
       auditObj = pageargument?.mapData;
       usercontroller.getCurrentDate(context, data: {}, callback: (res){
-        print("res ${auditObj}");
+        debugPrint("res $auditObj");
         int logintime = Jiffy.parse(res["logintime"],pattern: "yyyy-MM-dd h:m:s").millisecondsSinceEpoch;
 
         DateTime date = Jiffy.parseFromDateTime(DateTime.parse(auditObj["start_date"])).dateTime;
@@ -80,7 +68,7 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
         if(logintime >= audittime){
           disabledButton = false;
         }
-        print("auditObj ${auditObj}");
+        debugPrint("auditObj $auditObj");
         setState(() {});
       });
 
@@ -223,13 +211,13 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
       ],
     );
   }
-  launchURLPage() async {
+  Future<void> launchURLPage() async {
     // final Uri url = Uri.parse(API_URL+"export?id="+auditObj["id"].toString());
     // await launchUrl(
     //   url,
     //   webOnlyWindowName: '_blank',
     // );
-    js.context.callMethod('open', [API_URL+"export?type=1&id="+auditObj["reporturl"].toString(),"_blank"]);
+    launchUrl(Uri.parse("${API_URL}export?type=1&id=${auditObj["reporturl"]}"));
   }
 
   @override
@@ -240,6 +228,9 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
         child: PageContainerComp(
             isBGTransparent: true,
             padding: 0,
+            showTitle: true,
+            showButton: false,
+            title: AppTranslations.of(context)!.text("key_details"),
             child: Center(
               child:  auditObj == null?SizedBox():BoxContainer(
                   width: double.infinity,
@@ -256,7 +247,7 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
                                 child: Text(auditObj["companyname"],style: headingTextStyle,)
                             ),
                             Visibility(
-                                visible: ["C","P","CL"].indexOf(auditObj["status"]) == -1 ? true : false,
+                                visible: !["C","P","CL"].contains(auditObj["status"]) ? true : false,
                                 child: ButtonComp(
                                     height: buttonHeight,
                                     icon:Icon(Icons.download),
@@ -279,7 +270,7 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
                                 child: Center(child: Text(auditObj["companyname"],style: headingTextStyle,))
                             ),
                             Visibility(
-                                visible: ["C","P","CL"].indexOf(auditObj["status"]) == -1 ? true : false,
+                                visible: !["C","P","CL"].contains(auditObj["status"]) ? true : false,
                                 child: ButtonComp(
                                     height: buttonHeight,
                                     icon:Icon(Icons.download),
@@ -317,10 +308,10 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
                         Text(auditObj["remarks"],style: paragTextStyle,maxLines: 10,),
                         SizedBox(height: 15,),
                         Visibility(
-                            visible: ["C","P","CL"].indexOf(auditObj["status"]) == -1 && usercontroller.userData.role == "JrA"? true : false,
+                            visible: !["C","P","CL"].contains(auditObj["status"]) && usercontroller.userData.role == "JrA"? true : false,
                             //   visible: false,
                             child: Center(
-                              child: Container(
+                              child: SizedBox(
                                 width: 320,
                                 child: Row(
                                   children: [
@@ -425,7 +416,7 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
                         ),
                         Visibility(
                             visible: auditObj["status"] == "C" && usercontroller.userData.role != "JrA" && usercontroller.userData.role != "CL"? true : false,
-                            child: Container(
+                            child: SizedBox(
                               width: 350,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -452,10 +443,12 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
                                             });
                                           }
                                         },callback: (arr) async {
-                                          if(arr.length == 0){
+                                          if(arr.isEmpty){
                                             return;
                                           }
-                                          arr.forEach((ele)=>ele["checked"]=false);
+                                          for (var ele in arr) {
+                                            ele["checked"]=false;
+                                          }
                                           SizedBox col = SizedBox(
                                             height: 250,
                                             child: Column(
@@ -497,8 +490,8 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
                                               showCancelBtn: true,
                                               allowClosePopup: false,
                                               child: col,callback: (){
-                                            List<dynamic> dataObjArr = arr.where((_element)=>_element["checked"]).toList();
-                                            if(dataObjArr.length == 0){
+                                            List<dynamic> dataObjArr = arr.where((element)=>element["checked"]).toList();
+                                            if(dataObjArr.isEmpty){
                                               APIService(context).showToastMgs(AppTranslations.of(context)!.text("key_message_20"));
                                               return;
                                             }
@@ -535,10 +528,7 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
                     ),
                   )
               ),
-            ),
-            showTitle: true,
-            showButton: false,
-            title: AppTranslations.of(context)!.text("key_details"))
+            ))
     );
 
   }

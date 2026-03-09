@@ -1,5 +1,4 @@
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/outlinebutton.dart';
 import 'package:flutter/material.dart';
 import '../constants.dart';
 class BoxContainer extends StatelessWidget {
@@ -22,7 +21,7 @@ class BoxContainer extends StatelessWidget {
     return showImage! ? withImage(context) : withoutImage(context);
   }
   Widget withImage(context){
-    return Container(
+    return SizedBox(
         height: height,
         width: width,
         child: Center(
@@ -49,7 +48,7 @@ class BoxContainer extends StatelessWidget {
                               image: DecorationImage(image: imgPath!.isEmpty ? AssetImage("assets/images/person.jpeg") : NetworkImage(imgPath!)),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
+                                  color: Colors.grey.withValues(alpha: 0.5),
                                   spreadRadius: 3,
                                   blurRadius: 7,
                                   offset: Offset(0, 3), // changes position of shadow

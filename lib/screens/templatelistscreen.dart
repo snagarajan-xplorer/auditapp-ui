@@ -1,19 +1,13 @@
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
-import 'package:audit_app/services/api_service.dart';
-import 'package:audit_app/widget/boxcontainer.dart';
-import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:audit_app/widget/datatablecontainer.dart';
-import 'package:audit_app/widget/norecordcomp.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:jiffy/jiffy.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
-import '../responsive.dart';
 import '../services/LocalStorage.dart';
 import 'main/layoutscreen.dart';
 
@@ -87,23 +81,22 @@ class _TemplatelistscreenState extends State<Templatelistscreen> {
     Future.delayed(Duration(milliseconds: 200))
         .then((onValue) async {
       pageargument =  ModalRoute.of(context)?.settings.arguments as ScreenArgument? ?? ScreenArgument();
-      print("pageargument?.argument ${pageargument?.argument}");
+      debugPrint("pageargument?.argument ${pageargument?.argument}");
       if(pageargument?.argument  != null){
         await LocalStorage.setStringData("arguments",pageargument?.argument == ArgumentData.USER ? "User" : "Client");
       }else{
         String? str = await LocalStorage.getStringData("arguments");
         pageargument =  ScreenArgument(argument: str == "User" ? ArgumentData.USER : ArgumentData.CLIENT,mapData: {});
       }
-      String role = "ALL";
       pageTitle = AppTranslations.of(context)!.text("key_title_temp");
       sideTitle = AppTranslations.of(context)!.text("key_userdetails");
       usercontroller.getAllTemplateList(context,  callback:(res){
         templateArr = [];
-        res.forEach((element){
+        for (var element in res) {
           element["statusvalue"] = element["status"] == "A" ? "Active" : "Inactive";
           element["created_at"] = Jiffy.parseFromDateTime(DateTime.parse(element["created_at"])).format(pattern: "dd/MM/yyyy");
           templateArr.add(Map.of(element));
-        });
+        }
         setState(() {});
 
       });
@@ -121,19 +114,17 @@ class _TemplatelistscreenState extends State<Templatelistscreen> {
               padding: 0,
               title:pageTitle,
               showTitle: true,
-              showButton: menuAccessRole.indexOf(usercontroller.userData.role!) != -1?true:false,
+              showButton: menuAccessRole.contains(usercontroller.userData.role!)?true:false,
               callback: (){
-                ScreenArgument editargu = ScreenArgument(argument:pageargument?.argument,mapData: pageargument?.mapData,mode: "Add",editData: {});
                 Navigator.pushNamed(context, "/addtemplate",arguments: pageargument);
               },
-              child: templateArr.length == 0 ? Container() : DataTableContainer(
+              child: templateArr.isEmpty ? Container() : DataTableContainer(
                 dataArr: templateArr, fieldArr: dataObj,
                 pageType: "template",
                 onChanged: (str){
-                  print(str);
+                  debugPrint(str);
                 },
                 callback: (data){
-                  ScreenArgument editargu = ScreenArgument(argument:pageargument?.argument,mapData: pageargument?.mapData,mode: "Add",editData: {});
                   Navigator.pushNamed(context, "/addtemplate",arguments: pageargument);
                 },
               ),

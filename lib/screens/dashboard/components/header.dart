@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 
 import '../../../controllers/usercontroller.dart';
 import './../../../responsive.dart';
@@ -12,12 +11,12 @@ class Header extends StatefulWidget {
   final VoidCallback? backEvent;
   final String? previousScreenName;
   const Header({
-    Key? key,
+    super.key,
     required this.callback,
     this.showBackbutton = false,
     this.previousScreenName = "",
     this.backEvent,
-  }) : super(key: key);
+  });
 
   @override
   State<Header> createState() => _HeaderState();
@@ -49,7 +48,7 @@ class _HeaderState extends State<Header> {
                   IconButton(
                     icon: Icon(Icons.menu, color: Colors.black),
                     onPressed: () {
-                      print("Click Menu");
+                      debugPrint("Click Menu");
                       widget.callback();
                     },
                   ),
@@ -74,7 +73,7 @@ class _HeaderState extends State<Header> {
                       }
                     },
                     child: Container(
-                      padding: EdgeInsets.only(top: 7,left: 50),
+                      padding: EdgeInsets.only(top: 7,left: 20),
                       child: Text(
                         widget.previousScreenName!,
                         style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600,color: Color(0xFF505050)),
@@ -104,7 +103,7 @@ class _HeaderState extends State<Header> {
 }
 
 class BrandDropdown extends StatefulWidget {
-  const BrandDropdown({Key? key}) : super(key: key);
+  const BrandDropdown({super.key});
 
   @override
   State<BrandDropdown> createState() => _BrandDropdownState();
@@ -125,7 +124,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
   }
 
   Future<void> loadClients() async {
-    if (menuAccessRole.indexOf(usercontroller.userData.role!) != -1) {
+    if (menuAccessRole.contains(usercontroller.userData.role!)) {
       usercontroller.getClientList(
         context,
         data: {
@@ -152,7 +151,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    if (menuAccessRole.indexOf(usercontroller.userData.role!) == -1) {
+    if (!menuAccessRole.contains(usercontroller.userData.role!)) {
       return Container();
     }
 
@@ -172,7 +171,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
     }
 
     return DropdownButtonFormField<String>(
-      value: selectedClientId,
+      initialValue: selectedClientId,
       decoration: InputDecoration(
         contentPadding: EdgeInsets.symmetric(horizontal: 0, vertical: 0),
         border: InputBorder.none,
@@ -209,8 +208,8 @@ class _BrandDropdownState extends State<BrandDropdown> {
 
 class ProfileCard extends StatelessWidget {
   const ProfileCard({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

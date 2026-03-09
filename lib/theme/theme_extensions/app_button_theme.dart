@@ -47,8 +47,8 @@ class AppButtonTheme extends ThemeExtension<AppButtonTheme> {
     return AppButtonTheme(
       primaryElevated: ElevatedButton.styleFrom(
         backgroundColor: appColorScheme.primary,
-        disabledForegroundColor: appColorScheme.primary.withOpacity(0.38),
-        disabledBackgroundColor: appColorScheme.primary.withOpacity(0.12),
+        disabledForegroundColor: appColorScheme.primary.withValues(alpha: 0.38),
+        disabledBackgroundColor: appColorScheme.primary.withValues(alpha: 0.12),
       ).withCommonButtonStyle(
         appColorScheme: appColorScheme,
       ),
@@ -243,16 +243,16 @@ extension ButtonStyleExtension on ButtonStyle {
     Color? normalButtonTextColor,
   }) {
     return copyWith(
-      minimumSize: MaterialStateProperty.all(const Size(60.0, 46.0)),
-      mouseCursor: MaterialStateProperty.resolveWith((state) {
-        if (state.contains(MaterialState.disabled)) {
+      minimumSize: WidgetStateProperty.all(const Size(60.0, 46.0)),
+      mouseCursor: WidgetStateProperty.resolveWith((state) {
+        if (state.contains(WidgetState.disabled)) {
           return SystemMouseCursors.forbidden;
         }
 
         return null;
       }),
-      foregroundColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.disabled)) {
+      foregroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.disabled)) {
           return appColorScheme.buttonTextDisabled;
         }
 
@@ -269,10 +269,10 @@ extension ButtonStyleExtension on ButtonStyle {
       appColorScheme: appColorScheme,
       normalButtonTextColor: normalButtonTextColor,
     ).copyWith(
-      foregroundColor: MaterialStateProperty.resolveWith((states) {
+      foregroundColor: WidgetStateProperty.resolveWith((states) {
         return foregroundColor!.resolve(states);
       }),
-      side: MaterialStateProperty.resolveWith((states) {
+      side: WidgetStateProperty.resolveWith((states) {
         return BorderSide(
           width: 1.0,
           color: foregroundColor!.resolve(states)!,
@@ -289,7 +289,7 @@ extension ButtonStyleExtension on ButtonStyle {
       appColorScheme: appColorScheme,
       normalButtonTextColor: normalButtonTextColor,
     ).copyWith(
-      foregroundColor: MaterialStateProperty.resolveWith((states) {
+      foregroundColor: WidgetStateProperty.resolveWith((states) {
         return foregroundColor!.resolve(states);
       }),
     );

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
@@ -9,10 +8,10 @@ import '../services/LocalStorage.dart';
 class LanguageModel extends ChangeNotifier  {
   Locale _appLocale = Locale('en');
   var _themeMode = ThemeMode.light;
-  Locale get appLocal => _appLocale ?? Locale("en");
+  Locale get appLocal => _appLocale;
   String _lang = "en";
-  String get lang => _lang ?? "en";
-  ThemeMode get themeMode => _themeMode ?? ThemeMode.light;
+  String get lang => _lang;
+  ThemeMode get themeMode => _themeMode;
   void checkLanguage(){
     LocalStorage.getStringData("language")
         .then((value){

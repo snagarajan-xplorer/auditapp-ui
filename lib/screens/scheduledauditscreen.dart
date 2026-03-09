@@ -250,11 +250,11 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
               ),
               margin: EdgeInsets.symmetric(horizontal: defaultPadding, vertical: defaultPadding),
               child: isLoading
-                  ? Container(
+                  ? SizedBox(
                       height: 300,
                       child: Center(child: CircularProgressIndicator()))
                   : filteredAudits.isEmpty
-                      ? Container(
+                      ? SizedBox(
                           height: 200,
                           child: Center(
                             child: Text("No records found",
@@ -268,7 +268,7 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
                                 .asMap()
                                 .entries
                                 .map((e) => _buildTableRow(e.value, e.key))
-                                .toList(),
+                                ,
                           ],
                         ),
             ),
@@ -328,7 +328,6 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
   }
 
   Widget _buildTableRow(dynamic row, int index) {
-    final isEven = index % 2 == 0;
     final status = row["status"] ?? {};
     final statusLabel = status["label"] ?? "";
     final statusColor = _statusColor(status["color"] ?? "grey");

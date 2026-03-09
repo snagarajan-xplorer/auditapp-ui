@@ -3,7 +3,6 @@ import 'package:audit_app/screens/2.0/create_audit_screen.dart';
 import 'package:audit_app/screens/adddata.dart';
 import 'package:audit_app/screens/addtemplatescreen.dart';
 import 'package:audit_app/screens/auditcategoryscreen.dart';
-import 'package:audit_app/screens/auditdetails.dart';
 import 'package:audit_app/screens/auditinfoscreen.dart';
 import 'package:audit_app/screens/auditlistscreen.dart';
 import 'package:audit_app/screens/changepassword_screen.dart';
@@ -15,8 +14,6 @@ import 'package:audit_app/screens/templatescreenedit.dart';
 import 'package:audit_app/screens/userscreen.dart';
 import 'package:audit_app/theme/themes.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:get/get_navigation/src/routes/get_route.dart';
-import 'package:get/get_navigation/src/routes/transitions_type.dart';
 import 'package:get/get.dart';
 
 import 'screens/2.0/dashboard_screen.dart';
@@ -24,7 +21,6 @@ import 'screens/2.0/dashboard_screen.dart';
 import 'screens/2.0/login_screen.dart';
 import '../screens/splashscreen.dart';
 import '../providers/languagemodel.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 
@@ -68,7 +64,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   // This widget is the root of your application.
-  final LanguageModel model = new LanguageModel();
+  final LanguageModel model = LanguageModel();
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override

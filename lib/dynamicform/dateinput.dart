@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:intl/intl.dart';
-import '../constants.dart';
 import '../models/dynamicfield.dart';
 import '../models/selectionobj.dart';
 
@@ -14,7 +13,7 @@ class DateInputComp extends StatefulWidget {
   final DynamicField fieldObj;
   final Function(SelectionObj) onSaved;
   final Function(SelectionObj) selectionChange;
-  const DateInputComp({Key? key, required this.fieldName, this.id, this.mid, required this.fieldObj, required this.onSaved, required this.selectionChange}) : super(key: key);
+  const DateInputComp({super.key, required this.fieldName, this.id, this.mid, required this.fieldObj, required this.onSaved, required this.selectionChange});
 
   @override
   State<DateInputComp> createState() => _DateInputCompState();
@@ -24,7 +23,6 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
   late double width;
   late double height;
   DateTime getInitialDate(){
-    DateTime dateTime = Jiffy.now().dateTime;
     if(widget.fieldObj.maxDate.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch){
       if(widget.fieldObj.minDate.millisecondsSinceEpoch > DateTime.now().millisecondsSinceEpoch){
         return widget.fieldObj.minDate;
@@ -34,12 +32,11 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
     }else{
       return widget.fieldObj.minDate;
     }
-    return dateTime;
   }
 
   @override
   Widget build(BuildContext context) {
-    var width = (MediaQuery.of(context).size.width-kFieldWidth)/2;
+    super.build(context);
     return Visibility(
         visible: widget.fieldObj.visibility == "Y"?true:false,
         child: Container(
@@ -48,7 +45,7 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
             enabled: widget.fieldObj.disabledYN == "N"?true:false,
             name: widget.fieldObj.fieldName!,
             textInputAction: TextInputAction.done,
-            validator: widget.fieldObj.validator == null ? null: widget.fieldObj.validator,
+            validator: widget.fieldObj.validator,
             timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
             style: Theme.of(context).textTheme.bodyMedium,
             inputType: widget.fieldObj.enableTime == false ? InputType.date:InputType.both,
@@ -56,7 +53,6 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
             autovalidateMode: AutovalidateMode.onUserInteraction,
             //initialValue: widget.fieldObj?.fieldValue == null?widget.fieldObj.maxDate:widget.fieldObj?.fieldValue,
             onSaved: (DateTime? value){
-              String format= widget.fieldObj.enableTime == false ? 'yyyy-MM-dd' : 'yyyy-MM-ddTHH:mm:ss';
               SelectionObj dataobj = SelectionObj(fieldname: widget.fieldObj.fieldName!,fieldvalue: value);
               widget.onSaved(dataobj);
             },
@@ -86,7 +82,7 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
             decoration:  InputDecoration(
               label: widget.fieldObj.mandatory! == "Y"?RichText(
                 text: TextSpan(
-                  text: widget.fieldObj.labelName! ?? "",
+                  text: widget.fieldObj.labelName!,
                   children: [
                     TextSpan(
                         style: TextStyle(color: Colors.red),
@@ -95,7 +91,7 @@ class _DateInputCompState extends State<DateInputComp> with TickerProviderStateM
                   ],
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-              ):Text(widget.fieldObj.labelName! ?? "",style: Theme.of(context).textTheme.bodyMedium,),
+              ):Text(widget.fieldObj.labelName!,style: Theme.of(context).textTheme.bodyMedium,),
 
               counterText: "",
               contentPadding: EdgeInsets.only(left: 20),

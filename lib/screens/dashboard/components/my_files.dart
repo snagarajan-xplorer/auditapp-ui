@@ -2,19 +2,18 @@
 import '../../../controllers/usercontroller.dart';
 import './../../../responsive.dart';
 import 'package:flutter/material.dart';
-import './../../../models/my_files.dart';
 import '../../../constants.dart';
 import 'package:get/get.dart';
 import 'file_info_card.dart';
 
 class MyFiles extends StatelessWidget {
   const MyFiles({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final Size _size = MediaQuery.of(context).size;
+    final Size size = MediaQuery.of(context).size;
     return Column(
       children: [
         Row(
@@ -41,12 +40,12 @@ class MyFiles extends StatelessWidget {
         SizedBox(height: defaultPadding),
         Responsive(
           mobile: FileInfoCardGridView(
-            crossAxisCount: _size.width < 650 ? 2 : 4,
-            childAspectRatio: _size.width < 650 ? 1.3 : 1,
+            crossAxisCount: size.width < 650 ? 2 : 4,
+            childAspectRatio: size.width < 650 ? 1.3 : 1,
           ),
           tablet: FileInfoCardGridView(),
           desktop: FileInfoCardGridView(
-            childAspectRatio: _size.width < 1400 ? 1.1 : 1.4,
+            childAspectRatio: size.width < 1400 ? 1.1 : 1.4,
           ),
         ),
       ],
@@ -56,15 +55,15 @@ class MyFiles extends StatelessWidget {
 
 class FileInfoCardGridView extends StatelessWidget {
    FileInfoCardGridView({
-    Key? key,
+    super.key,
     this.crossAxisCount = 4,
     this.childAspectRatio = 1,
-  }) : super(key: key);
+  });
 
   final int crossAxisCount;
   final double childAspectRatio;
 
-  UserController usercontroller = Get.put(UserController());
+  final UserController usercontroller = Get.put(UserController());
 
   @override
   Widget build(BuildContext context) {

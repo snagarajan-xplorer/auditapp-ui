@@ -109,7 +109,7 @@ class _AnimatedCircleState extends State<AnimatedCircle>
                   width: widget.data.size.toDouble(),
                   height: widget.data.size.toDouble(),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.8),
+                    color: Colors.blue.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(
                         _animation.value * widget.data.size / 2),
                   ),

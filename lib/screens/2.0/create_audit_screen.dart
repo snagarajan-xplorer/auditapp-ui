@@ -42,7 +42,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
 
   DateTime _initialDate = Jiffy.now().dateTime;
   DateTime _firstDate = Jiffy.now().dateTime;
-  DateTime _lastDate = Jiffy.now().add(months: 8).dateTime;
+  final DateTime _lastDate = Jiffy.now().add(months: 8).dateTime;
 
   /// Data passed from the unscheduled audit screen row
   Map<String, dynamic>? _prefillData;
@@ -319,7 +319,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               validator: _selectedAuditType == 'Scheduled'
                   ? FormBuilderValidators.required(
                       errorText:
-                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                          AppTranslations.of(context)!.text('key_error_01'),
                     )
                   : null,
               onChanged: (value) {
@@ -356,7 +356,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               validator: _selectedAuditType == 'Scheduled'
                   ? FormBuilderValidators.required(
                       errorText:
-                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                          AppTranslations.of(context)!.text('key_error_01'),
                     )
                   : null,
               decoration: AppFormStyles.inputDecoration(),
@@ -388,7 +388,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               .toList(),
           validator: FormBuilderValidators.required(
             errorText:
-                AppTranslations.of(context)!.text('key_error_01') ?? '',
+                AppTranslations.of(context)!.text('key_error_01'),
           ),
           decoration: AppFormStyles.inputDecoration(),
         ),
@@ -413,7 +413,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
           style: Theme.of(context).textTheme.bodyMedium,
           validator: FormBuilderValidators.required(
             errorText:
-                AppTranslations.of(context)!.text('key_error_01') ?? '',
+                AppTranslations.of(context)!.text('key_error_01'),
           ),
           decoration: AppFormStyles.inputDecoration(),
         ),
@@ -430,7 +430,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
           validator: _selectedAuditType == 'Scheduled'
               ? FormBuilderValidators.required(
                   errorText:
-                      AppTranslations.of(context)!.text('key_error_01') ?? '',
+                      AppTranslations.of(context)!.text('key_error_01'),
                 )
               : null,
           decoration: AppFormStyles.inputDecoration(),
@@ -453,7 +453,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                   .toList(),
               validator: FormBuilderValidators.required(
                 errorText:
-                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    AppTranslations.of(context)!.text('key_error_01'),
               ),
               decoration: AppFormStyles.inputDecoration(),
             ),
@@ -475,7 +475,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: FormBuilderValidators.required(
                 errorText:
-                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    AppTranslations.of(context)!.text('key_error_01'),
               ),
               onChanged: (value) {
                 if (value != null && value.length == 6) {
@@ -516,7 +516,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               style: Theme.of(context).textTheme.bodyMedium,
               validator: FormBuilderValidators.required(
                 errorText:
-                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    AppTranslations.of(context)!.text('key_error_01'),
               ),
               decoration: AppFormStyles.inputDecoration(),
             ),
@@ -543,7 +543,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                   .toList(),
               validator: FormBuilderValidators.required(
                 errorText:
-                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    AppTranslations.of(context)!.text('key_error_01'),
               ),
               decoration: AppFormStyles.inputDecoration(),
             ),
@@ -562,7 +562,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               validator: _selectedAuditType == 'Un-scheduled'
                   ? FormBuilderValidators.required(
                       errorText:
-                          AppTranslations.of(context)!.text('key_error_01') ?? '', 
+                          AppTranslations.of(context)!.text('key_error_01'), 
                     )
                   : null,
               decoration: AppFormStyles.inputDecoration(),
@@ -584,7 +584,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                   .toList(),
               validator: FormBuilderValidators.required(
                 errorText:
-                    AppTranslations.of(context)!.text('key_error_01') ?? '',
+                    AppTranslations.of(context)!.text('key_error_01'),
               ),
               decoration: AppFormStyles.inputDecoration(),
             ),
@@ -612,7 +612,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               validator: _selectedAuditType == 'Scheduled'
                   ? FormBuilderValidators.required(
                       errorText:
-                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                          AppTranslations.of(context)!.text('key_error_01'),
                     )
                   : null,
               decoration: AppFormStyles.inputDecoration(),
@@ -635,7 +635,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               validator: _selectedAuditType == 'Scheduled'
                   ? FormBuilderValidators.required(
                       errorText:
-                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                          AppTranslations.of(context)!.text('key_error_01'),
                     )
                   : null,
               decoration: AppFormStyles.inputDecoration(
@@ -659,7 +659,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               validator: _selectedAuditType == 'Scheduled'
                   ? FormBuilderValidators.required(
                       errorText:
-                          AppTranslations.of(context)!.text('key_error_01') ?? '',
+                          AppTranslations.of(context)!.text('key_error_01'),
                     )
                   : null,
               decoration: AppFormStyles.inputDecoration(
@@ -848,7 +848,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                                     .toList(),
                                 validator: FormBuilderValidators.required(
                                   errorText:
-                                      AppTranslations.of(context)!.text('key_error_01') ?? '',
+                                      AppTranslations.of(context)!.text('key_error_01'),
                                 ),
                                 onChanged: (value) {
                                   setState(() {

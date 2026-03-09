@@ -8,7 +8,7 @@ class ScreenArgument{
   final String? mode;
   final Map<String,dynamic>? editData;
   final dynamic mapData;
-  const ScreenArgument({this.argument, this.mapData,this.mode="Add",this.editData = null});
+  const ScreenArgument({this.argument, this.mapData,this.mode="Add",this.editData});
   factory ScreenArgument.fromJson(Map<String, dynamic> json) {
     return ScreenArgument(
       argument: json['argument'] != null

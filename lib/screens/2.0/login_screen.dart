@@ -133,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: AppLabeledField(
                         label: 'Role',
                         child: DropdownButtonFormField<String>(
-                          value: roleMap.containsKey(selectedRole) ? selectedRole : null,
+                          initialValue: roleMap.containsKey(selectedRole) ? selectedRole : null,
                           decoration: AppFormStyles.inputDecoration(),
                           items: roleMap.entries.map((entry) {
                             return DropdownMenuItem(

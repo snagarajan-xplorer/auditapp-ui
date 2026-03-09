@@ -587,7 +587,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                   _isActive = value;
                 });
               },
-              activeColor: Colors.green,
+              activeThumbColor: Colors.green,
               activeTrackColor: Colors.green.shade200,
             ),
             const SizedBox(width: 8),

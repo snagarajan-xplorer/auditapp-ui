@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 class RadioInputComp extends StatefulWidget {
-  const RadioInputComp({Key? key}) : super(key: key);
+  const RadioInputComp({super.key});
 
   @override
   State<RadioInputComp> createState() => _RadioInputCompState();

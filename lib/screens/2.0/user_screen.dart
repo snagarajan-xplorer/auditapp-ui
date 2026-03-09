@@ -138,7 +138,7 @@ class _UserScreenV2State extends State<UserScreenV2> {
 
         if (isUserMode) {
           // Exclude CL and SA roles for user list
-          if (["CL", "SA"].indexOf(userMap["role"].toString()) == -1) {
+          if (!["CL", "SA"].contains(userMap["role"].toString())) {
             allUsers.add(userMap);
           }
         } else {
@@ -287,7 +287,7 @@ class _UserScreenV2State extends State<UserScreenV2> {
       previousScreenName: 'Settings',
       showBackbutton: true,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 50, right: 36),
+        padding: const EdgeInsets.only(left: 20, right: 36),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -317,8 +317,7 @@ class _UserScreenV2State extends State<UserScreenV2> {
                   ),
                   // Create New User button
                   if (menuAccessRole
-                          .indexOf(usercontroller.userData.role ?? '') !=
-                      -1)
+                          .contains(usercontroller.userData.role ?? ''))
                     SizedBox(
                       height: 42,
                       child: ElevatedButton.icon(

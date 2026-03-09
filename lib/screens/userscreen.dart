@@ -1,10 +1,6 @@
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
-import 'package:audit_app/services/api_service.dart';
-import 'package:audit_app/widget/boxcontainer.dart';
-import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:audit_app/widget/datatablecontainer.dart';
-import 'package:audit_app/widget/norecordcomp.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -13,7 +9,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:jiffy/jiffy.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
-import '../responsive.dart';
 import '../services/LocalStorage.dart';
 import 'main/layoutscreen.dart';
 
@@ -99,7 +94,7 @@ class _UserScreenState extends State<UserScreen> {
     Future.delayed(Duration(milliseconds: 200))
     .then((onValue) async {
       pageargument =  ModalRoute.of(context)?.settings.arguments as ScreenArgument? ?? ScreenArgument();
-      print("pageargument?.argument ${pageargument?.argument}");
+      debugPrint("pageargument?.argument ${pageargument?.argument}");
       if(pageargument?.argument  != null){
         await LocalStorage.setStringData("arguments",pageargument?.argument == ArgumentData.USER ? "User" : "Client");
       }else{
@@ -214,22 +209,22 @@ class _UserScreenState extends State<UserScreen> {
           ];
         }
 
-        usercontroller.userlist.forEach((element){
+        for (var element in usercontroller.userlist) {
           element["statusvalue"] = element["status"] == "A" ? "Active" : "Inactive";
-          if(pageargument?.argument == ArgumentData.USER && ["CL","SA"].indexOf(element["role"].toString()) == -1){
+          if(pageargument?.argument == ArgumentData.USER && !["CL","SA"].contains(element["role"].toString())){
             userArr.add(Map.of(element));
           }else if(pageargument?.argument == ArgumentData.CLIENT && element["role"] == "CL"){
             userArr.add(Map.of(element));
           }
 
-        });
+        }
 
       setState(() {});
 
       });
     });
   }
-  Widget _buildChild(obj){
+  /* Widget _buildChild(obj){
     return ListTile(
       title: Text(obj["name"]),
       subtitle: Row(
@@ -240,7 +235,7 @@ class _UserScreenState extends State<UserScreen> {
         ],
       ),
     );
-  }
+  } */
 
   @override
   Widget build(BuildContext context) {
@@ -253,25 +248,24 @@ class _UserScreenState extends State<UserScreen> {
                 padding: 0,
                 title:pageTitle,
                 showTitle: true,
-                showButton: menuAccessRole.indexOf(usercontroller.userData.role!) != -1?true:false,
+                showButton: menuAccessRole.contains(usercontroller.userData.role!)?true:false,
                 callback: (){
                   String filename = "assets/json/user.json";
                   if(kIsWeb){
                     filename = "json/user.json";
                   }
                   usercontroller.getStaticForm(context,type: pageargument?.argument ?? ArgumentData.USER, url: filename, callback: (){
-                    ScreenArgument editargu = ScreenArgument(argument:pageargument?.argument,mapData: pageargument?.mapData,mode: "Add",editData: {});
                     Navigator.pushNamed(context, "/adddata",arguments: pageargument);
                   });
                 },
-                child: userArr.length == 0 ? Container() : DataTableContainer(
+                child: userArr.isEmpty ? Container() : DataTableContainer(
                   dataArr: userArr, fieldArr: dataObj,
                   pageType: "user",
                   onChanged: (str){
 
                   },
                   callback: (data){
-                    print("data ${data}");
+                    debugPrint("data $data");
                     String filename = "assets/json/user.json";
                     if(kIsWeb){
                       filename = "json/user.json";

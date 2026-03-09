@@ -2,27 +2,18 @@ import 'dart:io';
 
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
-import 'package:audit_app/services/api_service.dart';
-import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
-import 'package:audit_app/widget/norecordcomp.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
-import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:jiffy/jiffy.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
-import '../responsive.dart';
 import 'main/layoutscreen.dart';
-import 'dart:js' as js;
+import 'package:url_launcher/url_launcher.dart';
 
 class AddTemplateScreen extends StatefulWidget {
   const AddTemplateScreen({super.key});
@@ -114,7 +105,7 @@ class _AddTemplateScreenState extends State<AddTemplateScreen> {
                         showButton: true,
                         buttonName: AppTranslations.of(context)!.text("key_download_temp"),
                         callback: (){
-                          js.context.callMethod('open', [API_URL+"templateexport?id=s2hgpasn0chndggqv0saht48b6lv25d8dkxulj9u8bgcosomappaiezrnc6kh6kgb8vbh2aqjplh78nk7r8caf3pq2f0bzckhf9ukv3y2g493w288e83preg","_blank"]);
+                          launchUrl(Uri.parse("${API_URL}templateexport?id=s2hgpasn0chndggqv0saht48b6lv25d8dkxulj9u8bgcosomappaiezrnc6kh6kgb8vbh2aqjplh78nk7r8caf3pq2f0bzckhf9ukv3y2g493w288e83preg"));
                         },
                         title: AppTranslations.of(context)!.text("key_title_temp"),
                         child: FormBuilder(
@@ -124,7 +115,7 @@ class _AddTemplateScreenState extends State<AddTemplateScreen> {
                                 FormBuilderTextField(
                                   name: "templatename",
                                   validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                      errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                   style: Theme.of(context).textTheme.bodyMedium,
                                   onChanged: (value){
 
@@ -164,10 +155,8 @@ class _AddTemplateScreenState extends State<AddTemplateScreen> {
                                     child: Text(toElement["clientname"]),
                                   )).toList(),
                                   validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                      errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                   onChanged: (value){
-                                    List<dynamic> selectCompany = clientlist.where((element)=>element["clientid"].toString() == value.toString()).toList();
-
 
                                   },
                                   decoration:  InputDecoration(
@@ -205,7 +194,7 @@ class _AddTemplateScreenState extends State<AddTemplateScreen> {
                                   name: "description",
                                   maxLines: 4,
                                   validator: FormBuilderValidators.compose([FormBuilderValidators.required(
-                                      errorText: AppTranslations.of(context)!.text("key_error_01") ?? "")]),
+                                      errorText: AppTranslations.of(context)!.text("key_error_01"))]),
                                   style: Theme.of(context).textTheme.bodyMedium,
                                   decoration:  InputDecoration(
                                     label: RichText(
@@ -271,7 +260,7 @@ class _AddTemplateScreenState extends State<AddTemplateScreen> {
                                         ),
                                         if (_imageBytes != null) ...[
                                           SizedBox(height: 10),
-                                          Text('Selected File: ${_imageName}'),
+                                          Text('Selected File: $_imageName'),
                                         ],
                                         if (field.errorText != null) ...[
                                           SizedBox(height: 5),

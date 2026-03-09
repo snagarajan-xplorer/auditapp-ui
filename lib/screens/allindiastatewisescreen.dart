@@ -59,10 +59,6 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
     }
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
   Future<void> loadFinancialYears() async {
     bool apiResponseReceived = false;
@@ -295,7 +291,7 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
               ),
             );
           } catch (e) {
-            print("Error fitting camera: $e");
+            debugPrint("Error fitting camera: $e");
           }
         });
       }
@@ -495,7 +491,7 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
           elevation: 3,
           child: InkWell(
             onTap: () => _zoomIn(),
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
               child: Icon(Icons.add, size: 20, color: Color(0xFF505050)),
@@ -509,7 +505,7 @@ class _AllIndiaStateWiseScreenState extends State<AllIndiaStateWiseScreen>
           elevation: 3,
           child: InkWell(
             onTap: () => _zoomOut(),
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
               child: Icon(Icons.remove, size: 20, color: Color(0xFF505050)),

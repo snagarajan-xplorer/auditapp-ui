@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 
-import '../localization/app_translations.dart';
 
 
 class Input extends StatelessWidget {
@@ -16,8 +14,8 @@ class Input extends StatelessWidget {
   final bool? autofocus;
   final Color? borderColor;
 
-  Input(
-      {required this.placeholder,
+  const Input(
+      {super.key, required this.placeholder,
       this.suffixIcon,
       this.prefixIcon,
       this.onTap,

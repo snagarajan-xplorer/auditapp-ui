@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 
 
-import '../constants.dart';
 import '../models/dynamicfield.dart';
 import '../models/selectionobj.dart';
 
@@ -17,7 +16,7 @@ class TextInputComp extends StatefulWidget {
   final DynamicField fieldObj;
   final Function(SelectionObj) onSaved;
   final Function(SelectionObj) selectionChange;
-   TextInputComp({Key? key, required this.fieldName,  this.id,  this.mid, required this.fieldObj, required this.selectionChange, required this.onSaved, required this.formKey}) : super(key: key);
+   const TextInputComp({super.key, required this.fieldName,  this.id,  this.mid, required this.fieldObj, required this.selectionChange, required this.onSaved, required this.formKey});
 
   @override
   State<TextInputComp> createState() => _TextInputCompState();
@@ -27,17 +26,11 @@ class _TextInputCompState extends State<TextInputComp>  with TickerProviderState
   late double width;
   late double height;
   GlobalKey btnKey = GlobalKey();
-  bool showPass = false!;
-  bool micOn = false!;
+  bool showPass = false;
+  bool micOn = false;
   FocusNode focusNode = FocusNode();
   late SelectionObj dataobj = SelectionObj(fieldname: widget.fieldObj.fieldName!,fieldvalue: "",keyvalue: "");
   List<TextInputFormatter> inputArr = [];
-
-  String _lastWords = '';
-  final FocusNode _node = FocusNode();
-
-
-
 
   @override
   void initState() {
@@ -77,10 +70,10 @@ class _TextInputCompState extends State<TextInputComp>  with TickerProviderState
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     //DynamicField field = Provider.of<DynamicNotifier>(context).quote.sections[0].blocks[widget.id].dynamicField[widget.mid];
 
     // Divide and round
-    var width = (MediaQuery.of(context).size.width-kFieldWidth)/2;
 
     return Visibility(
       visible: widget.fieldObj.visibility == "Y"?true:false,
@@ -98,7 +91,7 @@ class _TextInputCompState extends State<TextInputComp>  with TickerProviderState
           textInputAction: TextInputAction.done,
           keyboardType:widget.fieldObj.textInputType,
           obscureText: showPass,
-          initialValue: widget.fieldObj.fieldValue == null ? "":widget.fieldObj.fieldValue,
+          initialValue: widget.fieldObj.fieldValue ?? "",
           enabled: widget.fieldObj.disabledYN == "N"?true:false,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           style: Theme.of(context).textTheme.bodyMedium,
@@ -131,12 +124,12 @@ class _TextInputCompState extends State<TextInputComp>  with TickerProviderState
           },
 
           //initialValue: widget.fieldObj.fieldValue == null ? widget.fieldObj.defaultValue == null?"":widget.fieldObj.defaultValue:widget.fieldObj.fieldValue,
-          validator: widget.fieldObj.validator == null ? null: widget.fieldObj.validator,
+          validator: widget.fieldObj.validator,
           inputFormatters: widget.fieldObj.inputFormatters,
           decoration:  InputDecoration(
             label: widget.fieldObj.mandatory! == "Y"?RichText(
               text: TextSpan(
-                text: widget.fieldObj.labelName! ?? "",
+                text: widget.fieldObj.labelName!,
                 children: [
                   TextSpan(
                       style: TextStyle(color: Colors.red),
@@ -145,7 +138,7 @@ class _TextInputCompState extends State<TextInputComp>  with TickerProviderState
                 ],
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-            ):Text(widget.fieldObj.labelName! ?? "",style: Theme.of(context).textTheme.bodyMedium,),
+            ):Text(widget.fieldObj.labelName!,style: Theme.of(context).textTheme.bodyMedium,),
 
             contentPadding: EdgeInsets.only(left: 20),
             counterText: "",

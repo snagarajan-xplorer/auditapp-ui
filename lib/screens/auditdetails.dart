@@ -2,32 +2,18 @@ import 'package:accordion/accordion.dart';
 import 'package:accordion/controllers.dart';
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
-import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
-import 'package:audit_app/widget/norecordcomp.dart';
-import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:audit_app/widget/statuscomp.dart';
 import 'package:data_table_2/data_table_2.dart';
-import 'package:easy_stepper/easy_stepper.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:jiffy/jiffy.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
 import '../responsive.dart';
-import '../widget/outlinebutton.dart';
 import 'main/layoutscreen.dart';
-import 'dart:js' as js;
+import 'package:url_launcher/url_launcher.dart';
 
 class AuditDetails extends StatefulWidget {
   const AuditDetails({super.key});
@@ -56,7 +42,7 @@ class _AuditDetailsState extends State<AuditDetails> {
       List<dynamic> attendQuestion = element["questions"].where((quest)=>quest["answer"].toString().trim().toString().isNotEmpty).toList();
       ansValue = 0;
       totalValue = 0;
-      attendQuestion.forEach((ele){
+      for (var ele in attendQuestion) {
         if(ele["answer"] != "N/A"){
           String str = (ele["answer"] ?? "0");
           int d = int.tryParse(str) ?? 0;
@@ -64,7 +50,7 @@ class _AuditDetailsState extends State<AuditDetails> {
           totalValue = totalValue + 4;
 
         }
-      });
+      }
       element["answer"] = ansValue.toString();
       element["total"] = totalValue.toString();
       if (element["answer"] != null) {
@@ -134,7 +120,7 @@ class _AuditDetailsState extends State<AuditDetails> {
   Widget questionChild(id,quest,len){
     Color selectedColor = usercontroller.scoreArr[0]["color"];
     List<dynamic> arr = usercontroller.scoreArr.where((e)=>e["value"] == quest["answer"].toString()).toList();
-    if(arr.length != 0){
+    if(arr.isNotEmpty){
       selectedColor = arr[0]["color"];
     }
     return Column(
@@ -142,7 +128,7 @@ class _AuditDetailsState extends State<AuditDetails> {
       children: [
         SizedBox(
           width: double.infinity,
-          child: Text(id.toString()+"."+quest["question"],style: TextStyle(
+          child: Text("$id."+quest["question"],style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16
           ),textAlign: TextAlign.left,),
@@ -207,7 +193,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                           margin: EdgeInsets.only(left: 5,right: 5),
                           child: InkWell(
                             onTap: (){
-                              js.context.callMethod('open', [IMG_URL+imgelement["image"],"_blank"]);
+                              launchUrl(Uri.parse(IMG_URL+imgelement["image"]));
                             },
                             child: Container(
                               width: 90,
@@ -269,7 +255,7 @@ class _AuditDetailsState extends State<AuditDetails> {
       width: double.infinity,
         height: double.infinity,
         child: showAudit == true ? SingleChildScrollView(
-          child: Container(
+          child: SizedBox(
             width: double.infinity,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -359,19 +345,18 @@ class _AuditDetailsState extends State<AuditDetails> {
         ):Container()
     );
   }
-  launchURLPage() async {
+  Future<void> launchURLPage() async {
     // final Uri url = Uri.parse(API_URL+"export?id="+auditObj["id"].toString());
     // await launchUrl(
     //   url,
     //   webOnlyWindowName: '_blank',
     // );
-    js.context.callMethod('open', [API_URL+"exportControl?type=2&id="+auditObj["reporturl"].toString(),"_blank"]);
-    //js.context.callMethod('open', [API_URL+"export?type=2&id="+auditObj["reporturl"].toString(),"_blank"]);
+    launchUrl(Uri.parse("${API_URL}exportControl?type=2&id=${auditObj["reporturl"]}"));
+    //launchUrl(Uri.parse(API_URL+"export?type=2&id="+auditObj["reporturl"].toString()));
   }
 
   @override
   Widget build(BuildContext context) {
-    int id = 1;
     return LayoutScreen(
         child: Padding(
           padding: const EdgeInsets.only(left: defaultPadding,right: defaultPadding,top: 10),
@@ -395,7 +380,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                             height: 100,
                             child: DataTableTheme(
                                 data:  DataTableThemeData(
-                                    dataRowHeight: 30.0,
+                                    dataRowMinHeight: 30.0, dataRowMaxHeight: 30.0,
                                     horizontalMargin: 8,
                                     headingRowAlignment:MainAxisAlignment.spaceBetween,
                                     headingRowHeight: 30// Adjust row height
@@ -415,7 +400,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                                   DataRow(cells: [
                                     DataCell(Container(child: Center(child: Text(answerMark,style: paragTextStyle,)))),
                                     DataCell(Container(child: Center(child: Text(totalMark,style: paragTextStyle,)))),
-                                    DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: totalPer.toString()+"%",percentage: int.tryParse(totalPer.toString()),))
+                                    DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: "$totalPer%",percentage: int.tryParse(totalPer.toString()),))
                                     )))
                                   ])
                                 ]
@@ -435,7 +420,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                             height: 100,
                             child: DataTableTheme(
                                 data:  DataTableThemeData(
-                                    dataRowHeight: 30.0,
+                                    dataRowMinHeight: 30.0, dataRowMaxHeight: 30.0,
                                     horizontalMargin: 8,
                                     headingRowAlignment:MainAxisAlignment.spaceBetween,
                                     headingRowHeight: 30// Adjust row height
@@ -455,7 +440,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                                   DataRow(cells: [
                                     DataCell(Container(child: Center(child: Text(answerMark,style: paragTextStyle,)))),
                                     DataCell(Container(child: Center(child: Text(totalMark,style: paragTextStyle,)))),
-                                    DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: totalPer.toString()+"%",percentage: int.tryParse(totalPer.toString()),))
+                                    DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: "$totalPer%",percentage: int.tryParse(totalPer.toString()),))
                                     )))
                                   ])
                                 ]
@@ -526,7 +511,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                                           child: Column(
                                             children: [
                                               Text(AppTranslations.of(context)!.text("key_message_16"),style: headingTextStyle,),
-                                              SizedBox(width:50,child: StatusComp(status: "",statusvalue: item["percentage"].toString()+"%",percentage: int.tryParse(item["percentage"].toString()),))
+                                              SizedBox(width:50,child: StatusComp(status: "",statusvalue: "${item["percentage"]}%",percentage: int.tryParse(item["percentage"].toString()),))
                                             ],
                                           )
                                       )

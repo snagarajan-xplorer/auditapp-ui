@@ -407,7 +407,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     );
   }
 
-  void _deleteAudit(dynamic row) {
+  /* void _deleteAudit(dynamic row) {
     APIService(context).showWindowAlert(
         title: "Delete Audit",
         desc: "Are you sure you want to permanently delete this audit? This action cannot be undone.",
@@ -422,7 +422,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
             }
           });
         });
-  }
+  } */
 
   // ─── Build ──────────────────────────────────────────────────────────────────
 
@@ -431,7 +431,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     return LayoutScreen(
       showBackbutton: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(left: 50, right: 36),
+        padding: EdgeInsets.only(left: 20, right: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

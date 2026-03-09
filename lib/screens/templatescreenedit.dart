@@ -2,32 +2,18 @@ import 'package:accordion/accordion.dart';
 import 'package:accordion/controllers.dart';
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
-import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
-import 'package:audit_app/widget/datatablecontainer.dart';
-import 'package:audit_app/widget/norecordcomp.dart';
-import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:audit_app/widget/statuscomp.dart';
 import 'package:data_table_2/data_table_2.dart';
-import 'package:easy_stepper/easy_stepper.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:get/get.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:jiffy/jiffy.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../constants.dart';
 import '../controllers/usercontroller.dart';
 import '../responsive.dart';
-import '../widget/outlinebutton.dart';
 import 'main/layoutscreen.dart';
-import 'dart:js' as js;
+import 'package:url_launcher/url_launcher.dart';
 
 class TemplateEditScreen extends StatefulWidget {
   const TemplateEditScreen({super.key});
@@ -108,7 +94,7 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
   Widget questionChild(id,quest,len){
     Color selectedColor = usercontroller.scoreArr[0]["color"];
     List<dynamic> arr = usercontroller.scoreArr.where((e)=>e["value"] == quest["answer"].toString()).toList();
-    if(arr.length != 0){
+    if(arr.isNotEmpty){
       selectedColor = arr[0]["color"];
     }
     return Column(
@@ -116,7 +102,7 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
       children: [
         SizedBox(
           width: double.infinity,
-          child: Text(id.toString()+"."+quest["question"],style: TextStyle(
+          child: Text("$id."+quest["question"],style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16
           ),textAlign: TextAlign.left,),
@@ -283,18 +269,17 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
         ):Container()
     );
   }
-  launchURLPage() async {
+  Future<void> launchURLPage() async {
     // final Uri url = Uri.parse(API_URL+"export?id="+auditObj["id"].toString());
     // await launchUrl(
     //   url,
     //   webOnlyWindowName: '_blank',
     // );
-    js.context.callMethod('open', [API_URL+"export?type=2&id="+auditObj["reporturl"].toString(),"_blank"]);
+    launchUrl(Uri.parse("${API_URL}export?type=2&id=${auditObj["reporturl"]}"));
   }
 
   @override
   Widget build(BuildContext context) {
-    int id = 1;
     return LayoutScreen(
       child: Padding(
         padding: const EdgeInsets.only(left: defaultPadding,right: defaultPadding,top: 10),
@@ -318,7 +303,7 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
                           height: 100,
                           child: DataTableTheme(
                               data:  DataTableThemeData(
-                                  dataRowHeight: 30.0,
+                                  dataRowMinHeight: 30.0, dataRowMaxHeight: 30.0,
                                   horizontalMargin: 8,
                                   headingRowAlignment:MainAxisAlignment.spaceBetween,
                                   headingRowHeight: 30// Adjust row height
@@ -338,7 +323,7 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
                                 DataRow(cells: [
                                   DataCell(Container(child: Center(child: Text(answerMark,style: paragTextStyle,)))),
                                   DataCell(Container(child: Center(child: Text(totalMark,style: paragTextStyle,)))),
-                                  DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: totalPer.toString()+"%",percentage: int.tryParse(totalPer.toString()),))
+                                  DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: "$totalPer%",percentage: int.tryParse(totalPer.toString()),))
                                   )))
                                 ])
                               ]
@@ -358,7 +343,7 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
                           height: 100,
                           child: DataTableTheme(
                               data:  DataTableThemeData(
-                                  dataRowHeight: 30.0,
+                                  dataRowMinHeight: 30.0, dataRowMaxHeight: 30.0,
                                   horizontalMargin: 8,
                                   headingRowAlignment:MainAxisAlignment.spaceBetween,
                                   headingRowHeight: 30// Adjust row height
@@ -378,7 +363,7 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
                                 DataRow(cells: [
                                   DataCell(Container(child: Center(child: Text(answerMark,style: paragTextStyle,)))),
                                   DataCell(Container(child: Center(child: Text(totalMark,style: paragTextStyle,)))),
-                                  DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: totalPer.toString()+"%",percentage: int.tryParse(totalPer.toString()),))
+                                  DataCell(Container(child: Center(child: SizedBox(width:50,child: StatusComp(status: "",statusvalue: "$totalPer%",percentage: int.tryParse(totalPer.toString()),))
                                   )))
                                 ])
                               ]
@@ -449,7 +434,7 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
                                         child: Column(
                                           children: [
                                             Text(AppTranslations.of(context)!.text("key_message_16"),style: headingTextStyle,),
-                                            SizedBox(width:50,child: StatusComp(status: "",statusvalue: item["percentage"].toString()+"%",percentage: int.tryParse(item["percentage"].toString()),))
+                                            SizedBox(width:50,child: StatusComp(status: "",statusvalue: "${item["percentage"]}%",percentage: int.tryParse(item["percentage"].toString()),))
                                           ],
                                         )
                                     )
