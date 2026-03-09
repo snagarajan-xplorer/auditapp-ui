@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
@@ -32,7 +30,7 @@ class _AddTemplateScreenState extends State<AddTemplateScreen> {
   String modifyRemarks = "";
   List<dynamic> clientlist = [];
   ScreenArgument? pageargument;
-  File? selectedFile;
+  PlatformFile? selectedFile;
   Uint8List? _imageBytes;
   String? _imageName; //// To store the image data
 

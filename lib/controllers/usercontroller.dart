@@ -468,6 +468,10 @@ class UserController extends GetxController {
       'location':         item['location'] ?? item['branch'] ?? '-',
       'type_of_location': item['type_of_location'] ?? '-',
       'auditor':          item['auditor'] ?? item['auditorname'] ?? '-',
+      'company':          item['company'] ?? '-',
+      'assigned_by':      item['assigned_by'] ?? '-',
+      'id':               item['id'],
+      'reporturl':        item['reporturl'] ?? '',
       'status':           statusObj,
     };
   }

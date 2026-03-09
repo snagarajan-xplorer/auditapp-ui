@@ -433,7 +433,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       child: SingleChildScrollView(
         padding: EdgeInsets.only(left: 20, right: 20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start, 
           children: [
             // Title section
             Container(

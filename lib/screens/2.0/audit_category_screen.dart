@@ -149,7 +149,18 @@ class _AuditCategoryScreenV2State extends State<AuditCategoryScreenV2> {
       }
       
       // If audit status is "S" (Scheduled/Upcoming), start it first
-      String status = (mapData["status"] ?? "").toString();
+      dynamic statusRaw = mapData["status"];
+      String status;
+      if (statusRaw is Map) {
+        // Normalized data from getScheduledAuditDetails
+        String label = (statusRaw["label"] ?? "").toString();
+        status = const {
+          'Upcoming': 'S', 'Inprogress': 'PG', 'Published': 'P',
+          'Review': 'C', 'Cancelled': 'CL',
+        }[label] ?? "";
+      } else {
+        status = (statusRaw ?? "").toString();
+      }
       if (!isViewMode && status == "S") {
         usercontroller.startAudit(context, data: {"audit_id": auditId}, callback: (success) {
           _loadAuditData(auditId);

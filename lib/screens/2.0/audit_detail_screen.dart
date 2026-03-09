@@ -456,10 +456,11 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
   }
 
   Widget _buildStatusField() {
+    final statusCode = _resolveStatusCode();
     final statusLabel =
-        auditData["status_label"] ?? _mapStatusLabel(auditData["status"]);
+        auditData["status_label"] ?? _mapStatusLabel(statusCode);
     final statusColorName =
-        auditData["status_color"] ?? _mapStatusColor(auditData["status"]);
+        auditData["status_color"] ?? _mapStatusColor(statusCode);
     final color = _statusColor(statusColorName.toString());
 
     return Column(
@@ -542,9 +543,31 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     );
   }
 
+  /// Resolve status to a raw code string (e.g. "S", "P", "PG") regardless of
+  /// whether the source is a raw code or a Map {"label":...,"color":...}.
+  String _resolveStatusCode() {
+    // Prefer freshly-fetched API data
+    final apiStatus = auditData["status"];
+    if (apiStatus is String && apiStatus.isNotEmpty) return apiStatus;
+
+    // Fallback to row data passed from navigation
+    final rowStatus = rowData["status"];
+    if (rowStatus is String && rowStatus.isNotEmpty) return rowStatus;
+    if (rowStatus is Map) {
+      final label = (rowStatus["label"] ?? "").toString();
+      return const {
+        'Upcoming': 'S',
+        'Inprogress': 'PG',
+        'Published': 'P',
+        'Review': 'C',
+        'Cancelled': 'CL',
+      }[label] ?? 'S';
+    }
+    return "S";
+  }
+
   Widget _buildActionButtons() {
-    final status = auditData["status"] ?? rowData["status"] ?? "S";
-    final statusStr = status.toString();
+    final statusStr = _resolveStatusCode();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

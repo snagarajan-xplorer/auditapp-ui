@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:audit_app/responsive.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
@@ -226,16 +225,6 @@ class APIService {
       mapdata["status"] = 0;
       mapdata["message"] = "Connection refused. Backend server not reachable.";
       return jsonEncode(mapdata);
-    } on SocketException catch (_) {
-      if (loader) {
-        OverlayLoadingProgress.stop();
-      }
-      showToastMgs("Please check your internet");
-      dynamic mapdata = {};
-      mapdata["type"] = "error";
-      mapdata["status"] = 0;
-      mapdata["message"] = "Network error";
-      return jsonEncode(mapdata);
     } catch (e) {
       if (loader) {
         OverlayLoadingProgress.stop();
@@ -455,13 +444,16 @@ class APIService {
       mapdata["status"] = 0;
       mapdata["message"] = "Connection refused. Backend server not reachable.";
       return jsonEncode(mapdata);
-    } on SocketException catch (_) {
+    } catch (e) {
       if (loader) {
         OverlayLoadingProgress.stop();
       }
       showToastMgs("Please check your internet");
-      //Toast.show("Please check your internet",duration: Toast.lengthLong, gravity:  Toast.center);
-      rethrow;
+      dynamic mapdata = {};
+      mapdata["type"] = "error";
+      mapdata["status"] = 0;
+      mapdata["message"] = "Network error: ${e.toString()}";
+      return jsonEncode(mapdata);
     }
   }
 }

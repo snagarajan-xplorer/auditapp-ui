@@ -1,7 +1,15 @@
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 
 /// Set to true to use mock data for API responses
 const String env = 'prod';
+
+// Android emulator uses 10.0.2.2 to reach host machine's localhost
+String get _apiHost {
+  if (kIsWeb) return '127.0.0.1';
+  if (defaultTargetPlatform == TargetPlatform.android) return '10.0.2.2';
+  return '127.0.0.1';
+}
 
 const primaryColor = Color(0xFF2697FF);
 const secondaryColor = Color(0xFF2A2D3E);
@@ -105,8 +113,8 @@ const buttonHeight = 40.0;
 // const IMG_URL = "https://demo.webtekie.in/restapi/public/storage/";
 
 // CURRENTLY ACTIVE (LOCAL - REQUIRES BACKEND RUNNING!)
-const API_URL = "http://127.0.0.1:8000/api/";
-const IMG_URL = "http://127.0.0.1:8000/api/img/";
+final String API_URL = "http://$_apiHost:8000/api/";
+final String IMG_URL = "http://$_apiHost:8000/api/img/";
 
 // PRODUCTION SERVER
 // const API_URL = "https://auditondgo.com/restapi/public/api/";

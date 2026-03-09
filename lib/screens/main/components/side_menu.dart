@@ -28,6 +28,7 @@ class _SideMenuState extends State<SideMenu> {
     '/dashboard': ['dashboard', 'heatmap-allindia', 'heatmap-region', 'reports-published'],
     '/scheduledaudit': ['scheduled'],
     '/unscheduledaudit': ['unscheduled'],
+    '/assignedaudit': ['assigned-audit'],
     '/all-india-state-wise-audit': ['map-allindia-state'],
     '/red-report': ['map-red-report'],
     '/user': ['settings-users', 'reports-red', 'reports-ncc'],
@@ -58,7 +59,7 @@ class _SideMenuState extends State<SideMenu> {
     final menuKey = _resolveMenuKey();
 
     // Dynamically determine which sections should be expanded based on selected menu key
-    const auditStatusKeys = ['dashboard', 'scheduled', 'unscheduled'];
+    const auditStatusKeys = ['dashboard', 'scheduled', 'unscheduled', 'assigned-audit'];
     const reportsActivityWiseKeys = ['heatmap-allindia', 'heatmap-region'];
     const reportsMapWiseKeys = ['map-allindia-state', 'map-red-report'];
     const reportsSubKeys = ['reports-published', 'reports-red', 'reports-ncc'];
@@ -157,6 +158,23 @@ class _SideMenuState extends State<SideMenu> {
                           }
                         },
                       ),
+                      // TODO: Restore role check after testing → if (usercontroller.userData.role == 'JrA')
+                      if (usercontroller.userData.role == 'JrA')  
+                        DrawerListTile(
+                          menuKey: 'assigned-audit',
+                          selectedMenuKey: menuKey,
+                          title: "Assigned Audit",
+                          press: () {
+                            if (widget.enableAction!) {
+                              usercontroller.selectedMenuKey = 'assigned-audit';
+                              Navigator.pushNamed(context, "/assignedaudit",
+                                  arguments: ScreenArgument(
+                                      argument: ArgumentData.USER, mapData: {}));
+                            } else {
+                              widget.onCallback!(2);
+                            }
+                          },
+                        ),
                     ],
                   ),
                 // Reports Section

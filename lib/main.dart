@@ -44,6 +44,7 @@ import 'package:audit_app/screens/2.0/create_brand_screen.dart';
 import 'package:audit_app/screens/2.0/edit_brand_screen.dart';
 import 'package:audit_app/screens/2.0/audit_detail_screen.dart';
 import 'package:audit_app/screens/2.0/audit_category_screen.dart';
+import 'package:audit_app/screens/2.0/assigned_audit_screen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -116,6 +117,7 @@ class _MainAppState extends State<MainApp> {
             GetPage(name: "/editbrand", page: () => EditBrandScreen()),
             GetPage(name: "/auditdetails", page: () => AuditDetailsScreen()),
             GetPage(name: "/auditcategorylist-v2", page: () => AuditCategoryScreenV2()),
+            GetPage(name: "/assignedaudit", page: () => AssignedAuditScreen()),
           ],
           //   routes: <String, WidgetBuilder>{
           //     "/login": (context) => Loginscreen(),
