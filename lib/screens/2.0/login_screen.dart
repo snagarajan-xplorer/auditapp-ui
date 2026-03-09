@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import '../../controllers/usercontroller.dart';
 import '../../services/api_service.dart';
@@ -36,10 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-            Image.asset(
-              'assets/images/can_logo.png',  
-              width: 330,
-              height: 158,
+            SvgPicture.asset(
+              'assets/images/can-logo.svg',  
+              width: 200,
+              height: 100,
             ),
             const SizedBox(height: 28),
             const Text(

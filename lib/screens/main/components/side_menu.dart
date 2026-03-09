@@ -96,7 +96,7 @@ class _SideMenuState extends State<SideMenu> {
               margin: EdgeInsets.zero,
               decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.onSecondary),
-              child: Image.asset("assets/images/can_logo.png"),
+              child: SvgPicture.asset("assets/images/can-logo.svg", width: 280, height: 158),
             ),
             Expanded(
               child: ListView(

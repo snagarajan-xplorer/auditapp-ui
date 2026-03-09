@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 class Splashscreen extends StatefulWidget {
@@ -54,7 +55,7 @@ class _SplashscreenState extends State<Splashscreen>
           width: 300,
           child: Column(
             children: [
-              Image(image: AssetImage("assets/images/can_logo.png")),
+              SvgPicture.asset("assets/images/can-logo.svg"),
               LinearProgressIndicator(
                 value: controller.value,
                 semanticsLabel: '',
