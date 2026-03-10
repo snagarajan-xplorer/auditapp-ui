@@ -121,8 +121,9 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     List<dynamic> result = allAudits;
 
     if (status != null) {
+      final labels = _labelsForStatus(status);
       result = result
-          .where((a) => a["status"]["label"] == _labelForStatus(status))
+          .where((a) => labels.contains(a["status"]["label"]))
           .toList();
     }
     if (selectedCompany != "All") {
@@ -136,18 +137,25 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     });
   }
 
-  String _labelForStatus(String status) {
+  /// For JrA, "Completed" tab shows both Review (submitted by auditor) and
+  /// Published (approved by admin). Other roles see only Published.
+  List<String> _labelsForStatus(String status) {
+    if (status == "P") {
+      final role = usercontroller.userData.role ?? '';
+      if (role == "JrA") {
+        return ["Review", "Published"];
+      }
+      return ["Published"];
+    }
     switch (status) {
-      case "P":
-        return "Published";
       case "IP":
-        return "Inprogress";
+        return ["Inprogress"];
       case "S":
-        return "Upcoming";
+        return ["Upcoming"];
       case "CL":
-        return "Cancelled";
+        return ["Cancelled"];
       default:
-        return "";
+        return [];
     }
   }
 
@@ -254,8 +262,15 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
                   flex: 2,
                   cellBuilder: (row, _) {
                     final s = row["status"] ?? {};
-                    final label = s["label"] ?? "-";
-                    final color = s["color"] ?? "grey";
+                    String label = s["label"] ?? "-";
+                    String color = s["color"] ?? "grey";
+                    // For JrA, show Review/Published as "Completed"
+                    final role = usercontroller.userData.role ?? '';
+                    if (role == "JrA" &&
+                        (label == "Review" || label == "Published")) {
+                      label = "Completed";
+                      color = "green";
+                    }
                     return statusBadgeCell(
                       label: label,
                       color: color,
@@ -294,8 +309,8 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     final s = row["status"] ?? {};
     final label = s["label"] ?? "-";
 
-    // Published → View Audit (navigates to detail screen for view + download)
-    if (label == "Published") {
+    // Published / Review → View Audit (navigates to detail screen for view + download)
+    if (label == "Published" || label == "Review") {
       return _actionButton("View Audit", Color(0xFF2E77D0), () {
         Navigator.pushNamed(context, "/auditdetails",
             arguments:

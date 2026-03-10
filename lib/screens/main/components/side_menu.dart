@@ -159,7 +159,7 @@ class _SideMenuState extends State<SideMenu> {
                         },
                       ),
                       // TODO: Restore role check after testing → if (usercontroller.userData.role == 'JrA')
-                      if (usercontroller.userData.role == 'JrA')  
+                        
                         DrawerListTile(
                           menuKey: 'assigned-audit',
                           selectedMenuKey: menuKey,
