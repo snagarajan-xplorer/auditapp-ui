@@ -58,7 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<DataRow> rows = [];
   List<ReportObj> reportList = [];
   List<Map<String, dynamic>> heatreportList = [];
-  UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller;
   List<Polygon> mapPoints = [];
   String zone = "All";
   String year = Jiffy.now().year.toString();
@@ -74,6 +74,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    usercontroller = Get.find<UserController>();
 
     // Initialize financial years — Indian FY starts in April
     // If current month < April, current FY start year = last year
@@ -88,7 +89,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     selectedFinancialYear = financialYears[0]["value"];
     year = selectedFinancialYear; // Use FY format directly
 
-    Future.delayed(Duration(milliseconds: 200)).then((onValue) async {
+    Future.delayed(const Duration(milliseconds: 200)).then((onValue) async {
       newloadGeoJson();
       if (usercontroller.userData.role == null) {
         usercontroller.loadInitData();
@@ -278,7 +279,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         mapdata.forEach((key, value) {
           total = total + value.length;
           getChildObj(key, value, "state");
-          setState(() {});
         });
         setState(() {});
         rows = [];
@@ -330,11 +330,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               percentage: 100,
             ),
           ];
+          showHeatmap = true;
           setState(() {});
-          Future.delayed(Duration(milliseconds: 400)).then((_) {
-            showHeatmap = true;
-            setState(() {});
-          });
         });
 
         /*

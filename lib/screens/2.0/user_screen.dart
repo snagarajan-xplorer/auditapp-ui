@@ -16,14 +16,14 @@ class UserScreenV2 extends StatefulWidget {
 }
 
 class _UserScreenV2State extends State<UserScreenV2> {
-  UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller;
 
   // Data state
   bool isLoading = false;
   List<Map<String, dynamic>> allUsers = [];
   List<Map<String, dynamic>> filteredUsers = [];
   int currentPage = 1;
-  final int pageSize = 10;
+  static const int pageSize = 10;
 
   // Client ID → Name lookup
   Map<String, String> clientNameMap = {};
@@ -37,6 +37,7 @@ class _UserScreenV2State extends State<UserScreenV2> {
   @override
   void initState() {
     super.initState();
+    usercontroller = Get.find<UserController>();
     if (usercontroller.userData.role == null) {
       usercontroller.loadInitData();
     }

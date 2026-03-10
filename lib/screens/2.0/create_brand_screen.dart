@@ -16,7 +16,7 @@ class CreateBrandScreen extends StatefulWidget {
 }
 
 class _CreateBrandScreenState extends State<CreateBrandScreen> {
-  final UserController userController = Get.put(UserController());
+  late final UserController userController;
 
   // Form fields
   final TextEditingController _brandNameController = TextEditingController();
@@ -35,11 +35,12 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
   List<Map<String, dynamic>> _brandList = [];
   bool _isLoading = false;
   int _currentPage = 1;
-  final int _pageSize = 10;
+  static const int _pageSize = 10;
 
   @override
   void initState() {
     super.initState();
+    userController = Get.find<UserController>();
     if (userController.userData.role == null) {
       userController.loadInitData();
     }

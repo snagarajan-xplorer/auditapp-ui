@@ -105,11 +105,12 @@ class _RedReportScreenState extends State<RedReportScreen>
     return coords.map<LatLng>((c) => LatLng(c[1].toDouble(), c[0].toDouble())).toList();
   }
 
-  UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller;
 
   @override
   void initState() {
     super.initState();
+    usercontroller = Get.find<UserController>();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _loadIndiaPolygons();
       await _initializeScreen();

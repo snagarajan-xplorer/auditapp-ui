@@ -17,7 +17,7 @@ class AuditDetailsScreen extends StatefulWidget {
 }
 
 class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
-  UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller;
 
   bool isLoading = true;
   Map<String, dynamic> auditData = {};
@@ -28,6 +28,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    usercontroller = Get.find<UserController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final args = Get.arguments;
       if (args is ScreenArgument) {
@@ -114,22 +115,22 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: Color(0xFFDD0000), width: 1),
                   ),
-                  child: Icon(Icons.close, color: Color(0xFFDD0000), size: 18),
+                  child: const Icon(Icons.close, color: Color(0xFFDD0000), size: 18),
                 ),
-                SizedBox(height: 16),
-                Text("Are you sure you want to cancel this Audit?",
+                const SizedBox(height: 16),
+                const Text("Are you sure you want to cancel this Audit?",
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF505050))),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 AppFormStyles.fieldLabel('What is the reason?'),
                 TextField(
                   maxLines: 5,
                   onChanged: (val) => reason = val,
                   decoration: AppFormStyles.inputDecoration(),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -303,14 +304,14 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                       ],
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   // Title
-                  Text("Audit Details",
+                  const Text("Audit Details",
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF505050))),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
                   // Card
                   Container(
@@ -432,7 +433,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
 
   Widget _logoPlaceholder() {
     return Center(
-      child: Icon(Icons.business, size: 48, color: Color(0xFFCCCCCC)),
+      child: Icon(Icons.business, size: 48, color: const Color(0xFFCCCCCC)),
     );
   }
 
@@ -441,13 +442,13 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: TextStyle(
+            style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
                 color: Color(0xFF898989))),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(value,
-            style: TextStyle(
+            style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF505050))),
@@ -467,11 +468,11 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text("Status",
-            style: TextStyle(
+            style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w400,
                 color: Color(0xFF888888))),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Row(
           children: [
             Container(
@@ -482,7 +483,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                 shape: BoxShape.circle,
               ),
             ),
-            SizedBox(width: 6),
+            const SizedBox(width: 6),
             Text(statusLabel.toString(),
                 style: TextStyle(
                     fontSize: 15,

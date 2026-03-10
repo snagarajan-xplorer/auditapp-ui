@@ -15,7 +15,7 @@ class EditBrandScreen extends StatefulWidget {
 }
 
 class _EditBrandScreenState extends State<EditBrandScreen> {
-  final UserController userController = Get.put(UserController());
+  late final UserController userController;
 
   // Form fields
   final TextEditingController _brandNameController = TextEditingController();
@@ -36,6 +36,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
   @override
   void initState() {
     super.initState();
+    userController = Get.find<UserController>();
     if (userController.userData.role == null) {
       userController.loadInitData();
     }

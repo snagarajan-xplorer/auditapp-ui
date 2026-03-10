@@ -20,7 +20,7 @@ class TemplateEditScreenV2 extends StatefulWidget {
 
 class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
-  final UserController _uc = Get.put(UserController());
+  late final UserController _uc;
 
   TextEditingController templateNameController = TextEditingController();
 
@@ -45,6 +45,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   @override
   void initState() {
     super.initState();
+    _uc = Get.find<UserController>();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitialData());
   }
 

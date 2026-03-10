@@ -17,7 +17,7 @@ class AuditListV2Screen extends StatefulWidget {
 }
 
 class _AuditListV2ScreenState extends State<AuditListV2Screen> {
-  UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller;
 
   // Filter state
   String selectedState = "All";
@@ -36,17 +36,20 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     'CL': {'label': 'Cancelled',   'color': 'red'},
   };
 
-  List<String> get stateOptions {
+  List<String> _cachedStateOptions = const ["All"];
+  List<String> _cachedZoneOptions = const ["All"];
+
+  void _rebuildStateOptions() {
     final states = allAudits
         .map((a) => (a["state"] ?? "").toString())
         .where((s) => s.isNotEmpty && s != "-")
         .toSet()
         .toList()
       ..sort();
-    return ["All", ...states];
+    _cachedStateOptions = ["All", ...states];
   }
 
-  List<String> get zoneOptions {
+  void _rebuildZoneOptions() {
     final zones = allAudits
         .where(
             (a) => selectedState == "All" || (a["state"] ?? "").toString() == selectedState)
@@ -55,7 +58,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
         .toSet()
         .toList()
       ..sort();
-    return ["All", ...zones];
+    _cachedZoneOptions = ["All", ...zones];
   }
 
   // Data state
@@ -63,11 +66,12 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
   List<Map<String, dynamic>> allAudits = [];
   List<Map<String, dynamic>> filteredAudits = [];
   int currentPage = 1;
-  final int pageSize = 10;
+  static const int pageSize = 10;
 
   @override
   void initState() {
     super.initState();
+    usercontroller = Get.find<UserController>();
     if (usercontroller.userData.role == null) {
       usercontroller.loadInitData();
     }
@@ -102,6 +106,8 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
     usercontroller.getAuditList(context, data: data, callback: (res) {
       allAudits = res.map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e)).toList();
+      _rebuildStateOptions();
+      _rebuildZoneOptions();
       _applyFilter();
       if (mounted) setState(() => isLoading = false);
     });
@@ -174,7 +180,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
     // Published → View Audit
     if (statusLabel == "Published" || rawStatus == "P") {
-      return _actionButton("View Audit", Color(0xFF2E77D0), () {
+      return _actionButton("View Audit", const Color(0xFF2E77D0), () {
         Navigator.pushNamed(context, "/auditdetails",
             arguments:
                 ScreenArgument(argument: ArgumentData.USER, mapData: row));
@@ -186,7 +192,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       return Row(
         children: [
           Expanded(
-            child: _actionButton("Edit", Color(0xFF535353), () {
+            child: _actionButton("Edit", const Color(0xFF535353), () {
               Navigator.pushNamed(context, "/createaudit",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
@@ -197,7 +203,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
           ),
           SizedBox(width: 5),
           Expanded(
-            child: _actionButton("Publish", Color(0xFF67AC5B), () {
+            child: _actionButton("Publish", const Color(0xFF67AC5B), () {
               Navigator.pushNamed(context, "/auditcategorylist-v2",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
@@ -213,13 +219,13 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       return Row(
         children: [
           Expanded(
-            child: _actionButton("Cancel", Color(0xFF535353), () {
+            child: _actionButton("Cancel", const Color(0xFF535353), () {
               _cancelAudit(row);
             }, flexible: true),
           ),
           SizedBox(width: 5),
           Expanded(
-            child: _actionButton("Continue", Color(0xFF2E77D0), () {
+            child: _actionButton("Continue", const Color(0xFF2E77D0), () {
               Navigator.pushNamed(context, "/auditcategorylist-v2",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
@@ -243,7 +249,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       return Row(
         children: [
           Expanded(
-            child: _actionButton("Edit", Color(0xFF535353), () {
+            child: _actionButton("Edit", const Color(0xFF535353), () {
               Navigator.pushNamed(context, "/createaudit",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
@@ -254,7 +260,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
           ),
           SizedBox(width: 5),
           Expanded(
-            child: _actionButton("Start", Color(0xFF67AC5B), () {
+            child: _actionButton("Start", const Color(0xFF67AC5B), () {
               Navigator.pushNamed(context, "/auditcategorylist-v2",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
@@ -267,11 +273,11 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
     // Cancelled → Delete
     if (statusLabel == "Cancelled" || rawStatus == "CL") {
-      return _actionButton("Cancelled", Color(0xFFC9C9C9), () {
+      return _actionButton("Cancelled", const Color(0xFFC9C9C9), () {
       });
     }
 
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
   }
 
   Widget _actionButton(String label, Color bgColor, VoidCallback? onTap,
@@ -283,7 +289,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
         padding: EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: const BorderRadius.all(Radius.circular(6)),
         ),
         alignment: Alignment.center,
         child: Text(label,
@@ -319,16 +325,16 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.red, width: 2),
                   ),
-                  child: Icon(Icons.close, color: Colors.red, size: 24),
+                  child: const Icon(Icons.close, color: Colors.red, size: 24),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Title
-                Text("Are you sure you want to cancel this Audit ?",
+                const Text("Are you sure you want to cancel this Audit ?",
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF333333))),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Reason label
                 AppFormStyles.fieldLabel('What is the reason ?'),
                 // Text input
@@ -337,7 +343,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                   onChanged: (val) => reason = val,
                   decoration: AppFormStyles.inputDecoration(),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 // Buttons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
@@ -441,16 +447,16 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Audit List",
+                  const Text("Audit List",
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w500,
                           color: Color(0xFF505050))),
-                  SizedBox(height: 4), 
+                  const SizedBox(height: 4), 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Detailed overview of all audits",
+                      const Text("Detailed overview of all audits",
                           style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
@@ -460,19 +466,20 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                         children: [
                           TableFilterDropdown(
                               label: "State:",
-                              items: stateOptions,
+                              items: _cachedStateOptions,
                               value: selectedState,
                               onChanged: (val) {
                             setState(() {
                               selectedState = val!;
                               selectedZone = "All";
+                              _rebuildZoneOptions();
                             });
                             _applyFilter();
                           }),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           TableFilterDropdown(
                               label: "Zone :",
-                              items: zoneOptions,
+                              items: _cachedZoneOptions,
                               value: selectedZone,
                               onChanged: (val) {
                             setState(() => selectedZone = val!);
@@ -565,15 +572,15 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     final displayText = value.contains(' ') ? '$firstWord...' : value;
     return Tooltip(
       message: value,
-      waitDuration: Duration(milliseconds: 500),
+      waitDuration: const Duration(milliseconds: 500),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 18, horizontal: 10),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
+        decoration: const BoxDecoration(
           border: Border(
               right: BorderSide(color: Color(0xFFE0E0E0), width: 0.8)),
         ),
         child: Text(displayText,
-            style: TextStyle(fontSize: 13, color: Color(0xFF505050)),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF505050)),
             overflow: TextOverflow.ellipsis,
             maxLines: 1),
       ),
@@ -583,10 +590,10 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
   Widget _plainCell(String value) {
     return Tooltip(
       message: value,
-      waitDuration: Duration(milliseconds: 500),
+      waitDuration: const Duration(milliseconds: 500),
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 18, horizontal: 10),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
+        decoration: const BoxDecoration(
           border: Border(
               right: BorderSide(color: Color(0xFFE0E0E0), width: 0.8)),
         ),

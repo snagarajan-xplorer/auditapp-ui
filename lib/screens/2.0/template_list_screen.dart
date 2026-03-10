@@ -18,7 +18,7 @@ class TemplateScreen extends StatefulWidget {
 }
 
 class _TemplateScreenState extends State<TemplateScreen> {
-  final UserController userController = Get.put(UserController());
+  late final UserController userController;
 
   // Data state
   List<Map<String, dynamic>> templateList = [];
@@ -30,11 +30,12 @@ class _TemplateScreenState extends State<TemplateScreen> {
   PlatformFile? uploadedFile;
   bool isLoading = false;
   int currentPage = 1;
-  final int pageSize = 10;
+  static const int pageSize = 10;
 
   @override
   void initState() {
     super.initState();
+    userController = Get.find<UserController>();
     if (userController.userData.role == null) {
       userController.loadInitData();
     }

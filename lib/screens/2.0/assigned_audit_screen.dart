@@ -6,6 +6,51 @@ import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import '../../widget/reusable_table.dart';
 
+// ── Pre-built constants to avoid per-frame allocations ──────────────────────
+
+const _kTitleStyle = TextStyle(
+    fontSize: 20, fontWeight: FontWeight.w500, color: Color(0xFF505050));
+const _kSubtitleStyle = TextStyle(
+    fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF898989));
+const _kTabStyle =
+    TextStyle(fontSize: 16, fontWeight: FontWeight.w400);
+const _kTabLabelColor = Color(0xFF01ADEF);
+const _kTextColor = Color(0xFF505050);
+const _kActionBlue = Color(0xFF2E77D0);
+const _kActionGreen = Color(0xFF67AC5B);
+const _kActionDisabled = Color(0xFFC9C9C9);
+const _kActionTextStyle = TextStyle(
+    fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white);
+const _kActionPadding = EdgeInsets.symmetric(vertical: 8);
+const _kActionBorderRadius = BorderRadius.all(Radius.circular(6));
+const _kScrollPadding = EdgeInsets.only(left: 20, right: 20);
+const _kTitlePadding = EdgeInsets.all(defaultPadding);
+const _kFilterPadding = EdgeInsets.symmetric(
+    horizontal: defaultPadding, vertical: defaultPadding / 2);
+const _kFyRegex = r'^FY(\d{4})-(\d{2,4})$';
+
+// Pre-built tab widgets — avoids rebuilding on every frame
+const _kTabs = <Tab>[
+  Tab(text: "All"),
+  Tab(text: "Completed"),
+  Tab(text: "In Progress"),
+  Tab(text: "Upcoming"),
+  Tab(text: "Cancelled"),
+];
+
+// Static column definitions that don't depend on instance state
+const _kStaticColumns = <TableColumnDef>[
+  TableColumnDef(label: "Audit ID", flex: 2, key: "audit_id"),
+  TableColumnDef(label: "Sched. Date", flex: 2, key: "sched_date"),
+  TableColumnDef(label: "Start Date", flex: 2, key: "start_date"),
+  TableColumnDef(label: "End Date", flex: 2, key: "end_date"),
+  TableColumnDef(label: "State", flex: 2, key: "state"),
+  TableColumnDef(label: "City", flex: 2, key: "city"),
+  TableColumnDef(label: "Location", flex: 3, key: "location"),
+  TableColumnDef(label: "Company", flex: 2, key: "company"),
+  TableColumnDef(label: "Assigned by", flex: 2, key: "assigned_by"),
+];
+
 class AssignedAuditScreen extends StatefulWidget {
   const AssignedAuditScreen({super.key});
 
@@ -15,23 +60,26 @@ class AssignedAuditScreen extends StatefulWidget {
 
 class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  UserController usercontroller = Get.put(UserController());
+  late final TabController _tabController;
+  late final UserController usercontroller;
+  late final String _userRole;
 
   // Filter state
   String selectedCompany = "All";
   String selectedFinancialYear = "";
   List<Map<String, dynamic>> financialYears = [];
 
-  List<String> get companyOptions {
+  // Cached company options — rebuilt only when allAudits changes
+  List<String> _cachedCompanyOptions = const ["All"];
+
+  void _rebuildCompanyOptions() {
     final companies = allAudits
         .map((a) => (a["company"] ?? "") as String)
         .where((c) => c.isNotEmpty && c != "-")
         .toSet()
         .toList()
       ..sort();
-    return ["All", ...companies];
+    _cachedCompanyOptions = ["All", ...companies];
   }
 
   // Data state
@@ -39,27 +87,22 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
   List<dynamic> allAudits = [];
   List<dynamic> filteredAudits = [];
   int currentPage = 1;
-  final int pageSize = 10;
+  static const int pageSize = 10;
 
-  // Tab configuration — matches screenshot
-  final List<String> tabLabels = [
-    "All",
-    "Completed",
-    "In Progress",
-    "Upcoming",
-    "Cancelled"
-  ];
-  final List<String?> tabStatuses = [null, "P", "IP", "S", "CL"];
+  // Tab status mapping
+  static const List<String?> _tabStatuses = [null, "P", "IP", "S", "CL"];
+
+  // FY regex — compiled once
+  static final _fyRegex = RegExp(_kFyRegex, caseSensitive: false);
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        _applyFilter();
-      }
-    });
+    usercontroller = Get.find<UserController>();
+    _userRole = usercontroller.userData.role ?? '';
+
+    _tabController = TabController(length: _kTabs.length, vsync: this);
+    _tabController.addListener(_onTabChanged);
 
     // Build financial years — Indian FY starts in April
     final now = DateTime.now();
@@ -75,30 +118,35 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      _applyFilter();
+    }
+  }
+
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
 
   Future<void> _loadData() async {
     setState(() => isLoading = true);
-    final role = usercontroller.userData.role ?? '';
 
     // Convert "FY2025-26" label → bare end year "2026" for the API
     String yearParam = selectedFinancialYear;
-    final fyMatch = RegExp(r'^FY(\d{4})-(\d{2,4})$', caseSensitive: false)
-        .firstMatch(yearParam);
+    final fyMatch = _fyRegex.firstMatch(yearParam);
     if (fyMatch != null) {
       final startYear = int.parse(fyMatch.group(1)!);
       yearParam = (startYear + 1).toString();
     }
 
-    var data = {
+    final data = <String, dynamic>{
       "year": yearParam,
       "month": "All",
       "userid": usercontroller.userData.userId,
-      "role": role,
+      "role": _userRole,
       "client": usercontroller.userData.clientid,
       if (usercontroller.userData.clientid?.isNotEmpty == true)
         "client_id": usercontroller.userData.clientid!.first,
@@ -107,16 +155,43 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     await usercontroller.getScheduledAuditDetails(context, data: data,
         callback: (list, total) {
       allAudits = list;
-      _applyFilter();
-      if (mounted) setState(() => isLoading = false);
+      _rebuildCompanyOptions();
+      _applyFilterAndStopLoading();
     });
     // Ensure loading stops even if callback was never called
     if (mounted && isLoading) setState(() => isLoading = false);
   }
 
+  /// Combines filter + loading-state update into a single setState.
+  void _applyFilterAndStopLoading() {
+    final tabIndex = _tabController.index;
+    final status = _tabStatuses[tabIndex];
+
+    List<dynamic> result = allAudits;
+
+    if (status != null) {
+      final labels = _labelsForStatus(status);
+      result = result
+          .where((a) => labels.contains(a["status"]["label"]))
+          .toList();
+    }
+    if (selectedCompany != "All") {
+      result =
+          result.where((a) => (a["company"] ?? "") == selectedCompany).toList();
+    }
+
+    if (mounted) {
+      setState(() {
+        filteredAudits = result;
+        currentPage = 1;
+        isLoading = false;
+      });
+    }
+  }
+
   void _applyFilter() {
     final tabIndex = _tabController.index;
-    final status = tabStatuses[tabIndex];
+    final status = _tabStatuses[tabIndex];
 
     List<dynamic> result = allAudits;
 
@@ -140,59 +215,86 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
   /// For JrA, "Completed" tab shows both Review (submitted by auditor) and
   /// Published (approved by admin). Other roles see only Published.
   List<String> _labelsForStatus(String status) {
-    if (status == "P") {
-      final role = usercontroller.userData.role ?? '';
-      if (role == "JrA") {
-        return ["Review", "Published"];
-      }
-      return ["Published"];
-    }
     switch (status) {
+      case "P":
+        return _userRole == "JrA"
+            ? const ["Review", "Published"]
+            : const ["Published"];
       case "IP":
-        return ["Inprogress"];
+        return const ["Inprogress"];
       case "S":
-        return ["Upcoming"];
+        return const ["Upcoming"];
       case "CL":
-        return ["Cancelled"];
+        return const ["Cancelled"];
       default:
-        return [];
+        return const [];
     }
+  }
+
+  // ── Columns that depend on instance state — built once per build ──────────
+
+  List<TableColumnDef> _buildColumns() {
+    return [
+      ..._kStaticColumns,
+      TableColumnDef(
+        label: "Status",
+        flex: 2,
+        cellBuilder: (row, _) {
+          final s = row["status"] ?? {};
+          String label = s["label"] ?? "-";
+          String color = s["color"] ?? "grey";
+          // For JrA, show Review/Published as "Completed"
+          if (_userRole == "JrA" &&
+              (label == "Review" || label == "Published")) {
+            label = "Completed";
+            color = "green";
+          }
+          return statusBadgeCell(
+            label: label,
+            color: color,
+          );
+        },
+      ),
+      TableColumnDef(
+        label: "Action",
+        flex: 2,
+        isLast: true,
+        cellBuilder: (row, _) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+          child: _buildActionButtons(row),
+        ),
+      ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
+    final columns = _buildColumns();
+
     return LayoutScreen(
       showBackbutton: false,
       child: SingleChildScrollView(
-        padding: EdgeInsets.only(left: 20, right: 20),
+        padding: _kScrollPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title
             Container(
-              padding: EdgeInsets.all(defaultPadding),
-              child: Column(
+              padding: _kTitlePadding,
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Scheduled Audit Details",
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF505050))),
+                  Text("Scheduled Audit Details", style: _kTitleStyle),
                   SizedBox(height: 4),
                   Text("Detailed overview of all audits",
-                      style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF898989))),
+                      style: _kSubtitleStyle),
                 ],
               ),
             ),
 
             // Tabs + Filters Row
             Container(
-              padding: EdgeInsets.symmetric(
-                  horizontal: defaultPadding, vertical: defaultPadding / 2),
+              padding: _kFilterPadding,
               child: Row(
                 children: [
                   // Tabs
@@ -201,29 +303,27 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
                     child: TabBar(
                       controller: _tabController,
                       isScrollable: true,
-                      labelColor: Color(0xFF01ADEF),
-                      unselectedLabelColor: Color(0xFF505050),
-                      indicatorColor: Color(0xFF01ADEF),
+                      labelColor: _kTabLabelColor,
+                      unselectedLabelColor: _kTextColor,
+                      indicatorColor: _kTabLabelColor,
                       indicatorWeight: 3,
-                      labelStyle: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w400),
-                      unselectedLabelStyle: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w400),
-                      tabs: tabLabels.map((l) => Tab(text: l)).toList(),
+                      labelStyle: _kTabStyle,
+                      unselectedLabelStyle: _kTabStyle,
+                      tabs: _kTabs,
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   // Company Filter
                   TableFilterDropdown(
                     label: "Company :",
-                    items: companyOptions,
+                    items: _cachedCompanyOptions,
                     value: selectedCompany,
                     onChanged: (val) {
                       setState(() => selectedCompany = val!);
                       _applyFilter();
                     },
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   // Financial Year Filter
                   TableFilterDropdown(
                     items: financialYears
@@ -244,49 +344,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
 
             // Table + Pagination
             ReusableTable(
-              columns: [
-                TableColumnDef(label: "Audit ID", flex: 2, key: "audit_id"),
-                TableColumnDef(
-                    label: "Sched. Date", flex: 2, key: "sched_date"),
-                TableColumnDef(
-                    label: "Start Date", flex: 2, key: "start_date"),
-                TableColumnDef(label: "End Date", flex: 2, key: "end_date"),
-                TableColumnDef(label: "State", flex: 2, key: "state"),
-                TableColumnDef(label: "City", flex: 2, key: "city"),
-                TableColumnDef(label: "Location", flex: 3, key: "location"),
-                TableColumnDef(label: "Company", flex: 2, key: "company"),
-                TableColumnDef(
-                    label: "Assigned by", flex: 2, key: "assigned_by"),
-                TableColumnDef(
-                  label: "Status",
-                  flex: 2,
-                  cellBuilder: (row, _) {
-                    final s = row["status"] ?? {};
-                    String label = s["label"] ?? "-";
-                    String color = s["color"] ?? "grey";
-                    // For JrA, show Review/Published as "Completed"
-                    final role = usercontroller.userData.role ?? '';
-                    if (role == "JrA" &&
-                        (label == "Review" || label == "Published")) {
-                      label = "Completed";
-                      color = "green";
-                    }
-                    return statusBadgeCell(
-                      label: label,
-                      color: color,
-                    );
-                  },
-                ),
-                TableColumnDef(
-                  label: "Action",
-                  flex: 2,
-                  isLast: true,
-                  cellBuilder: (row, _) => Container(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
-                    child: _buildActionButtons(row),
-                  ),
-                ),
-              ],
+              columns: columns,
               rows: filteredAudits,
               isLoading: isLoading,
               currentPage: currentPage,
@@ -296,7 +354,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
               onPageChanged: (page) => setState(() => currentPage = page),
             ),
 
-            SizedBox(height: defaultPadding * 2),
+            const SizedBox(height: defaultPadding * 2),
           ],
         ),
       ),
@@ -311,7 +369,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
 
     // Published / Review → View Audit (navigates to detail screen for view + download)
     if (label == "Published" || label == "Review") {
-      return _actionButton("View Audit", Color(0xFF2E77D0), () {
+      return _actionButton("View Audit", _kActionBlue, () {
         Navigator.pushNamed(context, "/auditdetails",
             arguments:
                 ScreenArgument(argument: ArgumentData.USER, mapData: row));
@@ -320,7 +378,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
 
     // Inprogress → Continue (navigate to audit form)
     if (label == "Inprogress" || label == "In Progress") {
-      return _actionButton("Continue", Color(0xFF2E77D0), () {
+      return _actionButton("Continue", _kActionBlue, () {
         Navigator.pushNamed(context, "/auditcategorylist-v2",
             arguments:
                 ScreenArgument(argument: ArgumentData.USER, mapData: row));
@@ -329,7 +387,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
 
     // Upcoming → Start (navigate to audit form; it handles startAudit API internally)
     if (label == "Upcoming") {
-      return _actionButton("Start", Color(0xFF67AC5B), () {
+      return _actionButton("Start", _kActionGreen, () {
         Navigator.pushNamed(context, "/auditcategorylist-v2",
             arguments:
                 ScreenArgument(argument: ArgumentData.USER, mapData: row));
@@ -338,10 +396,10 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
 
     // Cancelled → Disabled
     if (label == "Cancelled") {
-      return _actionButton("Cancelled", Color(0xFFC9C9C9), null);
+      return _actionButton("Cancelled", _kActionDisabled, null);
     }
 
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
   }
 
   Widget _actionButton(String label, Color bgColor, VoidCallback? onTap) {
@@ -349,18 +407,15 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
       onTap: onTap,
       child: Container(
         width: 90,
-        padding: EdgeInsets.symmetric(vertical: 8),
+        padding: _kActionPadding,
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: _kActionBorderRadius,
         ),
         alignment: Alignment.center,
         child: Text(label,
             textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Colors.white)),
+            style: _kActionTextStyle),
       ),
     );
   }

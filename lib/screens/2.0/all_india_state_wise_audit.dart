@@ -34,11 +34,12 @@ class _AllIndiaStateWiseAuditState
   Set<Marker> markers = {};
   Map<String, dynamic> stateDataMap = {};
 
-  UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller;
 
   @override
   void initState() {
     super.initState();
+    usercontroller = Get.find<UserController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeScreen();
     });
@@ -56,11 +57,6 @@ class _AllIndiaStateWiseAuditState
     if (mounted) {
       setState(() {});
     }
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   Future<void> loadFinancialYears() async {

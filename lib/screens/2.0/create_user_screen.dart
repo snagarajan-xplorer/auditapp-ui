@@ -24,7 +24,7 @@ class CreateUserScreen extends StatefulWidget {
 
 class _CreateUserScreenState extends State<CreateUserScreen> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
-  final UserController _uc = Get.put(UserController());
+  late final UserController _uc;
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   // Data
@@ -98,6 +98,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   @override
   void initState() {
     super.initState();
+    _uc = Get.find<UserController>();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitialData());
   }
 

@@ -13,12 +13,14 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller = Get.find<UserController>();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   String email = "";
   String password = "";
   String selectedRole = "AD";
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+
+  static final RegExp _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
   // Map role display names to role IDs
   final Map<String, String> roleMap = {
@@ -84,16 +86,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Color(0xFF505050),
                           ),
                           onChanged: (value) {
-                            setState(() {
-                              email = value;
-                            });
+                            email = value;
                           },
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your email';
                             }
-                            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                            if (!emailRegex.hasMatch(value)) {
+                            if (!_emailRegex.hasMatch(value)) {
                               return 'Please enter a valid email address';
                             }
                             return null;
@@ -114,9 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Color(0xFF505050),
                           ),
                           onChanged: (value) {
-                            setState(() {
-                              password = value;
-                            });
+                            password = value;
                           },
                           validator: (value) {
                             if (value == null || value.isEmpty) {

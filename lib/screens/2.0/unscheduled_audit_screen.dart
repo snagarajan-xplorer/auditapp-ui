@@ -13,7 +13,7 @@ class UnScheduledAuditScreen extends StatefulWidget {
 }
 
 class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
-  UserController usercontroller = Get.put(UserController());
+  late final UserController usercontroller;
 
   // Filter state
   String selectedFinancialYear = "";
@@ -23,12 +23,16 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
   bool isLoading = false;
   List<dynamic> allRecords = [];
   int currentPage = 1;
-  final int pageSize = 10;
+  static const int pageSize = 10;
+
+  // FY regex — compiled once
+  static final _fyRegex = RegExp(r'^FY(\d{4})-(\d{2,4})$', caseSensitive: false);
 
 
   @override
   void initState() {
     super.initState();
+    usercontroller = Get.find<UserController>();
 
     // Build financial years — Indian FY starts in April
     final now = DateTime.now();
@@ -52,11 +56,10 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
 
     // Convert "FY2025-26" label → bare end year "2026" for the API
     String yearParam = selectedFinancialYear;
-    final fyMatch = RegExp(r'^FY(\d{4})-(\d{2,4})$', caseSensitive: false)
-        .firstMatch(yearParam);
+    final fyMatch = _fyRegex.firstMatch(yearParam);
     if (fyMatch != null) {
       final startYear = int.parse(fyMatch.group(1)!);
-      yearParam = (startYear + 1).toString(); // "FY2025-26" → "2026"
+      yearParam = (startYear + 1).toString();
     }
 
     final data = {

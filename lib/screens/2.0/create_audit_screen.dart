@@ -31,7 +31,7 @@ class CreateAuditScreen extends StatefulWidget {
 
 class _CreateAuditScreenState extends State<CreateAuditScreen> {
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
-  final UserController _uc = Get.put(UserController());
+  late final UserController _uc;
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   List<dynamic> _clientList = [];
@@ -90,6 +90,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   @override
   void initState() {
     super.initState();
+    _uc = Get.find<UserController>();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadInitialData());
   }
 
