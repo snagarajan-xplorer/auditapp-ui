@@ -125,9 +125,31 @@ class _TemplateScreenState extends State<TemplateScreen> {
   }
 
   void _uploadTemplate() async {
-    if (uploadedFile == null ||
-        selectedClientId == null ||
-        templateNameController.text.isEmpty) {
+    if (templateNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Template name is required'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (selectedClientId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a brand'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    if (uploadedFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please upload a template file'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
     setState(() => isLoading = true);
@@ -142,6 +164,12 @@ class _TemplateScreenState extends State<TemplateScreen> {
         'assigned_user': userController.userData.name, 
       },
       callback: (res) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Template created successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
         setState(() {
           isLoading = false;
           uploadedFileName = null;
@@ -182,9 +210,38 @@ class _TemplateScreenState extends State<TemplateScreen> {
           label: 'Status',
           flex: 2,
           cellBuilder: (row, _) {
-            return statusBadgeCell(
-              label: row['statusLabel'] ?? '-',
-              color: row['statusColor'] ?? 'grey',
+            final isActive = row['status'] == 'A';
+            return Container(
+              height: double.infinity,
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: const BoxDecoration(
+                border: Border(
+                  right: BorderSide(color: Color(0xFFE0E0E0), width: 0.8),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isActive ? const Color(0xFF67AC5B) : const Color(0xFFE53935),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isActive ? 'Active' : 'Inactive',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: isActive ? const Color(0xFF67AC5B) : const Color(0xFFE53935),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         ),
@@ -285,6 +342,7 @@ void _downloadTemplate(String templateId) {
                 width: 320,
                 child: AppLabeledField(
                   label: 'Template Name',
+                  required: true,
                   child: TextField(
                     controller: templateNameController,
                     decoration: AppFormStyles.inputDecoration(),
@@ -296,6 +354,7 @@ void _downloadTemplate(String templateId) {
                 width: 320,
                 child: AppLabeledField(
                   label: 'Brand',
+                  required: true,
                   child: DropdownButtonFormField<String>(
                     initialValue: selectedClientId,
                     isExpanded: true,
@@ -321,10 +380,7 @@ void _downloadTemplate(String templateId) {
           const SizedBox(height: 20),
 
           // Upload Template
-          const Text(
-            'Upload Template',
-            style: TextStyle(fontSize: 14, color: Color(0xFF505050)),
-          ),
+          AppFormStyles.fieldLabel('Upload Template', required: true),
           const SizedBox(height: 10),
           Row(
             children: [

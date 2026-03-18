@@ -25,6 +25,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
 
   PlatformFile? _logoFile;
   bool _isActive = true;
+  bool _isCheckingStatus = false;
 
   // Edit mode
   bool _isEditMode = false;
@@ -105,7 +106,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
       'clientmobile': _mobileController.text.trim(),
       'clientemail': _emailController.text.trim(),
       'created_by': userController.userData.name ?? '',
-      'status': _isActive ? 'A' : 'I',
+      'status': _isActive ? 'A' : 'IA',
     };
 
     if (_isEditMode && _editClientId != null) {
@@ -117,6 +118,12 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
         logoFilename: _logoFile?.name,
         data: extraData,
         callback: (res) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Client updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
           Navigator.pop(context, true);
         },
       );
@@ -129,6 +136,12 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
           logoFilename: _logoFile!.name,
           data: extraData,
           callback: (res) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Client created successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             _clearForm();
             _loadBrands();
           },
@@ -141,6 +154,12 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
             ...extraData,
           },
           callback: (res) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Client created successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             _clearForm();
             _loadBrands();
           },
@@ -297,21 +316,72 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
                 scale: 1.3,
                 child: Switch(
                   value: _isActive,
-                  onChanged: (value) {
-                    setState(() {
-                      _isActive = value;
-                    });
-                  },
+                  onChanged: _isCheckingStatus
+                      ? null
+                      : (value) {
+                          if (!value && _editClientId != null) {
+                            // Trying to deactivate – check all audits are done
+                            setState(() => _isCheckingStatus = true);
+                            userController.getClientStatus(context,
+                                data: {
+                                  'client_id': _editClientId,
+                                  'status': 'IA',
+                                },
+                                callback: (res) {
+                                  if (!mounted) return;
+                                  setState(() => _isCheckingStatus = false);
+                                  if (res['cont'] == true) {
+                                    setState(() => _isActive = false);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(res['message'] ?? 'Cannot deactivate client'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                });
+                          } else {
+                            // Activating – allow directly
+                            if (value && _editClientId != null) {
+                              userController.getClientStatus(context,
+                                  data: {
+                                    'client_id': _editClientId,
+                                    'status': 'A',
+                                  },
+                                  callback: (res) {
+                                    if (!mounted) return;
+                                    if (res['cont'] == true) {
+                                      setState(() => _isActive = true);
+                                    }
+                                  });
+                            } else {
+                              setState(() => _isActive = value);
+                            }
+                          }
+                        },
                   activeThumbColor: Colors.white,
                   activeTrackColor: const Color(0xFF67AC5B),
                   inactiveThumbColor: Colors.white,
                   inactiveTrackColor: const Color(0xFFBDBDBD),
                 ),
               ),
+              if (_isCheckingStatus)
+                const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               const SizedBox(width: 8),
-              const Text(
-                'Active',
-                style: TextStyle(fontSize: 14, color: Color(0xFF505050)),
+              Text(
+                _isActive ? 'Active' : 'Inactive',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _isActive ? const Color(0xFF67AC5B) : const Color(0xFFBDBDBD),
+                ),
               ),
             ],
           ),

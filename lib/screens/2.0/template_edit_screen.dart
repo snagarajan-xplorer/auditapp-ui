@@ -31,10 +31,6 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
   // Data
   List<dynamic> _clientList = [];
 
-  // State dropdown data
-  // ignore: unused_field
-  String? _selectedState;
-
   // Page argument
   bool _isEditMode = false;
   Map<String, dynamic>? _editData;
@@ -73,9 +69,9 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
             callback: (res) {
               if (mounted) {
                 setState(() {
-                  // If cont is false and message mentions "assigned", template is assigned to audit
+                  // Template is assigned to audit if deactivation is blocked (cont == false)
                   _isAssignedToAudit = res['cont'] == false &&
-                      (res['message']?.toString().toLowerCase().contains('assigned') ?? false);
+                      ((res['pending_audits'] ?? 0) > 0);
                 });
               }
             },
@@ -141,249 +137,6 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
     });
   }
 
-  // ── section label ─────────────────────────────────────────────────────────
-
-
-  // ── spacing helpers ───────────────────────────────────────────────────────
-  /* Widget get _hSpace => SizedBox(
-        width: Responsive.isDesktop(context) ? defaultPadding : 0,
-        height: Responsive.isDesktop(context) ? 0 : defaultPadding,
-      ); */
-
-  // ── field builders ────────────────────────────────────────────────────────
-
-  /// Row 1: Username | Email ID | Mobile No.
- 
-  /* Widget _fieldUsername() {
-    return AppLabeledField(
-      label: 'Username',
-      child: FormBuilderTextField(
-        name: 'name',
-        style: Theme.of(context).textTheme.bodyMedium,
-        textCapitalization: TextCapitalization.words,
-        validator: FormBuilderValidators.required(
-          errorText: 'Please enter username',
-        ),
-        decoration: AppFormStyles.inputDecoration(),
-      ),
-    );
-  } */
-
-  /* Widget _fieldCity() {
-    return AppLabeledField(
-      label: 'City',
-      child: FormBuilderTextField(
-        name: 'city',
-        style: Theme.of(context).textTheme.bodyMedium,
-        decoration: AppFormStyles.inputDecoration(),
-      ),
-    );
-  } */
-
-  /// Role dropdown
-  /* Widget _fieldRole() {
-    return SizedBox(
-      width: Responsive.isDesktop(context) ? 350 : double.infinity,
-      child: AppLabeledField(
-        label: 'Role',
-        child: FormBuilderDropdown<String>(
-          name: 'role',
-          items: _roles
-              .map<DropdownMenuItem<String>>(
-                (r) => DropdownMenuItem(
-                  value: r['roleid'].toString(),
-                  child: Text(r['rolename'].toString()),
-                ),
-              )
-              .toList(),
-          validator: FormBuilderValidators.required(
-            errorText: 'Please select role',
-          ),
-          onChanged: (value) {
-            // Handle visibility of brand based on role
-            if (mounted) setState(() {});
-          },
-          decoration: AppFormStyles.inputDecoration(),
-        ),
-      ),
-    );
-  } */
-
-  /// Brand multi-select checkbox widget (custom)
-  /* Widget _fieldBrand() {
-    // Determine the current role: prefer the form field value, fall back to edit data
-    String? selectedRole = _formKey.currentState?.fields['role']?.value;
-    if (selectedRole == null && _isEditMode && _editData != null) {
-      selectedRole = _editData!['role']?.toString();
-    }
-    // Hide brands for AD and JrA roles
-    if (selectedRole == 'AD' || selectedRole == 'JrA') {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        AppFormStyles.fieldLabel('Brand'),
-        Container(
-          width: Responsive.isDesktop(context)
-              ? MediaQuery.of(context).size.width * 0.45
-              : double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: const Color(0xFFBDBDBD)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with "Select" label
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    _brandSectionOpen = !_brandSectionOpen;
-                  });
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedBrandIds.isEmpty
-                            ? 'Select'
-                            : _allBrandsSelected
-                                ? 'All Brands'
-                                : '${_selectedBrandIds.length} selected',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF535353),
-                        ),
-                      ),
-                      Icon(
-                        _brandSectionOpen
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        color: const Color(0xFF535353),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (_brandSectionOpen) ...[
-                const Divider(height: 1, color: Color(0xFFC9C9C9)),
-                // "All Brands" option
-                _brandCheckboxTile(
-                  label: 'All Brands',
-                  isChecked: _allBrandsSelected,
-                  onChanged: (checked) {
-                    setState(() {
-                      _allBrandsSelected = checked ?? false;
-                      if (_allBrandsSelected) {
-                        _selectedBrandIds = _clientList
-                            .map((c) => c['clientid'].toString())
-                            .toList();
-                      } else {
-                        _selectedBrandIds = [];
-                      }
-                    });
-                  },
-                ),
-                // Individual brands
-                ..._clientList.map((client) {
-                  final id = client['clientid'].toString();
-                  final name = client['clientname'].toString();
-                  return _brandCheckboxTile(
-                    label: name,
-                    isChecked: _selectedBrandIds.contains(id),
-                    onChanged: (checked) {
-                      setState(() {
-                        if (checked == true) {
-                          _selectedBrandIds.add(id);
-                        } else {
-                          _selectedBrandIds.remove(id);
-                        }
-                        _allBrandsSelected = _clientList.isNotEmpty &&
-                            _selectedBrandIds.length == _clientList.length;
-                      });
-                    },
-                  );
-                }),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _brandCheckboxTile({
-    required String label,
-    required bool isChecked,
-    required ValueChanged<bool?> onChanged,
-  }) {
-    return InkWell(
-      onTap: () => onChanged(!isChecked),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Color(0xFFC9C9C9))),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: Checkbox(
-                value: isChecked,
-                onChanged: onChanged,
-                activeColor: const Color(0xFF02B2EB),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF505050),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  } */
-
-  // ── submit button ─────────────────────────────────────────────────────────
-  /* Widget _buildSubmitButton() {
-    return SizedBox(
-      width: Responsive.isDesktop(context) ? 400 : double.infinity,
-      height: 48,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF535353),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(4),
-          ),
-          elevation: 0,
-        ),
-        onPressed: () {},
-        child: Text(
-          _isEditMode ? 'Update User' : 'Create New User',
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  } */
-
   // ── build ─────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -392,7 +145,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
       showBackbutton: true,
       child: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -512,7 +265,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(
-                            'Cannot deactivate this template. It is assigned to an active audit.',
+                            'Cannot deactivate. Template has pending audit(s) that are not yet completed.',
                           ),
                           backgroundColor: Colors.red,
                         ),
@@ -537,7 +290,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
               if (!_isActive && _isAssignedToAudit) ...[
                 const SizedBox(width: 16),
                 Text(
-                  '*Note that the template has been assigned an audit.',
+                  '*Template has pending audit(s). Complete all audits to deactivate.',
                   style: TextStyle(
                     fontSize: 13,
                     color: Colors.red.shade700,
@@ -565,11 +318,12 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
                       'status': _isActive ? 'A' : 'IA',
                     },
                     callback: (res) {
-                      if (res['message'] != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(res['message'].toString())),
-                        );
-                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(res['message']?.toString() ?? 'Template updated successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
                       if (mounted){
                         Navigator.pop(context, true);
                       }
@@ -582,7 +336,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
                       borderRadius: BorderRadius.circular(4)),
                 ),
                 child: const Text(
-                  'Save Template',
+                  'Update Template',
                   style: TextStyle(fontSize: 14, color: Colors.white),
                 ),
               ),

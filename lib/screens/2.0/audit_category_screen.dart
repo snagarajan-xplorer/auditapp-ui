@@ -392,6 +392,9 @@ class _AuditCategoryScreenV2State
       "reviews": questionArray[pageStep]["reviews"],
       "clientremarks": questionArray[pageStep]["clientremarks"],
       "answer": questionArray[pageStep]["answer"],
+      "mode_of_audit": questionArray[pageStep]["mode_of_audit"],
+      "responsibility": questionArray[pageStep]["responsibility"],
+      "timeframe": questionArray[pageStep]["timeframe"],
       "cateanswer": categoryObj["answer"],
       "catetotal": categoryObj["total"],
       "selecteddropdown": questionArray[pageStep]["selecteddropdown"]

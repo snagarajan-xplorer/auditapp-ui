@@ -171,14 +171,16 @@ class UserController extends GetxController {
   }
 
   void register(context,
-      {required Map data, required Function(dynamic) callback}) {
-    APIService(context).postData("register", data, true).then((resvalue) {
+      {required Map data, required Function(dynamic) callback, Function(String)? onError}) {
+    APIService(context).postData("register", data, true, showMsg: false).then((resvalue) {
       if (resvalue.length != 5) {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (!res.containsKey("type")) {
           if (res.containsKey("mid")) {
             callback(res);
           }
+        } else if (onError != null) {
+          onError(res["message"]?.toString() ?? "Something went wrong");
         }
       }
     });
@@ -1265,6 +1267,19 @@ class UserController extends GetxController {
   }
 
   // ── Brand / Client ──────────────────────────────────────────────────────
+
+  void getClientStatus(context,
+      {required Map<String, dynamic> data,
+      required Function(dynamic) callback}) {
+    APIService(context).postData("clientStatus", data, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (!res.containsKey("type")) {
+          callback(res);
+        }
+      }
+    });
+  }
 
   void getBrandList(context,
       {required Function(List<dynamic>) callback}) {

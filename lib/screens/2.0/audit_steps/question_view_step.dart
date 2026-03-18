@@ -4,7 +4,7 @@ import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../constants.dart';
 
@@ -379,7 +379,7 @@ class QuestionViewStep extends StatelessWidget {
               }).toList(),
             ),
             const SizedBox(height: 16),
-            // Review text
+            // Observation (was Review)
             AppLabeledField(
               label: AppTranslations.of(context)!
                   .text("key_review"),
@@ -398,7 +398,7 @@ class QuestionViewStep extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            // Client remarks
+            // Management Response (was Client Remarks)
             AppLabeledField(
               label: AppTranslations.of(context)!
                   .text("key_customer_review"),
@@ -417,31 +417,148 @@ class QuestionViewStep extends StatelessWidget {
                 decoration: AppFormStyles.inputDecoration(),
               ),
             ),
-            const SizedBox(height: 20),
-            // File attachments
+            const SizedBox(height: 16),
+            // Mode of Audit / Responsibility / Time Frame row
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: AppLabeledField(
+                      label: AppTranslations.of(context)!
+                          .text("key_mode_of_audit"),
+                      child: DropdownButtonFormField<String>(
+                        initialValue: (question["mode_of_audit"] ?? "").toString().isEmpty
+                            ? null
+                            : question["mode_of_audit"],
+                        items: const [
+                          DropdownMenuItem(value: "Onsite", child: Text("Onsite")),
+                          DropdownMenuItem(value: "Offsite", child: Text("Offsite")),
+                          DropdownMenuItem(value: "Hybrid", child: Text("Hybrid")),
+                        ],
+                        onChanged: isViewMode
+                            ? null
+                            : (value) {
+                                question["mode_of_audit"] = value;
+                                onRefresh();
+                              },
+                        decoration: AppFormStyles.inputDecoration(),
+                      ),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: AppLabeledField(
+                      label: AppTranslations.of(context)!
+                          .text("key_responsibility"),
+                      child: FormBuilderTextField(
+                        name: "responsibility_${question["questionid"]}",
+                        readOnly: isViewMode,
+                        initialValue: question["responsibility"] ?? "",
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        onChanged: (value) {
+                          question["responsibility"] = value;
+                          onRefresh();
+                        },
+                        decoration: AppFormStyles.inputDecoration(),
+                      ),
+                    ),
+                  ),
+                ),
+                Flexible(
+                  flex: 1,
+                  child: AppLabeledField(
+                    label: AppTranslations.of(context)!
+                        .text("key_timeframe"),
+                    child: GestureDetector(
+                      onTap: isViewMode
+                          ? null
+                          : () async {
+                              DateTime initial = DateTime.now();
+                              if ((question["timeframe"] ?? "").toString().isNotEmpty) {
+                                try {
+                                  initial = DateFormat('dd/MM/yyyy').parse(question["timeframe"]);
+                                } catch (_) {
+                                  try {
+                                    initial = DateFormat('yyyy-MM-dd').parse(question["timeframe"]);
+                                  } catch (_) {}
+                                }
+                              }
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: initial,
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2100),
+                              );
+                              if (picked != null) {
+                                question["timeframe"] = DateFormat('dd/MM/yyyy').format(picked);
+                                onRefresh();
+                              }
+                            },
+                      child: InputDecorator(
+                        decoration: AppFormStyles.inputDecoration(
+                          suffixIcon: const Icon(Icons.calendar_today, size: 20),
+                        ),
+                        child: Text(
+                          (question["timeframe"] ?? "").toString().isEmpty
+                              ? ""
+                              : question["timeframe"],
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Attach Audit Evidence
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  AppTranslations.of(context)!
+                      .text("key_attach_evidence"),
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF505050)),
+                ),
+              ),
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!isViewMode)
-                  Flexible(
-                    flex: 1,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
                     child: SizedBox(
-                      width: 150,
+                      width: 100,
                       height: buttonHeight,
-                      child: ElevatedButton.icon(
+                      child: ElevatedButton(
                           onPressed: () {
                             onFilePick(question);
                           },
-                          icon: const Icon(Icons.cloud_upload,
-                              size: 20, color: Colors.white),
-                          label: Text(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF29B6F6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: Text(
                               AppTranslations.of(context)!
-                                  .text("key_btn_upload"),
+                                  .text("key_btn_browse"),
                               style: const TextStyle(
                                   color: Colors.white))),
                     ),
                   ),
                 Flexible(
-                  flex: 2,
                   child: Wrap(
                     spacing: 10,
                     runSpacing: 10,
@@ -481,8 +598,8 @@ class QuestionViewStep extends StatelessWidget {
       img = "assets/images/ppt.png";
     }
     return Container(
-      width: 90,
-      height: 90,
+      width: 140,
+      height: 100,
       margin: const EdgeInsets.only(left: 5, right: 5),
       child: Stack(
         children: [
@@ -496,8 +613,8 @@ class QuestionViewStep extends StatelessWidget {
                 ));
               },
               child: Container(
-                width: 90,
-                height: 90,
+                width: 140,
+                height: 100,
                 decoration: BoxDecoration(
                     image: DecorationImage(
                         fit: BoxFit.cover,
@@ -505,7 +622,9 @@ class QuestionViewStep extends StatelessWidget {
                             ? NetworkImage(
                                 IMG_URL + imgelement["image"])
                             : AssetImage(img)),
-                    borderRadius: BorderRadius.circular(8)),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: const Color(0xFFE0E0E0), width: 1)),
               ),
             ),
           ),
@@ -517,11 +636,15 @@ class QuestionViewStep extends StatelessWidget {
                 onTap: () {
                   onFileRemove(imgelement, question);
                 },
-                child: SvgPicture.asset(
-                  "assets/icons/close.svg",
-                  colorFilter: ColorFilter.mode(
-                      Colors.blue.shade900, BlendMode.srcIn),
-                  height: 24,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF8A65),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close,
+                      size: 14, color: Colors.white),
                 ),
               ),
             ),

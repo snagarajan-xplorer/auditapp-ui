@@ -287,6 +287,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   Widget _fieldUsername() {
     return AppLabeledField(
       label: 'Username',
+      required: true,
       child: FormBuilderTextField(
         name: 'name',
         style: Theme.of(context).textTheme.bodyMedium,
@@ -302,6 +303,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   Widget _fieldEmail() {
     return AppLabeledField(
       label: 'Email ID',
+      required: true,
       child: FormBuilderTextField(
         name: 'email',
         style: Theme.of(context).textTheme.bodyMedium,
@@ -318,6 +320,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   Widget _fieldMobile() {
     return AppLabeledField(
       label: 'Mobile No.',
+      required: true,
       child: FormBuilderTextField(
         name: 'mobile',
         style: Theme.of(context).textTheme.bodyMedium,
@@ -335,12 +338,16 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   Widget _fieldJoiningDate() {
     return AppLabeledField(
       label: 'Joining Date',
+      required: true,
       child: FormBuilderDateTimePicker(
         name: 'joiningdate',
         inputType: InputType.date,
         style: Theme.of(context).textTheme.bodyMedium,
         firstDate: Jiffy.now().subtract(years: 10).dateTime,
         lastDate: Jiffy.now().add(years: 1).dateTime,
+        validator: FormBuilderValidators.required(
+          errorText: 'Please select joining date',
+        ),
         decoration: AppFormStyles.inputDecoration(
           suffixIcon: const Icon(Icons.calendar_today, size: 18),
         ),
@@ -351,6 +358,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   Widget _fieldState() {
     return AppLabeledField(
       label: 'State',
+      required: true,
       child: FormBuilderDropdown<String>(
         name: 'state',
         items: _indianStates
@@ -358,6 +366,9 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
               (s) => DropdownMenuItem(value: s, child: Text(s)),
             )
             .toList(),
+        validator: FormBuilderValidators.required(
+          errorText: 'Please select state',
+        ),
         onChanged: (value) {
           _selectedState = value;
           // Reset city when state changes
@@ -372,9 +383,13 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
   Widget _fieldCity() {
     return AppLabeledField(
       label: 'City',
+      required: true,
       child: FormBuilderTextField(
         name: 'city',
         style: Theme.of(context).textTheme.bodyMedium,
+        validator: FormBuilderValidators.required(
+          errorText: 'Please enter city',
+        ),
         decoration: AppFormStyles.inputDecoration(),
       ),
     );
@@ -386,6 +401,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       width: Responsive.isDesktop(context) ? 350 : double.infinity,
       child: AppLabeledField(
         label: 'Role',
+        required: true,
         child: FormBuilderDropdown<String>(
           name: 'role',
           items: _roles
@@ -641,7 +657,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         ),
         onPressed: _onCreateUser,
         child: Text(
-          _isEditMode ? 'Save  Profaids User' : 'Create New User',
+          _isEditMode ? 'Update Profaids User' : 'Create New User',
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -704,10 +720,23 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     }
 
     _uc.register(context, data: formData, callback: (res) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isEditMode ? 'User updated successfully' : 'User created successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
       // Navigate back to user list
       final arg = _pageArgument ??
           ScreenArgument(argument: ArgumentData.USER, mapData: {});
       Navigator.pushNamed(context, '/user', arguments: arg);
+    }, onError: (message) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
     });
   }
 
@@ -719,7 +748,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
       showBackbutton: true,
       child: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

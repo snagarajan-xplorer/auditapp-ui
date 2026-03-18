@@ -119,6 +119,12 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
         logoFilename: _logoFile?.name,
         data: extraData,
         callback: (res) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Client updated successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
           _clearForm();
           _loadBrands();
         },
@@ -132,6 +138,12 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
           logoFilename: _logoFile!.name,
           data: extraData,
           callback: (res) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Client created successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             _clearForm();
             _loadBrands();
           },
@@ -144,6 +156,12 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
             ...extraData,
           },
           callback: (res) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Client created successfully'),
+                backgroundColor: Colors.green,
+              ),
+            );
             _clearForm();
             _loadBrands();
           },
