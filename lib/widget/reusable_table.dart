@@ -19,6 +19,7 @@ class TableColumnDef {
   final String? key;
   final Widget Function(dynamic row, int index)? cellBuilder;
   final bool isLast;
+  final String? headerGroup;
 
   const TableColumnDef({
     required this.label,
@@ -26,6 +27,7 @@ class TableColumnDef {
     this.key,
     this.cellBuilder,
     this.isLast = false,
+    this.headerGroup,
   });
 }
 
@@ -152,6 +154,12 @@ class ReusableTable extends StatelessWidget {
   // ── header ────────────────────────────────────────────────────────────────
 
   Widget _buildTableHeader() {
+    final hasGroups = columns.any((c) => c.headerGroup != null);
+    if (!hasGroups) return _buildSingleRowHeader();
+    return _buildGroupedHeader();
+  }
+
+  Widget _buildSingleRowHeader() {
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFF8D8D8D),
@@ -162,6 +170,132 @@ class ReusableTable extends StatelessWidget {
       ),
       child: Row(
         children: columns.map((col) => _headerCell(col)).toList(),
+      ),
+    );
+  }
+
+  Widget _buildGroupedHeader() {
+    const double topHeight = 40;
+    const double bottomHeight = 36;
+    const double fullHeight = topHeight + bottomHeight;
+    const Color headerBg = Color(0xFF8D8D8D);
+    const Color borderColor = Color(0xFFBCBCBC);
+
+    final List<_HeaderSegment> segments = [];
+    for (final col in columns) {
+      if (col.headerGroup == null) {
+        segments.add(_HeaderSegment(columns: [col], groupLabel: null));
+      } else if (segments.isNotEmpty &&
+          segments.last.groupLabel == col.headerGroup) {
+        segments.last.columns.add(col);
+      } else {
+        segments
+            .add(_HeaderSegment(columns: [col], groupLabel: col.headerGroup));
+      }
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: headerBg,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: segments.map((seg) {
+          final totalFlex =
+              seg.columns.fold<int>(0, (sum, c) => sum + c.flex);
+          final isLastSeg = seg.columns.last.isLast;
+
+          if (seg.groupLabel == null) {
+            final col = seg.columns.first;
+            return Expanded(
+              flex: col.flex,
+              child: Container(
+                height: fullHeight,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: col.isLast
+                      ? null
+                      : const Border(
+                          right:
+                              BorderSide(color: borderColor, width: 1)),
+                ),
+                child: Text(
+                  col.label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: headerFontWeight,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Expanded(
+            flex: totalFlex,
+            child: Column(
+              children: [
+                Container(
+                  height: topHeight,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom:
+                          const BorderSide(color: borderColor, width: 1),
+                      right: isLastSeg
+                          ? BorderSide.none
+                          : const BorderSide(
+                              color: borderColor, width: 1),
+                    ),
+                  ),
+                  child: Text(
+                    seg.groupLabel!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: headerFontWeight,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: bottomHeight,
+                  child: Row(
+                    children: seg.columns.map((col) {
+                      return Expanded(
+                        flex: col.flex,
+                        child: Container(
+                          height: bottomHeight,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: col.isLast
+                                ? null
+                                : const Border(
+                                    right: BorderSide(
+                                        color: borderColor, width: 1)),
+                          ),
+                          child: Text(
+                            col.label,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: headerFontWeight,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -333,6 +467,12 @@ class ReusableTable extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HeaderSegment {
+  final List<TableColumnDef> columns;
+  final String? groupLabel;
+  _HeaderSegment({required this.columns, required this.groupLabel});
 }
 
 // ─── Shared filter dropdown ─────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import 'package:audit_app/controllers/usercontroller.dart';
+import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../main/layoutscreen.dart';
@@ -210,28 +211,24 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
                         Text("Un-scheduled Audit Details",
                             style: TextStyle(
                                 fontSize: 20,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                                 color: Color(0xFF505050))),
-                        SizedBox(height: 4),
+                        SizedBox(height: 18),
                         Text("Detailed overview of all audits",
                             style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w100,
                                 color: Color(0xFF898989))),
                       ],
                     ),
                   ),
                   // FY dropdown
-                  TableFilterDropdown(
-                    items: financialYears.map((e) => e["label"] as String).toList(),
-                    value: financialYears.firstWhere(
-                        (e) => e["value"] == selectedFinancialYear)["label"]!,
+                  FinancialYearDropdown(
+                    value: selectedFinancialYear,
+                    items: financialYears,
                     onChanged: (val) {
-                      if (val != null) {
-                        final selected = financialYears.firstWhere((e) => e["label"] == val);
-                        setState(() => selectedFinancialYear = selected["value"]!);
-                        _loadData();
-                      }
+                      setState(() => selectedFinancialYear = val);
+                      _loadData();
                     },
                   ),
                 ],

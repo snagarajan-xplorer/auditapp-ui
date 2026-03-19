@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'dart:convert';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
+import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -329,19 +330,19 @@ class _RedReportScreenState extends State<RedReportScreen>
                     "Red Report Audit",
                     style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFF505050),
                     ),
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "See the Risk. Strengthen the Control",
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w100,
                           color: Color(0xFF898989),
                         ),
                       ),
@@ -450,40 +451,21 @@ class _RedReportScreenState extends State<RedReportScreen>
 
   Widget _buildFinancialYearDropdown() {
     if (financialYears.isEmpty) {
-      return Container();
+      return const SizedBox.shrink();
     }
-    return Container(
-      height: 40,
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Color(0xFFC9C9C9)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: DropdownButton<String>(
-        value: selectedFinancialYear,
-        underline: SizedBox(),
-        icon: Icon(Icons.arrow_drop_down, size: 20, color: Color(0xFF505050)),
-        style: TextStyle(
-          fontSize: 14,
-          color: Color(0xFF505050),
-        ),
-        items: financialYears.map((Map<String, dynamic> item) {
-          return DropdownMenuItem<String>(
-            value: item["value"],
-            child: Text(item["label"]),
-          );
-        }).toList(),
-        onChanged: (String? newValue) async {
-          if (mounted && newValue != null) {
-            setState(() {
-              selectedFinancialYear = newValue;
-              selectedYear = newValue;
-            });
-            await loadStateWiseData();
-          }
-        },
-      ),
+
+    return FinancialYearDropdown(
+      value: selectedFinancialYear,
+      items: financialYears,
+      onChanged: (newValue) async {
+        if (mounted) {
+          setState(() {
+            selectedFinancialYear = newValue;
+            selectedYear = newValue;
+          });
+          await loadStateWiseData();
+        }
+      },
     );
   }
 

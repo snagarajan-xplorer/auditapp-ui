@@ -7,9 +7,9 @@ import '../../widget/reusable_table.dart';
 
 // ── Pre-built constants ─────────────────────────────────────────────────────
 const _kTitleStyle = TextStyle(
-    fontSize: 20, fontWeight: FontWeight.w500, color: Color(0xFF505050));
+    fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF505050));
 const _kSubtitleStyle = TextStyle(
-    fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF898989));
+    fontSize: 18, fontWeight: FontWeight.w100, color: Color(0xFF898989));
 const _kTabStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.w400);
 const _kTabLabelColor = Color(0xFF01ADEF);
 const _kTextColor = Color(0xFF505050);
@@ -240,7 +240,7 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Scheduled Audit Details", style: _kTitleStyle),
-                  SizedBox(height: 4),
+                  SizedBox(height: 18),
                   Text("Detailed overview of all audits", style: _kSubtitleStyle),
                 ],
               ),

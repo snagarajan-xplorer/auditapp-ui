@@ -948,6 +948,72 @@ class UserController extends GetxController {
     });
   }
 
+  void getActivityWiseHeatmap(context,
+      {required Map<String, dynamic> data,
+      required Function(dynamic) callback}) async {
+    APIService(context)
+        .postData("getActivityWiseHeatmap", data, true)
+        .then((resvalue) {
+      if (resvalue.length != 5) {
+        try {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (res.containsKey("type") && res["type"] == "error") {
+            callback(null);
+            return;
+          }
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              callback(res["data"]);
+            } else {
+              callback(null);
+            }
+          } else {
+            callback(null);
+          }
+        } catch (e) {
+          callback(null);
+        }
+      } else {
+        callback(null);
+      }
+    }).catchError((error) {
+      callback(null);
+    });
+  }
+
+  void getRegionWiseHeatmap(context,
+      {required Map<String, dynamic> data,
+      required Function(dynamic) callback}) async {
+    APIService(context)
+        .postData("getRegionWiseHeatmap", data, true)
+        .then((resvalue) {
+      if (resvalue.length != 5) {
+        try {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (res.containsKey("type") && res["type"] == "error") {
+            callback(null);
+            return;
+          }
+          if (!res.containsKey("type")) {
+            if (res.containsKey("data")) {
+              callback(res["data"]);
+            } else {
+              callback(null);
+            }
+          } else {
+            callback(null);
+          }
+        } catch (e) {
+          callback(null);
+        }
+      } else {
+        callback(null);
+      }
+    }).catchError((error) {
+      callback(null);
+    });
+  }
+
   Future<void> getAuditCount(context,
       {required Map<String, dynamic> data,
       required Function(dynamic) callback}) async {

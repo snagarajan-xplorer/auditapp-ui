@@ -306,13 +306,13 @@ class _UserScreenV2State extends State<UserScreenV2> {
                       Text(pageTitle,
                           style: const TextStyle(
                               fontSize: 20,
-                              fontWeight: FontWeight.w500,
+                              fontWeight: FontWeight.w600,
                               color: Color(0xFF505050))),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 18),
                       Text(pageSubtitle,
                           style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w100,
                               color: Color(0xFF898989))),
                     ],
                   ),

@@ -487,7 +487,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
           child: const Text(
             'Template list',
             style: TextStyle(
-                fontSize: 20,color: Color(0xFF505050), fontWeight: FontWeight.w500),
+                fontSize: 20,color: Color(0xFF505050), fontWeight: FontWeight.w600),
           ),
         ),
         const SizedBox(height: 8),
@@ -527,7 +527,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
                 style: TextStyle(
                     fontSize: 20,
                     color: Color(0xFF505050),
-                    fontWeight: FontWeight.w500),
+                    fontWeight: FontWeight.w600),
               ),
             ),
             _buildCreateBrandSection(),

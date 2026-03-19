@@ -4,6 +4,7 @@ import 'package:audit_app/models/reportobj.dart';
 import '../main/layoutscreen.dart';
 import 'package:audit_app/services/utility.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
+import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:audit_app/widget/pagecontainercomp.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/services.dart';
@@ -1015,39 +1016,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return SizedBox();
     }
 
-    return Container(
-      height: 40,
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Color(0xFFC9C9C9)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: DropdownButton<String>(
-        value: selectedFinancialYear,
-        underline: SizedBox(),
-        icon: Icon(Icons.arrow_drop_down, size: 20, color: Color(0xFF505050)),
-        style: TextStyle(
-          fontSize: 14,
-          color: Color(0xFF505050),
-        ),
-        items: financialYears.map((Map<String, dynamic> item) {
-          return DropdownMenuItem<String>(
-            value: item["value"],
-            child: Text(item["label"]),
-          );
-        }).toList(),
-        onChanged: (String? newValue) async {
-          if (mounted && newValue != null) {
-            setState(() {
-              selectedFinancialYear = newValue;
-              year = newValue; // Use FY format directly
-            });
-            // Reload data with new year
-            await getClientReport(client_id);
-          }
-        },
-      ),
+    return FinancialYearDropdown(
+      value: selectedFinancialYear,
+      items: financialYears,
+      onChanged: (newValue) async {
+        if (mounted) {
+          setState(() {
+            selectedFinancialYear = newValue;
+            year = newValue;
+          });
+          await getClientReport(client_id);
+        }
+      },
     );
   }
 }

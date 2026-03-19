@@ -2,6 +2,7 @@ import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/widget/app_form_field.dart';
+import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
@@ -450,16 +451,16 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                   const Text("Audit List",
                       style: TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: Color(0xFF505050))),
-                  const SizedBox(height: 4), 
+                  const SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Detailed overview of all audits",
                           style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w100,
                               color: Color(0xFF898989))),
                       // Filters row
                       Row(
@@ -486,15 +487,12 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                             _applyFilter();
                           }),
                           SizedBox(width: 12),
-                          TableFilterDropdown(
-                              items: financialYears
-                                  .map((e) => e["label"] as String)
-                                  .toList(),
-                              value: financialYears.firstWhere((e) => e["value"] == year)["label"]!,
+                          FinancialYearDropdown(
+                              value: year,
+                              items: financialYears,
                               onChanged: (val) {
-                            final selected = financialYears.firstWhere((e) => e["label"] == val);
                             setState(() {
-                              year = selected["value"]!;
+                              year = val;
                               selectedState = "All";
                               selectedZone = "All";
                             });

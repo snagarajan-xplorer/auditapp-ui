@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
+import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -425,19 +426,19 @@ class _AllIndiaStateWiseAuditState
                     "Heatmap – All India (State wise)",
                     style: TextStyle(
                       fontSize: 20,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFF505050),
                     ),
                   ),
-                  SizedBox(height: 4),
+                  SizedBox(height: 18),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "See the Risk. Strengthen the Control",
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w100,
                           color: Color(0xFF898989),
                         ),
                       ),
@@ -731,72 +732,26 @@ class _AllIndiaStateWiseAuditState
   }
 
   Widget _buildFinancialYearDropdown() {
-    // Safety check - if financialYears is empty, return a placeholder
     if (financialYears.isEmpty) {
-      return Container(
-        height: 40,
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Color(0xFFC9C9C9)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(
-          child: Text(
-            "No years available",
-            style: TextStyle(fontSize: 14, color: Color(0xFF505050)),
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          height: 40,
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Color(0xFFC9C9C9)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButton<String>(
-            value: selectedFinancialYear,
-            underline: SizedBox(),
-            icon:
-                Icon(Icons.arrow_drop_down, size: 20, color: Color(0xFF505050)),
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFF505050),
-            ),
-            items: financialYears.map((Map<String, dynamic> item) {
-              return DropdownMenuItem<String>(
-                value: item["label"],
-                child: Text(item["label"]),
-              );
-            }).toList(),
-            onChanged: (String? newValue) async {
-              if (mounted && newValue != null) {
-                // Find the selected item to get the year value
-                var selectedItem = financialYears.firstWhere(
-                  (item) => item["label"] == newValue,
-                  // Label equals value (FYYYYY-YY); fallback uses the label itself
-                  orElse: () => {"label": newValue, "value": newValue},
-                );
-
-                setState(() {
-                  selectedFinancialYear = newValue;
-                  // Ensure endpoint receives FY format (e.g., FY2025-26)
-                  selectedYear = selectedItem["value"];
-                });
-                // Load state data with new year
-                await loadStateWiseData();
-              }
-            },
-          ),
-        ),
-      ],
+    return FinancialYearDropdown(
+      value: selectedFinancialYear,
+      items: financialYears,
+      onChanged: (newValue) async {
+        if (mounted) {
+          final selectedItem = financialYears.firstWhere(
+            (item) => item["value"] == newValue,
+            orElse: () => {"label": newValue, "value": newValue},
+          );
+          setState(() {
+            selectedFinancialYear = newValue;
+            selectedYear = selectedItem["value"];
+          });
+          await loadStateWiseData();
+        }
+      },
     );
   }
 }

@@ -25,7 +25,9 @@ class _SideMenuState extends State<SideMenu> {
   /// This ensures the sidebar always reflects the actual page —
   /// even on direct URL entry, deep links, or back/forward navigation.
   static const _routeMenuKeys = <String, List<String>>{
-    '/dashboard': ['dashboard', 'heatmap-allindia', 'heatmap-region', 'reports-published'],
+    '/dashboard': ['dashboard', 'reports-published'],
+    '/heatmap-region': ['heatmap-region'],
+    '/heatmap-activity-wise': ['heatmap-allindia'],
     '/scheduledaudit': ['scheduled'],
     '/unscheduledaudit': ['unscheduled'],
     '/assignedaudit': ['assigned-audit'],
@@ -60,17 +62,18 @@ class _SideMenuState extends State<SideMenu> {
 
     // Dynamically determine which sections should be expanded based on selected menu key
     const auditStatusKeys = ['dashboard', 'scheduled', 'unscheduled', 'assigned-audit'];
-    const reportsActivityWiseKeys = ['heatmap-allindia', 'heatmap-region'];
-    const reportsMapWiseKeys = ['map-allindia-state', 'map-red-report'];
+    const heatmapActivityWiseKeys = ['heatmap-allindia', 'heatmap-region'];
+    const heatmapMapWiseKeys = ['map-allindia-state', 'map-red-report'];
+    const heatmapKeys = [...heatmapActivityWiseKeys, ...heatmapMapWiseKeys];
     const reportsSubKeys = ['reports-published', 'reports-red', 'reports-ncc'];
     const settingsKeys = ['settings-users', 'settings-template', 'settings-brand'];
     const auditKeys = ['audit-create', 'audit-list'];
 
     bool isAuditStatusExpanded = auditStatusKeys.contains(menuKey);
-    bool isReportsActivityWiseExpanded = reportsActivityWiseKeys.contains(menuKey);
-    bool isReportsMapWiseExpanded = reportsMapWiseKeys.contains(menuKey);
+    bool isReportsExpanded = [...heatmapKeys, ...reportsSubKeys].contains(menuKey);
+    bool isReportsActivityWiseExpanded = heatmapActivityWiseKeys.contains(menuKey);
+    bool isReportsMapWiseExpanded = heatmapMapWiseKeys.contains(menuKey);
     bool isReportsSubExpanded = reportsSubKeys.contains(menuKey);
-    bool isReportsExpanded = isReportsActivityWiseExpanded || isReportsMapWiseExpanded || isReportsSubExpanded;
     bool isSettingsExpanded = settingsKeys.contains(menuKey);
     bool isAuditExpanded = auditKeys.contains(menuKey);
 
@@ -216,7 +219,7 @@ class _SideMenuState extends State<SideMenu> {
                             press: () {
                               if (widget.enableAction!) {
                                 usercontroller.selectedMenuKey = 'heatmap-allindia';
-                                Navigator.pushNamed(context, "/dashboard");
+                                Navigator.pushNamed(context, "/heatmap-activity-wise");
                               } else {
                                 widget.onCallback!(2);
                               }
@@ -229,7 +232,7 @@ class _SideMenuState extends State<SideMenu> {
                             press: () {
                               if (widget.enableAction!) {
                                 usercontroller.selectedMenuKey = 'heatmap-region';
-                                Navigator.pushNamed(context, "/dashboard");
+                                Navigator.pushNamed(context, "/heatmap-region");
                               } else {
                                 widget.onCallback!(3);
                               }

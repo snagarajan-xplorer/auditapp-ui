@@ -506,7 +506,7 @@ void _downloadTemplate(String templateId) {
                 children: [
                   const Text(
                     'Create Template',
-                    style: TextStyle(fontSize: 20,color: Color(0xFF505050), fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 20,color: Color(0xFF505050), fontWeight: FontWeight.w600),
                   ),
                   ElevatedButton.icon(
                     onPressed: () {
