@@ -62,7 +62,8 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   /// When true, the audit-type dropdown is locked to 'Scheduled'
   bool _lockScheduled = false;
 
-
+  DateTime? _editStartDate;
+  DateTime? _editStartTime;
 
   static const List<String> _locationTypes = [
     'Retail Store',
@@ -80,6 +81,11 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   ];
 
   // ── helpers ──────────────────────────────────────────────────────────────
+  String? _trimVal(dynamic v) {
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return (s.isEmpty || s == '-') ? null : s;
+  }
 
   // ── lifecycle ─────────────────────────────────────────────────────────────
   @override
@@ -107,6 +113,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
       _prefillData = Map<String, dynamic>.from(args.editData!);
       _editAuditId = _prefillData!['id'] ?? _prefillData!['audit_id'];
       _selectedAuditType = 'Scheduled';
+      _parseEditDateTimeFields();
     } else if (args is Map<String, dynamic>) {
       _prefillData = args;
       // Coming from "Schedule Audit" on unscheduled screen — always Scheduled
@@ -138,50 +145,23 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                 Future.delayed(const Duration(milliseconds: 400), () {
                   final pf = _prefillData!;
 
-                  // Build base patch FIRST (fields that don't need async)
                   final patch = <String, dynamic>{};
                   patch['audit_type'] = 'Scheduled';
                   if (pf['client_id'] != null) patch['client_id'] = pf['client_id'].toString();
-                  if (pf['zone'] != null && pf['zone'] != '-') patch['zone'] = pf['zone'];
-                  if (pf['location'] != null && pf['location'] != '-') patch['location'] = pf['location'];
-                  if (pf['type_of_location'] != null && pf['type_of_location'] != '-') patch['type_of_location'] = pf['type_of_location'];
-                  if (pf['branch'] != null && pf['branch'] != '-') patch['branch'] = pf['branch'];
+                  if (_trimVal(pf['zone']) != null) patch['zone'] = pf['zone'];
+                  if (_trimVal(pf['location']) != null) patch['location'] = pf['location'].toString().trim();
+                  if (_trimVal(pf['type_of_location']) != null) patch['type_of_location'] = pf['type_of_location'];
+                  if (_trimVal(pf['branch']) != null) patch['branch'] = pf['branch'].toString().trim();
 
-                  // Edit mode: also prefill auditname, assigned_user, remarks, start_date, start_time
                   if (_isEditMode) {
-                    final auditName = (pf['auditname'] ?? pf['audit_name'] ?? '').toString();
+                    final auditName = (pf['auditname'] ?? pf['audit_name'] ?? '').toString().trim();
                     if (auditName.isNotEmpty) patch['auditname'] = auditName;
                     if (pf['assigned_user'] != null) patch['assigned_user'] = pf['assigned_user'].toString();
-                    if (pf['remarks'] != null && pf['remarks'].toString().trim().isNotEmpty) {
-                      patch['remarks'] = pf['remarks'].toString();
+                    if (_trimVal(pf['remarks']) != null) {
+                      patch['remarks'] = pf['remarks'].toString().trim();
                     }
-                    // Parse start_date
-                    if (pf['start_date'] != null) {
-                      try {
-                        final dt = DateTime.parse(pf['start_date'].toString());
-                        patch['start_date'] = dt;
-                        // Allow editing past dates in edit mode
-                        if (dt.isBefore(_firstDate)) {
-                          _firstDate = dt;
-                          _initialDate = dt;
-                        }
-                      } catch (_) {}
-                    }
-                    // Parse start_time
-                    if (pf['start_time'] != null) {
-                      try {
-                        final rawTime = pf['start_time'].toString();
-                        // Handle formats like "09:00:00" or ISO datetime
-                        DateTime timeValue;
-                        if (rawTime.contains('T') || rawTime.contains('-')) {
-                          timeValue = DateTime.parse(rawTime);
-                        } else {
-                          final parts = rawTime.split(':');
-                          timeValue = DateTime(2000, 1, 1, int.parse(parts[0]), int.parse(parts[1]));
-                        }
-                        patch['start_time'] = timeValue;
-                      } catch (_) {}
-                    }
+                    if (_editStartDate != null) patch['start_date'] = _editStartDate;
+                    if (_editStartTime != null) patch['start_time'] = _editStartTime;
                   }
 
                   final pincode = pf['pincode']?.toString() ?? '';
@@ -275,6 +255,34 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
         );
       },
     );
+  }
+
+  void _parseEditDateTimeFields() {
+    if (_prefillData == null) return;
+    final pf = _prefillData!;
+    final rawDate = pf['start_date_raw'] ?? pf['start_date'];
+    if (rawDate != null) {
+      try {
+        final dt = DateTime.parse(rawDate.toString());
+        _editStartDate = dt;
+        if (dt.isBefore(_firstDate)) {
+          _firstDate = dt;
+          _initialDate = dt;
+        }
+      } catch (_) {}
+    }
+    final rawTime = pf['start_time_raw'] ?? pf['start_time'];
+    if (rawTime != null) {
+      try {
+        final s = rawTime.toString();
+        if (s.contains('T') || s.contains('-')) {
+          _editStartTime = DateTime.parse(s);
+        } else {
+          final parts = s.split(':');
+          _editStartTime = DateTime(2000, 1, 1, int.parse(parts[0]), int.parse(parts[1]));
+        }
+      } catch (_) {}
+    }
   }
 
   // ── section header widget ─────────────────────────────────────────────────
@@ -400,7 +408,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
     if (_prefillData == null) return null;
     final v = _prefillData![key] ?? (altKey != null ? _prefillData![altKey] : null);
     if (v == null) return null;
-    final s = v.toString();
+    final s = v.toString().trim();
     return (s.isEmpty || s == '-') ? null : s;
   }
 
@@ -479,6 +487,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                     AppTranslations.of(context)!.text('key_error_01'),
               ),
               onChanged: (value) {
+                if (_isPrefilling) return;
                 if (value != null && value.length == 6) {
                   _uc.getPinCode(
                     context,
@@ -489,7 +498,6 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                       _formKey.currentState?.patchValue({
                         'state': res.isNotEmpty ? res[0]['State'] : '',
                       });
-                      // auto-select first city if available
                       if (res.isNotEmpty) {
                         Future.delayed(
                           const Duration(milliseconds: 300),
@@ -577,7 +585,8 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
             label: 'Type of Location',
             required: true,
             child: FormBuilderDropdown<String>(
-              name: 'type_of_location', 
+              name: 'type_of_location',
+              initialValue: _prefillString('type_of_location'),
               items: _locationTypes
                   .map<DropdownMenuItem<String>>(
                     (t) => DropdownMenuItem(value: t, child: Text(t)),
@@ -628,6 +637,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
             required: _selectedAuditType == 'Scheduled',
             child: FormBuilderDateTimePicker(
               name: 'start_date',
+              initialValue: _editStartDate,
               initialDate: _initialDate,
               firstDate: _firstDate,
               lastDate: _lastDate,
@@ -653,6 +663,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
             required: _selectedAuditType == 'Scheduled',
             child: FormBuilderDateTimePicker(
               name: 'start_time',
+              initialValue: _editStartTime,
               inputType: InputType.time,
               format: DateFormat.jm(),
               timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
@@ -685,7 +696,8 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
           ),
           style: Theme.of(context).textTheme.bodyMedium,
           decoration: AppFormStyles.inputDecoration(
-            contentPadding: const EdgeInsets.only(left: 16, top: 20),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),
       );
@@ -792,6 +804,10 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
         raw['id'] = _editAuditId;
       }
 
+      if (_prefillData != null && _prefillData!['unscheduled_id'] != null) {
+        raw['unscheduled_id'] = _prefillData!['unscheduled_id'];
+      }
+
       _uc.saveAudit(context, data: raw, callback: () {
         Navigator.pushNamed(context, '/auditlist');
       });
@@ -814,6 +830,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
     return LayoutScreen(
       previousScreenName: 'Audit',
       showBackbutton: true,
+      backEvent: () => Navigator.pop(context),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(defaultPadding),
@@ -831,6 +848,24 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          InkWell(
+                            onTap: () => Navigator.pop(context),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.arrow_back, size: 16, color: Color(0xFF02B2EB)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Back',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF02B2EB),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                           // ── Audit Type ──────────────────────────────────
                           const SizedBox(height: defaultPadding),
                           SizedBox(

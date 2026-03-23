@@ -5,7 +5,6 @@ import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../constants.dart';
 
 class QuestionViewStep extends StatelessWidget {
@@ -18,7 +17,6 @@ class QuestionViewStep extends StatelessWidget {
   final bool showNextBtn;
   final Color selectedColor;
   final List<dynamic> scoreArr;
-  final PageController questionController;
 
   // Callbacks
   final void Function(dynamic element) onQuestionIndexTap;
@@ -26,9 +24,6 @@ class QuestionViewStep extends StatelessWidget {
   final VoidCallback onNext;
   final void Function(dynamic question, String value, Color color)
       onScoreTap;
-  final void Function(dynamic question) onFilePick;
-  final void Function(dynamic imageElement, dynamic question)
-      onFileRemove;
   final VoidCallback onRefresh;
 
   const QuestionViewStep({
@@ -42,33 +37,14 @@ class QuestionViewStep extends StatelessWidget {
     required this.showNextBtn,
     required this.selectedColor,
     required this.scoreArr,
-    required this.questionController,
     required this.onQuestionIndexTap,
     required this.onPrevious,
     required this.onNext,
     required this.onScoreTap,
-    required this.onFilePick,
-    required this.onFileRemove,
     required this.onRefresh,
   });
 
-  /// Get the current dropdown value from selecteddropdown or
-  /// fallback to config.
-  static dynamic getDropdownValue(
-      dynamic question, dynamic element2) {
-    List<dynamic> arr = (question["selecteddropdown"] ?? [])
-        .where((item) =>
-            item["dropdownid"] == element2["dropdownid"])
-        .toList();
-    if (arr.isNotEmpty &&
-        arr[0]["selectedoption"] != null &&
-        arr[0]["selectedoption"].toString().trim().isNotEmpty) {
-      return arr[0]["selectedoption"];
-    }
-    var val = element2["selectedoption"];
-    if (val == null || val.toString().trim().isEmpty) return null;
-    return val;
-  }
+
 
   Color _getQuestionColor(dynamic element, int index) {
     Color c = const Color(0xFF535353);
@@ -87,7 +63,6 @@ class QuestionViewStep extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Header row
         SizedBox(
           width: wdt + 140,
           child: Row(
@@ -120,81 +95,72 @@ class QuestionViewStep extends StatelessWidget {
           ),
         ),
         SizedBox(height: defaultPadding),
-        // Question pageview with side index
         Expanded(
-          child: SizedBox(
-            width: wdt + 40,
-            child: questionArray.isNotEmpty
-                ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Flexible(
-                        flex: 10,
-                        child: PageView.builder(
-                          physics:
-                              const NeverScrollableScrollPhysics(),
-                          itemCount: questionArray.length,
-                          controller: questionController,
-                          itemBuilder: (context, index) {
-                            return KeyedSubtree(
-                              key: ValueKey(
-                                  "question_${questionArray[index]["questionid"]}"),
-                              child: _questionComp(
-                                  context, questionArray[index]),
-                            );
-                          },
-                        ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+          width: wdt + 140,
+          child: questionArray.isNotEmpty
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Flexible(
+                      flex: 10,
+                      child: KeyedSubtree(
+                        key: ValueKey(
+                            "question_${questionArray[pageStep]["questionid"]}"),
+                        child: _questionComp(
+                            context, questionArray[pageStep]),
                       ),
-                      // Side index buttons
-                      SizedBox(
-                        width: 30,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children:
-                                questionArray.map((element) {
-                              id++;
-                              return InkWell(
-                                onTap: () {
-                                  onQuestionIndexTap(element);
-                                },
-                                child: Container(
-                                  width:
-                                      pageStep == element["index"]
-                                          ? 30
-                                          : 20,
-                                  height: 30,
-                                  margin: const EdgeInsets.only(
-                                      top: 4, bottom: 4),
-                                  decoration: BoxDecoration(
-                                    color: _getQuestionColor(
-                                        element, id),
-                                    borderRadius:
-                                        const BorderRadius.only(
-                                            topRight:
-                                                Radius.circular(8),
-                                            bottomRight:
-                                                Radius.circular(
-                                                    8)),
-                                  ),
-                                  child: Center(
-                                    child: Text(id.toString(),
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight:
-                                                FontWeight.w600)),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      )
-                    ],
-                  )
-                : const SizedBox(),
-          ),
+                    ),
+                    SizedBox(
+                      width: 30,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children:
+                            questionArray.map((element) {
+                          id++;
+                          return InkWell(
+                            onTap: () {
+                              onQuestionIndexTap(element);
+                            },
+                            child: Container(
+                              width:
+                                  pageStep == element["index"]
+                                      ? 30
+                                      : 20,
+                              height: 30,
+                              margin: const EdgeInsets.only(
+                                  top: 4, bottom: 4),
+                              decoration: BoxDecoration(
+                                color: _getQuestionColor(
+                                    element, id),
+                                borderRadius:
+                                    const BorderRadius.only(
+                                        topRight:
+                                            Radius.circular(8),
+                                        bottomRight:
+                                            Radius.circular(
+                                                8)),
+                              ),
+                              child: Center(
+                                child: Text(id.toString(),
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight:
+                                            FontWeight.w600)),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    )
+                  ],
+                )
+              : const SizedBox(),
         ),
         SizedBox(height: defaultPadding),
         // Previous/Next buttons
@@ -228,16 +194,19 @@ class QuestionViewStep extends StatelessWidget {
           ),
         ),
         SizedBox(height: defaultPadding),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
 
   Widget _questionComp(BuildContext context, dynamic question) {
     return BoxContainer(
-      width: wdt - 50,
-      height: double.infinity,
-      child: SingleChildScrollView(
-        child: Column(
+      width: wdt + 120,
+      height: null,
+      child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -247,14 +216,14 @@ class QuestionViewStep extends StatelessWidget {
               width: double.infinity,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center, 
                 children: [
                   Text(question["question"],
                       style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           color: Color(0xFF505050))),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 20), 
                   // Score circle
                   Container(
                     width: 50,
@@ -320,63 +289,6 @@ class QuestionViewStep extends StatelessWidget {
                     ),
                 ],
               ),
-            ),
-            const SizedBox(height: 10),
-            // Dropdowns row
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: question["dropdown"]
-                  .map<Widget>((element2) {
-                return Flexible(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: AppLabeledField(
-                      label: element2["dropdownname"],
-                      child: DropdownButtonFormField<dynamic>(
-                        initialValue: getDropdownValue(
-                            question, element2),
-                        items: element2["options"]
-                            .map<DropdownMenuItem<dynamic>>(
-                                (toElement) =>
-                                    DropdownMenuItem(
-                                      value: toElement[
-                                          "optionvalue"],
-                                      child: Text(toElement[
-                                          "optionvalue"]),
-                                    ))
-                            .toList(),
-                        onChanged: isViewMode
-                            ? null
-                            : (value) {
-                                List<dynamic> arr = question[
-                                        "selecteddropdown"]
-                                    .where((item) =>
-                                        item["dropdownid"] ==
-                                        element2["dropdownid"])
-                                    .toList();
-                                if (arr.isEmpty) {
-                                  question["selecteddropdown"]
-                                      .add({
-                                    "dropdownid":
-                                        element2["dropdownid"],
-                                    "dropdownname":
-                                        element2["dropdownname"],
-                                    "selectedoption": value
-                                  });
-                                } else {
-                                  arr[0]["selectedoption"] =
-                                      value;
-                                }
-                                onRefresh();
-                              },
-                        decoration:
-                            AppFormStyles.inputDecoration(),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
             ),
             const SizedBox(height: 16),
             // Observation (was Review)
@@ -482,22 +394,36 @@ class QuestionViewStep extends StatelessWidget {
                               DateTime initial = DateTime.now();
                               if ((question["timeframe"] ?? "").toString().isNotEmpty) {
                                 try {
-                                  initial = DateFormat('dd/MM/yyyy').parse(question["timeframe"]);
+                                  initial = DateFormat('dd/MM/yyyy hh:mm a').parse(question["timeframe"]);
                                 } catch (_) {
                                   try {
-                                    initial = DateFormat('yyyy-MM-dd').parse(question["timeframe"]);
-                                  } catch (_) {}
+                                    initial = DateFormat('dd/MM/yyyy').parse(question["timeframe"]);
+                                  } catch (_) {
+                                    try {
+                                      initial = DateFormat('yyyy-MM-dd').parse(question["timeframe"]);
+                                    } catch (_) {}
+                                  }
                                 }
                               }
-                              final picked = await showDatePicker(
+                              final pickedDate = await showDatePicker(
                                 context: context,
                                 initialDate: initial,
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2100),
                               );
-                              if (picked != null) {
-                                question["timeframe"] = DateFormat('dd/MM/yyyy').format(picked);
-                                onRefresh();
+                              if (pickedDate != null) {
+                                final pickedTime = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay.fromDateTime(initial),
+                                );
+                                if (pickedTime != null) {
+                                  final dt = DateTime(
+                                    pickedDate.year, pickedDate.month, pickedDate.day,
+                                    pickedTime.hour, pickedTime.minute,
+                                  );
+                                  question["timeframe"] = DateFormat('dd/MM/yyyy hh:mm a').format(dt);
+                                  onRefresh();
+                                }
                               }
                             },
                       child: InputDecorator(
@@ -516,140 +442,8 @@ class QuestionViewStep extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            // Attach Audit Evidence
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  AppTranslations.of(context)!
-                      .text("key_attach_evidence"),
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF505050)),
-                ),
-              ),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!isViewMode)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: SizedBox(
-                      width: 100,
-                      height: buttonHeight,
-                      child: ElevatedButton(
-                          onPressed: () {
-                            onFilePick(question);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF29B6F6),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
-                          child: Text(
-                              AppTranslations.of(context)!
-                                  .text("key_btn_browse"),
-                              style: const TextStyle(
-                                  color: Colors.white))),
-                    ),
-                  ),
-                Flexible(
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: question["proofdocuments"]
-                        .map<Widget>((imgelement) {
-                      return _buildAttachment(
-                          context, imgelement, question);
-                    }).toList(),
-                  ),
-                )
-              ],
-            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildAttachment(BuildContext context,
-      dynamic imgelement, dynamic question) {
-    bool image = true;
-    String name = imgelement["image"].toString();
-    var index = name.lastIndexOf(".");
-    var ext = name.substring(index, name.length);
-    String img = "assets/images/doc.png";
-    if (ext.contains("doc")) {
-      image = false;
-      img = "assets/images/doc.png";
-    } else if (ext.contains("xls")) {
-      image = false;
-      img = "assets/images/xls.png";
-    } else if (ext.contains("pdf")) {
-      image = false;
-      img = "assets/images/pdf.png";
-    } else if (ext.contains("ppt")) {
-      image = false;
-      img = "assets/images/ppt.png";
-    }
-    return Container(
-      width: 140,
-      height: 100,
-      margin: const EdgeInsets.only(left: 5, right: 5),
-      child: Stack(
-        children: [
-          Positioned(
-            left: 0,
-            top: 0,
-            child: InkWell(
-              onTap: () {
-                launchUrl(Uri.parse(
-                  IMG_URL + imgelement["image"].toString(),
-                ));
-              },
-              child: Container(
-                width: 140,
-                height: 100,
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: image
-                            ? NetworkImage(
-                                IMG_URL + imgelement["image"])
-                            : AssetImage(img)),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: const Color(0xFFE0E0E0), width: 1)),
-              ),
-            ),
-          ),
-          if (!isViewMode)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: InkWell(
-                onTap: () {
-                  onFileRemove(imgelement, question);
-                },
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF8A65),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.close,
-                      size: 14, color: Colors.white),
-                ),
-              ),
-            ),
-        ],
-      ),
     );
   }
 }

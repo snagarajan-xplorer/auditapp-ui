@@ -41,11 +41,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String id = "";
   String client_id = "";
   dynamic dataObj = {
-    "complete": 0,
-    "incomplete": 0,
+    "published": 0,
+    "inprogress": 0,
     "upcoming": 0,
-    "cancel": 0
+    "cancelled": 0,
+    "review": 0,
+    "total": 0,
   };
+  int unscheduledCount = 0;
   List<Map<String, dynamic>> auditList = [];
   List<Map<String, dynamic>> fieldArr = [
     {"type": "string", "key": "auditname"},
@@ -67,6 +70,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<LatLng> indiaBoundary = [];
   final MapController mapController = MapController();
   List<Polygon> polygons = [];
+  static const Set<String> _trackedDashboardStatuses = {"P", "IP", "S", "CL"};
+  static final RegExp _fyRegex =
+      RegExp(r'^FY(\d{4})-(\d{2,4})$', caseSensitive: false);
 
   // Financial years dropdown
   List<Map<String, dynamic>> financialYears = [];
@@ -133,7 +139,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-
   Future<void> newloadGeoJson() async {
     final data = await rootBundle.loadString('assets/json/india.geojson');
     final geo = jsonDecode(data);
@@ -146,7 +151,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         loadedPolygons.add(
           Polygon(
             points: _convertCoords(geometry["coordinates"][0]),
-            color: Color(0xFFD1D1D1), // Use Not Applicable gray instead of white
+            color:
+                Color(0xFFD1D1D1), // Use Not Applicable gray instead of white
             borderStrokeWidth: 1.5,
             borderColor: Colors.grey,
           ),
@@ -156,7 +162,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           loadedPolygons.add(
             Polygon(
               points: _convertCoords(polygon[0]),
-              color: Color(0xFFD1D1D1), // Use Not Applicable gray instead of white
+              color:
+                  Color(0xFFD1D1D1), // Use Not Applicable gray instead of white
               borderStrokeWidth: 1.5,
               borderColor: Colors.transparent,
             ),
@@ -184,6 +191,80 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .toList();
   }
 
+  String _yearParamForApi() {
+    final yearValue = year.toString();
+    final fyMatch = _fyRegex.firstMatch(yearValue);
+    if (fyMatch != null) {
+      final startYear = int.parse(fyMatch.group(1)!);
+      return (startYear + 1).toString();
+    }
+    return yearValue;
+  }
+
+  Map<String, dynamic> _buildScheduledPayload(String clientid) {
+    final role = usercontroller.userData.role ?? '';
+    final isAdminRole = role == 'SA' || role == 'AD';
+    final yearParam = _yearParamForApi();
+    return {
+      "year": yearParam,
+      "month": "All",
+      "userid": usercontroller.userData.userId,
+      "role": role,
+      if (!isAdminRole) "client": usercontroller.userData.clientid,
+      if (!isAdminRole)
+        "client_id": usercontroller.userData.clientid?.isNotEmpty == true
+            ? usercontroller.userData.clientid!.first
+            : null,
+      if (isAdminRole) "client_id": clientid,
+      "zone": zone,
+    };
+  }
+
+  Map<String, dynamic> _buildUnscheduledPayload(String clientid) {
+    final role = usercontroller.userData.role ?? '';
+    final isAdminRole = role == 'SA' || role == 'AD';
+    final yearParam = _yearParamForApi();
+    return {
+      "year": yearParam,
+      "userid": usercontroller.userData.userId,
+      "role": role,
+      "zone": zone,
+      if (!isAdminRole) "client": usercontroller.userData.clientid,
+      if (!isAdminRole)
+        "client_id": usercontroller.userData.clientid?.isNotEmpty == true
+            ? usercontroller.userData.clientid!.first
+            : null,
+    };
+  }
+
+  Future<void> _loadDashboardCounts(String clientid) async {
+    await Future.wait([
+      usercontroller.getScheduledAuditDetails(
+        context,
+        data: _buildScheduledPayload(clientid),
+        callback: (list, total) {
+          final trackedSummary = UserController.summarizeTrackedAuditStatuses(
+            list.where((audit) {
+              final code = UserController.normalizeStatusCode(
+                audit["status_code"] ?? audit["status"],
+              );
+              return _trackedDashboardStatuses.contains(code);
+            }),
+          );
+          trackedSummary["total"] = total;
+          dataObj = trackedSummary;
+        },
+      ),
+      usercontroller.getUnScheduledAuditDetails(
+        context,
+        data: _buildUnscheduledPayload(clientid),
+        callback: (list, total) {
+          unscheduledCount = total;
+        },
+      ),
+    ]);
+  }
+
   Future<void> getClientReport(String clientid) async {
     if (clientArr.isNotEmpty) {
       id = clientArr[0]["clientname"];
@@ -196,16 +277,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       totalpercentage = 0;
       heading = ["Zone", "State", "No of SMOs"];
       rows = [];
-      dataObj = {
-        "complete": 0,
-        "incomplete": 0,
-        "upcoming": 0,
-        "cancel": 0
-      };
+      dataObj = UserController.normalizeAuditSummary({});
+      unscheduledCount = 0;
       setState(() {});
       var map = {
         "client_id": clientid,
-        "year": year,
+        "year": _yearParamForApi(),
         "zone": zone,
         "userid": usercontroller.userData.userId,
         "role": usercontroller.userData.role
@@ -213,31 +290,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (menuAccessRoleAdmin.contains(usercontroller.userData.role!)) {
         map = {
           "client_id": clientid,
-          "year": year,
+          "year": _yearParamForApi(),
           "zone": zone,
           "userid": usercontroller.userData.userId,
           "role": usercontroller.userData.role
         };
       }
+      await _loadDashboardCounts(clientid);
+      if (!mounted) return;
       usercontroller.getClientHeatReport(context, data: map,
           callback: (mapdata) {
         // When no records found, mapdata is empty – show 0 values
         if (mapdata == null || (mapdata is Map && mapdata.isEmpty)) {
-          dataObj = {
-            "complete": 0,
-            "incomplete": 0,
-            "upcoming": 0,
-            "cancel": 0
-          };
           total = 0;
           totalpercentage = 0;
           reportList = [];
           allAuditList = [];
           heading = ["Zone", "State", "No of SMOs"];
           rows = [];
+          final summary = UserController.normalizeAuditSummary(dataObj);
           usercontroller.countList = [
             CloudStorageInfo(
-              title: "0",
+              title: (summary["published"] ?? 0).toString(),
               numOfFiles: 0,
               path: "P",
               svgSrc: "assets/icons/Documents.svg",
@@ -246,7 +320,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               percentage: 0,
             ),
             CloudStorageInfo(
-              title: "0",
+              title: (summary["inprogress"] ?? 0).toString(),
               numOfFiles: 0,
               path: "IP",
               svgSrc: "assets/icons/google_drive.svg",
@@ -255,7 +329,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               percentage: 0,
             ),
             CloudStorageInfo(
-              title: "0",
+              title: (summary["upcoming"] ?? 0).toString(),
               numOfFiles: 0,
               path: "S",
               svgSrc: "assets/icons/one_drive.svg",
@@ -264,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               percentage: 0,
             ),
             CloudStorageInfo(
-              title: "0",
+              title: (summary["cancelled"] ?? 0).toString(),
               numOfFiles: 0,
               path: "CL",
               svgSrc: "assets/icons/drop_box.svg",
@@ -290,50 +364,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
             heading.add(obj.key!);
           }
         }
-        usercontroller.getAuditCount(context, data: map, callback: (countobj) {
-          dataObj = countobj;
+        final summary = UserController.normalizeAuditSummary(dataObj);
 
-          usercontroller.countList = [
-            CloudStorageInfo(
-              title: countobj["complete"].toString(),
-              numOfFiles: 1328,
-              path: "P",
-              svgSrc: "assets/icons/Documents.svg",
-              totalStorage: "Published Audit",
-              color: Colors.green,
-              percentage: 100,
-            ),
-            CloudStorageInfo(
-              title: countobj["incomplete"].toString(),
-              numOfFiles: 1328,
-              path: "IP",
-              svgSrc: "assets/icons/google_drive.svg",
-              totalStorage: "In Progress Audit",
-              color: Colors.deepOrange,
-              percentage: 100,
-            ),
-            CloudStorageInfo(
-              title: countobj["upcoming"].toString(),
-              numOfFiles: 1328,
-              path: "S",
-              svgSrc: "assets/icons/one_drive.svg",
-              totalStorage: "Up Coming Audit",
-              color: Colors.blueAccent,
-              percentage: 100,
-            ),
-            CloudStorageInfo(
-              title: countobj["cancel"].toString(),
-              numOfFiles: 5328,
-              path: "CL",
-              svgSrc: "assets/icons/drop_box.svg",
-              totalStorage: "Cancelled Audit",
-              color: Colors.grey.shade700,
-              percentage: 100,
-            ),
-          ];
-          showHeatmap = true;
-          setState(() {});
-        });
+        usercontroller.countList = [
+          CloudStorageInfo(
+            title: summary["published"].toString(),
+            numOfFiles: 1328,
+            path: "P",
+            svgSrc: "assets/icons/Documents.svg",
+            totalStorage: "Published Audit",
+            color: Colors.green,
+            percentage: 100,
+          ),
+          CloudStorageInfo(
+            title: summary["inprogress"].toString(),
+            numOfFiles: 1328,
+            path: "IP",
+            svgSrc: "assets/icons/google_drive.svg",
+            totalStorage: "In Progress Audit",
+            color: Colors.deepOrange,
+            percentage: 100,
+          ),
+          CloudStorageInfo(
+            title: summary["upcoming"].toString(),
+            numOfFiles: 1328,
+            path: "S",
+            svgSrc: "assets/icons/one_drive.svg",
+            totalStorage: "Up Coming Audit",
+            color: Colors.blueAccent,
+            percentage: 100,
+          ),
+          CloudStorageInfo(
+            title: summary["cancelled"].toString(),
+            numOfFiles: 5328,
+            path: "CL",
+            svgSrc: "assets/icons/drop_box.svg",
+            totalStorage: "Cancelled Audit",
+            color: Colors.grey.shade700,
+            percentage: 100,
+          ),
+        ];
+        showHeatmap = true;
+        setState(() {});
 
         /*
         usercontroller.getAuditList(context, data: {"userid":usercontroller.userData.userId,"role":usercontroller.userData.role,"client":clientid,"year":Jiffy.now().year.toString(),"month":Jiffy.now().month.toString()}, callback: (auditArr){
@@ -381,8 +453,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       int percentage2 = 0;
       List<ReportObj> robj = reportList
           .where((report) =>
-              report.state == element[key] &&
-              report.zone == element["zone"])
+              report.state == element[key] && report.zone == element["zone"])
           .toList();
       ReportObj obj = ReportObj();
       if (robj.isEmpty) {
@@ -605,7 +676,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             },
                             validator: FormBuilderValidators.compose([
                               FormBuilderValidators.required(
-                                  errorText: AppTranslations.of(context)!.text("key_error_01"))
+                                  errorText: AppTranslations.of(context)!
+                                      .text("key_error_01"))
                             ]),
                             decoration: AppFormStyles.inputDecoration(),
                           ),
@@ -727,192 +799,197 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ? Center(child: CircularProgressIndicator())
                 : Padding(
                     padding: EdgeInsets.only(
-                      left: 0,
-                      right: 0,
-                      bottom: defaultPadding,
-                      top:0
-                    ),
+                        left: 0, right: 0, bottom: defaultPadding, top: 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title Section
-                        Text(
-                          "Audit Status at a Glance",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF505050),
-                          ),
-                        ),
-                        SizedBox(height: 18),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              "A clear view of where the audit execution stands.",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w100,
-                                color: Color(0xFF898989),
-                              ),
-                            ),
-                            _buildFinancialYearDropdown(),
-                          ],
-                        ),
-                        SizedBox(height: 31),
-
-                        // Top 3 Cards (Total, Scheduled, Unscheduled)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildTopCard(
-                                "Total",
-                                (dataObj["complete"] +
-                                        dataObj["incomplete"] +
-                                        dataObj["upcoming"] +
-                                        dataObj["cancel"])
-                                    .toString(),
-                                Color(0xFF2E77D0),
-                              ),
-                            ),
-                            SizedBox(width: defaultPadding),
-                            Expanded(
-                              child: _buildTopCard(
-                                "Scheduled",
-                                dataObj["upcoming"].toString(),
-                                Color(0xFF67AC5B),
-                              ),
-                            ),
-                            SizedBox(width: defaultPadding),
-                            Expanded(
-                              child: _buildTopCard(
-                                "Un-scheduled",
-                                dataObj["incomplete"].toString(),
-                                Color(0xFFFFC422),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 42),
-
-                        // Status Bar with 5 sections
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Color(0xFFC9C9C9),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
+                        Builder(builder: (context) {
+                          final summary =
+                              UserController.normalizeAuditSummary(dataObj);
+                          final totalScheduled = summary["total"] ?? 0;
+                          final totalAll =
+                              (summary["total"] ?? 0) + unscheduledCount;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: _buildStatusCard(
-                                  "Scheduled",
-                                  Colors.white,
-                                  dataObj["complete"].toString(),
-                                  Colors.white,
-                                  bgColor: Color(0xFF67AC5B),
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(8),
-                                    bottomLeft: Radius.circular(8),
+                              // Title Section
+                              Text(
+                                "Audit Status at a Glance",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF505050),
+                                ),
+                              ),
+                              SizedBox(height: 18),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "A clear view of where the audit execution stands.",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w100,
+                                      color: Color(0xFF898989),
+                                    ),
+                                  ),
+                                  _buildFinancialYearDropdown(),
+                                ],
+                              ),
+                              SizedBox(height: 31),
+
+                              // Top 3 Cards (Total, Scheduled, Unscheduled)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildTopCard(
+                                      "Total",
+                                      totalAll.toString(),
+                                      Color(0xFF2E77D0),
+                                    ),
+                                  ),
+                                  SizedBox(width: defaultPadding),
+                                  Expanded(
+                                    child: _buildTopCard(
+                                      "Scheduled",
+                                      totalScheduled.toString(),
+                                      Color(0xFF67AC5B),
+                                    ),
+                                  ),
+                                  SizedBox(width: defaultPadding),
+                                  Expanded(
+                                    child: _buildTopCard(
+                                      "Un-scheduled",
+                                      unscheduledCount.toString(),
+                                      Color(0xFFFFC422),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 42),
+
+                              // Status Bar with 5 sections
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: Color(0xFFC9C9C9),
+                                    width: 1,
                                   ),
                                 ),
-                              ),
-                              _buildDivider(),
-                              Expanded(
-                                child: _buildStatusCard(
-                                    "Published",
-                                    Color(0xFF2E77D0),
-                                    (dataObj["complete"] ~/ 2).toString(),
-                                  Colors.black
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildStatusCard(
+                                        "Scheduled",
+                                        Colors.white,
+                                        totalScheduled.toString(),
+                                        Colors.white,
+                                        bgColor: Color(0xFF67AC5B),
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(8),
+                                          bottomLeft: Radius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                    _buildDivider(),
+                                    Expanded(
+                                      child: _buildStatusCard(
+                                          "Published",
+                                          Color(0xFF2E77D0),
+                                          (summary["published"] ?? 0)
+                                              .toString(),
+                                          Colors.black),
+                                    ),
+                                    _buildDivider(),
+                                    Expanded(
+                                      child: _buildStatusCard(
+                                          "In Progress",
+                                          Color(0xFFF29500),
+                                          (summary["inprogress"] ?? 0)
+                                              .toString(),
+                                          Colors.black),
+                                    ),
+                                    _buildDivider(),
+                                    Expanded(
+                                      child: _buildStatusCard(
+                                          "Upcoming",
+                                          Color(0xFF9654CE),
+                                          (summary["upcoming"] ?? 0).toString(),
+                                          Colors.black),
+                                    ),
+                                    _buildDivider(),
+                                    Expanded(
+                                      child: _buildStatusCard(
+                                          "Cancelled",
+                                          Color(0xFFDD0000),
+                                          (summary["cancelled"] ?? 0)
+                                              .toString(),
+                                          Colors.black),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              _buildDivider(),
-                              Expanded(
-                                child: _buildStatusCard(
-                                    "In Progress",
-                                    Color(0xFFF29500),
-                                    dataObj["incomplete"].toString(),
-                                    Colors.black),
-                              ),
-                              _buildDivider(),
-                              Expanded(
-                                child: _buildStatusCard(
-                                    "Upcoming",
-                                   Color(0xFF9654CE),
-                                    dataObj["upcoming"].toString(),
-                                  Colors.black
-                                ),
-                              ),
-                              _buildDivider(),
-                              Expanded(
-                                child: _buildStatusCard(
-                                    "Cancelled",
-                                    Color(0xFFDD0000),
-                                    dataObj["cancel"].toString(),
-                                  Colors.black
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: defaultPadding * 2),
+                              SizedBox(height: defaultPadding * 2),
 
-                        // Heat Map Section (if needed)
-                        // if (showHeatmap) getHeatMapContainer(),
-                        if (showHeatmap) SizedBox(height: defaultPadding),
-                        //if (showHeatmap) 
-                        // BoxContainer(
-                        //   width: double.infinity,
-                        //   height: 700,
-                        //   child: FlutterMap(
-                        //     mapController: mapController,
-                        //     options: MapOptions(
-                        //       initialCenter: LatLng(22.9734, 78.6569),
-                        //       initialZoom: 4, 
-                        //       interactionOptions: const InteractionOptions(
-                        //         flags: InteractiveFlag.all &
-                        //             ~InteractiveFlag.rotate,
-                        //       ),
-                        //     ),
-                        //     children: [
-                        //       if (polygons.isNotEmpty)
-                        //         PolygonLayer(
-                        //           polygons: polygons,
-                        //         ),
-                        //       MarkerLayer(
-                        //         markers: allAuditList
-                        //             .map<Marker>(
-                        //               (_element) => Marker(
-                        //                 point: LatLng(
-                        //                     double.tryParse(
-                        //                             _element["latitude"]) ??
-                        //                         13.0827,
-                        //                     double.tryParse(
-                        //                             _element["longitude"]) ??
-                        //                         80.2707),
-                        //                 width: 35,
-                        //                 height: 35,
-                        //                 child: Tooltip(
-                        //                   message: _element["audit_no"] +
-                        //                       "(" +
-                        //                       _element["city"] +
-                        //                       ")",
-                        //                   child: Image(
-                        //                     image:
-                        //                         AssetImage(_element["svg"]),
-                        //                     height: 40,
-                        //                   ),
-                        //                 ),
-                        //               ),
-                        //             )
-                        //             .toList(),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
+                              // Heat Map Section (if needed)
+                              // if (showHeatmap) getHeatMapContainer(),
+                              if (showHeatmap) SizedBox(height: defaultPadding),
+                              //if (showHeatmap)
+                              // BoxContainer(
+                              //   width: double.infinity,
+                              //   height: 700,
+                              //   child: FlutterMap(
+                              //     mapController: mapController,
+                              //     options: MapOptions(
+                              //       initialCenter: LatLng(22.9734, 78.6569),
+                              //       initialZoom: 4,
+                              //       interactionOptions: const InteractionOptions(
+                              //         flags: InteractiveFlag.all &
+                              //             ~InteractiveFlag.rotate,
+                              //       ),
+                              //     ),
+                              //     children: [
+                              //       if (polygons.isNotEmpty)
+                              //         PolygonLayer(
+                              //           polygons: polygons,
+                              //         ),
+                              //       MarkerLayer(
+                              //         markers: allAuditList
+                              //             .map<Marker>(
+                              //               (_element) => Marker(
+                              //                 point: LatLng(
+                              //                     double.tryParse(
+                              //                             _element["latitude"]) ??
+                              //                         13.0827,
+                              //                     double.tryParse(
+                              //                             _element["longitude"]) ??
+                              //                         80.2707),
+                              //                 width: 35,
+                              //                 height: 35,
+                              //                 child: Tooltip(
+                              //                   message: _element["audit_no"] +
+                              //                       "(" +
+                              //                       _element["city"] +
+                              //                       ")",
+                              //                   child: Image(
+                              //                     image:
+                              //                         AssetImage(_element["svg"]),
+                              //                     height: 40,
+                              //                   ),
+                              //                 ),
+                              //               ),
+                              //             )
+                              //             .toList(),
+                              //       ),
+                              //     ],
+                              //   ),
+                              // ),
+                            ],
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -967,7 +1044,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatusCard(String title, Color titleColor, String value, Color valueColor, {Color? bgColor, BorderRadius? borderRadius}) {
+  Widget _buildStatusCard(
+      String title, Color titleColor, String value, Color valueColor,
+      {Color? bgColor, BorderRadius? borderRadius}) {
     return Container(
       height: 152,
       padding: EdgeInsets.symmetric(vertical: 30, horizontal: 8),

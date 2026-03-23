@@ -36,7 +36,6 @@ class _AuditCategoryScreenV2State
   late final UserController usercontroller;
 
   final _controller = PageController(keepPage: false);
-  final _questioncontroller = PageController(keepPage: false);
 
   /// True when opened from "View Audit" on a published audit — all fields read-only.
   bool isViewMode = false;
@@ -71,6 +70,7 @@ class _AuditCategoryScreenV2State
   List<String>? _imageNameList;
   int countFile = 0;
   int totalFile = 0;
+  final List<Map<String, dynamic>> _pendingUploads = [];
   String totalMark = "0";
   String answerMark = "0";
   String totalPer = "0";
@@ -151,6 +151,7 @@ class _AuditCategoryScreenV2State
       showAudit = true;
       int ansValue = 0;
       int totalValue = 0;
+      auditObj["proofdocuments"] ??= [];
 
       auditObj["categorys"].forEach((element) {
         element["submitAns"] =
@@ -332,8 +333,6 @@ class _AuditCategoryScreenV2State
         selectedColor = arr[0]["color"];
       }
     }
-    _questioncontroller.animateToPage(pageStep,
-        duration: _kDuration, curve: _kCurve);
     setState(() {});
   }
 
@@ -359,23 +358,40 @@ class _AuditCategoryScreenV2State
   //  File Upload
   // =====================================================
 
-  void fileUploadProcess(question) {
+  void _uploadPendingFiles({required VoidCallback onComplete}) {
+    if (_pendingUploads.isEmpty) {
+      onComplete();
+      return;
+    }
+    List<Map<String, dynamic>> pending = List.from(_pendingUploads);
+    (auditObj["proofdocuments"] as List).removeWhere((e) => e["_isLocal"] == true);
+    _imageBytesList = pending.map((e) => e["bytes"] as Uint8List).toList();
+    _imageNameList = pending.map((e) => e["name"] as String).toList();
+    countFile = 0;
+    totalFile = _imageBytesList!.length;
+    _pendingUploads.clear();
+    setState(() {});
+    _fileUploadProcess(onComplete: onComplete);
+  }
+
+  void _fileUploadProcess({required VoidCallback onComplete}) {
     Map<String, dynamic> dataObj = {
       "type": "audit",
-      "audit_id": question["audit_id"],
-      "questionid": question["questionid"]
+      "audit_id": auditObj["id"],
     };
     usercontroller.uploadImage(context,
         bytes: _imageBytesList![countFile],
         filename: _imageNameList![countFile],
         data: dataObj, callback: (res01) {
       if (res01.containsKey("data")) {
-        question["proofdocuments"].add(res01["data"]);
+        auditObj["proofdocuments"].add(res01["data"]);
       }
       setState(() {});
       if (countFile < totalFile - 1) {
         countFile++;
-        fileUploadProcess(question);
+        _fileUploadProcess(onComplete: onComplete);
+      } else {
+        onComplete();
       }
     });
   }
@@ -521,10 +537,6 @@ class _AuditCategoryScreenV2State
         .toList();
     answerQuest = attendQuestion2.length;
     setState(() {});
-    Future.delayed(const Duration(milliseconds: 20)).then((v) {
-      _questioncontroller.animateToPage(pageStep,
-          duration: _kDuration, curve: _kCurve);
-    });
   }
 
   // =====================================================
@@ -578,8 +590,9 @@ class _AuditCategoryScreenV2State
     setState(() {});
   }
 
-  void _handleFilePick(dynamic question) async {
-    if (question["proofdocuments"].length == 10) {
+  void _handleFilePick() async {
+    List<dynamic> proofDocs = auditObj["proofdocuments"] ?? [];
+    if (proofDocs.length >= 10) {
       APIService(context).showToastMgs(
           AppTranslations.of(context)!.text("key_error_04"));
       return;
@@ -588,12 +601,7 @@ class _AuditCategoryScreenV2State
       type: FileType.any,
       allowMultiple: true,
     );
-    _imageBytesList = [];
-    _imageNameList = [];
-    countFile = 0;
-    setState(() {});
     if (result != null && result.files.isNotEmpty) {
-      totalFile = result.files.length;
       for (var kid = 0; kid < result.files.length; kid++) {
         var file = result.files[kid];
         var index = file.name.lastIndexOf(".");
@@ -606,16 +614,30 @@ class _AuditCategoryScreenV2State
               callback: () {});
           return;
         }
-        _imageBytesList!.add(file.bytes!);
-        _imageNameList!.add(file.name);
+        _pendingUploads.add({
+          "bytes": file.bytes!,
+          "name": file.name,
+        });
+        auditObj["proofdocuments"].add({
+          "image": file.name,
+          "_localBytes": file.bytes!,
+          "_isLocal": true,
+        });
       }
-      setState(() {});
-      fileUploadProcess(question);
+      _uploadPendingFiles(onComplete: () {
+        setState(() {});
+      });
     }
   }
 
-  void _handleFileRemove(
-      dynamic imageElement, dynamic question) {
+  void _handleFileRemove(dynamic imageElement) {
+    if (imageElement["_isLocal"] == true) {
+      auditObj["proofdocuments"].remove(imageElement);
+      _pendingUploads.removeWhere(
+          (e) => e["name"] == imageElement["image"]);
+      setState(() {});
+      return;
+    }
     APIService(context).showWindowAlert(
         title: "",
         desc: AppTranslations.of(context)!.text("key_are_you"),
@@ -624,11 +646,10 @@ class _AuditCategoryScreenV2State
           Map<String, dynamic> obj = {
             "id": imageElement["id"],
             "audit_id": imageElement["audit_id"],
-            "question_id": imageElement["question_id"]
           };
           usercontroller.removeUploadFile(context, data: obj,
               callback: (arr) {
-            question["proofdocuments"] = arr;
+            auditObj["proofdocuments"] = arr;
             setState(() {});
           });
         });
@@ -672,7 +693,6 @@ class _AuditCategoryScreenV2State
     } else if (pageStep < questionArray.length - 1) {
       _navigateToQuestion(pageStep + 1);
     } else {
-      // Last question with answer already saved
       List ansList = questionArray
           .where(
               (ele) => ele["submitAns"].toString().trim().isNotEmpty)
@@ -1120,13 +1140,10 @@ class _AuditCategoryScreenV2State
         showNextBtn: showNextBtn,
         selectedColor: selectedColor,
         scoreArr: usercontroller.scoreArr,
-        questionController: _questioncontroller,
         onQuestionIndexTap: _handleQuestionIndexTap,
         onPrevious: _handleQuestionPrevious,
         onNext: _handleQuestionNext,
         onScoreTap: _handleScoreTap,
-        onFilePick: _handleFilePick,
-        onFileRemove: _handleFileRemove,
         onRefresh: () => setState(() {}),
       );
     }
@@ -1153,6 +1170,8 @@ class _AuditCategoryScreenV2State
               isViewMode: isViewMode,
               showAudit: showAudit,
               onCategoryTap: _openCategory,
+              onFilePick: _handleFilePick,
+              onFileRemove: _handleFileRemove,
             );
           case 2:
             return SubmitReviewStep(

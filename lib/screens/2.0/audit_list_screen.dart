@@ -3,6 +3,7 @@ import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
 import 'package:audit_app/widget/app_form_field.dart';
 import 'package:audit_app/widget/financial_year_dropdown.dart';
+import 'package:audit_app/widget/zone_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
@@ -38,7 +39,6 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
   };
 
   List<String> _cachedStateOptions = const ["All"];
-  List<String> _cachedZoneOptions = const ["All"];
 
   void _rebuildStateOptions() {
     final states = allAudits
@@ -48,18 +48,6 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
         .toList()
       ..sort();
     _cachedStateOptions = ["All", ...states];
-  }
-
-  void _rebuildZoneOptions() {
-    final zones = allAudits
-        .where(
-            (a) => selectedState == "All" || (a["state"] ?? "").toString() == selectedState)
-        .map((a) => (a["zone"] ?? "").toString())
-        .where((z) => z.isNotEmpty && z != "-")
-        .toSet()
-        .toList()
-      ..sort();
-    _cachedZoneOptions = ["All", ...zones];
   }
 
   // Data state
@@ -108,7 +96,6 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     usercontroller.getAuditList(context, data: data, callback: (res) {
       allAudits = res.map<Map<String, dynamic>>((e) => Map<String, dynamic>.from(e)).toList();
       _rebuildStateOptions();
-      _rebuildZoneOptions();
       _applyFilter();
       if (mounted) setState(() => isLoading = false);
     });
@@ -144,10 +131,10 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
   String _getSchedDate(Map<String, dynamic> row) {
     try {
-      final raw = row["start_date"];
+      final raw = row["start_date_raw"] ?? row["start_date"];
       if (raw == null) return "-";
       return Jiffy.parseFromDateTime(DateTime.parse(raw.toString()))
-          .format(pattern: "MMM dd, yyyy");
+          .format(pattern: "dd MMM yyyy");
     } catch (_) {
       return (row["start_date"] ?? "-").toString();
     }
@@ -155,10 +142,10 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
   String _getEndDate(Map<String, dynamic> row) {
     try {
-      final raw = row["end_date"];
+      final raw = row["end_date_raw"] ?? row["end_date"];
       if (raw == null || raw.toString().isEmpty) return "-";
       return Jiffy.parseFromDateTime(DateTime.parse(raw.toString()))
-          .format(pattern: "MMM dd, yyyy");
+          .format(pattern: "dd MMM yyyy");
     } catch (_) {
       return (row["end_date"] ?? "-").toString();
     }
@@ -173,6 +160,35 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
   }
 
   // ─── Action Buttons per status ──────────────────────────────────────────────
+
+  bool _canStartAudit(Map<String, dynamic> row) {
+    try {
+      final rawDate = row['start_date_raw'];
+      final rawTime = row['start_time_raw'];
+      if (rawDate == null) return false;
+
+      final date = DateTime.parse(rawDate.toString());
+      DateTime scheduled;
+      if (rawTime != null && rawTime.toString().isNotEmpty) {
+        final timeStr = rawTime.toString();
+        if (timeStr.contains('T') || timeStr.contains('-')) {
+          final t = DateTime.parse(timeStr);
+          scheduled = DateTime(date.year, date.month, date.day, t.hour, t.minute);
+        } else {
+          final parts = timeStr.split(':');
+          scheduled = DateTime(date.year, date.month, date.day, int.parse(parts[0]), int.parse(parts[1]));
+        }
+      } else {
+        scheduled = DateTime(date.year, date.month, date.day);
+      }
+
+      final now = DateTime.now();
+      return now.isAfter(scheduled.subtract(const Duration(minutes: 2))) ||
+             now.isAtSameMomentAs(scheduled.subtract(const Duration(minutes: 2)));
+    } catch (_) {
+      return false;
+    }
+  }
 
   Widget _buildActionButtons(Map<String, dynamic> row) {
     final status = _getStatus(row);
@@ -237,16 +253,9 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       );
     }
 
-    // Upcoming → Edit
+    // Upcoming → Edit + Start (Start only shows 2 mins before scheduled time)
     if (statusLabel == "Upcoming" || rawStatus == "S") {
-      // return _actionButton("Edit", Color(0xFF535353), () {
-      //   Navigator.pushNamed(context, "/createaudit",
-      //       arguments: ScreenArgument(
-      //           argument: ArgumentData.USER,
-      //           mode: "Edit",
-      //           mapData: allAudits,
-      //           editData: row));
-      // });
+      final showStart = _canStartAudit(row);
       return Row(
         children: [
           Expanded(
@@ -259,15 +268,17 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                       editData: row));
             }, flexible: true),
           ),
-          SizedBox(width: 5),
-          Expanded(
-            child: _actionButton("Start", const Color(0xFF67AC5B), () {
-              Navigator.pushNamed(context, "/auditcategorylist-v2",
-                  arguments: ScreenArgument(
-                      argument: ArgumentData.USER,
-                      mapData: row));
-            }, flexible: true),
-          ),
+          if (showStart) ...[
+            SizedBox(width: 5),
+            Expanded(
+              child: _actionButton("Start", const Color(0xFF67AC5B), () {
+                Navigator.pushNamed(context, "/auditcategorylist-v2",
+                    arguments: ScreenArgument(
+                        argument: ArgumentData.USER,
+                        mapData: row));
+              }, flexible: true),
+            ),
+          ],
         ],
       );
     }
@@ -473,14 +484,14 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                             setState(() {
                               selectedState = val!;
                               selectedZone = "All";
-                              _rebuildZoneOptions();
                             });
                             _applyFilter();
                           }),
                           const SizedBox(width: 12),
-                          TableFilterDropdown(
-                              label: "Zone :",
-                              items: _cachedZoneOptions,
+                          ZoneDropdown(
+                              label: "Zone:",
+                              allData: allAudits,
+                              stateFilter: selectedState,
                               value: selectedZone,
                               onChanged: (val) {
                             setState(() => selectedZone = val!);

@@ -170,10 +170,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     List<dynamic> result = allAudits;
 
     if (status != null) {
-      final labels = _labelsForStatus(status);
-      result = result
-          .where((a) => labels.contains(a["status"]["label"]))
-          .toList();
+      result = result.where((a) => _matchesTabStatus(a, status)).toList();
     }
     if (selectedCompany != "All") {
       result =
@@ -196,10 +193,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     List<dynamic> result = allAudits;
 
     if (status != null) {
-      final labels = _labelsForStatus(status);
-      result = result
-          .where((a) => labels.contains(a["status"]["label"]))
-          .toList();
+      result = result.where((a) => _matchesTabStatus(a, status)).toList();
     }
     if (selectedCompany != "All") {
       result =
@@ -212,23 +206,26 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     });
   }
 
-  /// For JrA, "Completed" tab shows both Review (submitted by auditor) and
-  /// Published (approved by admin). Other roles see only Published.
-  List<String> _labelsForStatus(String status) {
+  bool _matchesTabStatus(dynamic audit, String status) {
+    final code = _statusCodeOf(audit);
     switch (status) {
       case "P":
-        return _userRole == "JrA"
-            ? const ["Review", "Published"]
-            : const ["Published"];
+        return _userRole == "JrA" ? (code == "P" || code == "C") : code == "P";
       case "IP":
-        return const ["Inprogress"];
+        return code == "IP";
       case "S":
-        return const ["Upcoming"];
+        return code == "S";
       case "CL":
-        return const ["Cancelled"];
+        return code == "CL";
       default:
-        return const [];
+        return false;
     }
+  }
+
+  String _statusCodeOf(dynamic audit) {
+    return UserController.normalizeStatusCode(
+      audit["status_code"] ?? audit["status"],
+    );
   }
 
   // ── Columns that depend on instance state — built once per build ──────────
@@ -243,9 +240,9 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
           final s = row["status"] ?? {};
           String label = s["label"] ?? "-";
           String color = s["color"] ?? "grey";
+          final code = _statusCodeOf(row);
           // For JrA, show Review/Published as "Completed"
-          if (_userRole == "JrA" &&
-              (label == "Review" || label == "Published")) {
+          if (_userRole == "JrA" && (code == "C" || code == "P")) {
             label = "Completed";
             color = "green";
           }
@@ -364,11 +361,10 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
   // ─── Action Buttons per status (mirrors AuditListV2 behavior) ─────────────
 
   Widget _buildActionButtons(dynamic row) {
-    final s = row["status"] ?? {};
-    final label = s["label"] ?? "-";
+    final code = _statusCodeOf(row);
 
     // Published / Review → View Audit (navigates to detail screen for view + download)
-    if (label == "Published" || label == "Review") {
+    if (code == "P" || code == "C") {
       return _actionButton("View Audit", _kActionBlue, () {
         Navigator.pushNamed(context, "/auditdetails",
             arguments:
@@ -377,7 +373,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     }
 
     // Inprogress → Continue (navigate to audit form)
-    if (label == "Inprogress" || label == "In Progress") {
+    if (code == "IP") {
       return _actionButton("Continue", _kActionBlue, () {
         Navigator.pushNamed(context, "/auditcategorylist-v2",
             arguments:
@@ -386,7 +382,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     }
 
     // Upcoming → Start (navigate to audit form; it handles startAudit API internally)
-    if (label == "Upcoming") {
+    if (code == "S") {
       return _actionButton("Start", _kActionGreen, () {
         Navigator.pushNamed(context, "/auditcategorylist-v2",
             arguments:
@@ -395,7 +391,7 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     }
 
     // Cancelled → Disabled
-    if (label == "Cancelled") {
+    if (code == "CL") {
       return _actionButton("Cancelled", _kActionDisabled, null);
     }
 

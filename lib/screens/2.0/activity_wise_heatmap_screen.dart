@@ -29,15 +29,7 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
   int currentPage = 1;
   static const int pageSize = 10;
 
-  // Score-to-color mapping (matches scoreArr in usercontroller)
-  static const List<Color> _scoreColors = [
-    Color(0xFFEA4032), // 0  — Not Complied (Red)
-    Color(0xFFFFB552), // 1  — Partly Complied (Orange)
-    Color(0xFFFFFD55), // 2  — Partly Complied (Yellow)
-    Color(0xFFA4DD5A), // 3  — Partly Complied (Green)
-    Color(0xFF5EC2FF), // 4  — Complied (Blue)
-  ];
-  static const Color _naColor = Color(0xFFD1D1D1); // N/A (Gray)
+
 
   @override
   void initState() {
@@ -88,12 +80,7 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
     });
   }
 
-  Color _colorForScore(dynamic score) {
-    if (score == null) return _naColor;
-    int s = (score is int) ? score : int.tryParse(score.toString()) ?? -1;
-    if (s >= 0 && s < _scoreColors.length) return _scoreColors[s];
-    return _naColor;
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +238,7 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
   }
 
   Widget _scoreBadgeCell(dynamic score) {
-    final color = _colorForScore(score);
+    final color = colorForScore(score);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       alignment: Alignment.center,
@@ -290,11 +277,11 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
                 TableRow(
                   children: [
                     _legendHeaderCell("Color Badge"),
-                    _legendColorCell(_scoreColors[0], "Not Complied"),
-                    _legendColorCell(_scoreColors[1], "Partly Complied"),
-                    _legendColorCell(_scoreColors[2], "Partly Complied"),
-                    _legendColorCell(_scoreColors[3], "Partly Complied"),
-                    _legendColorCell(_scoreColors[4], "Complied"),
+                    _legendColorCell(scoreColors[0], "Not Complied"),
+                    _legendColorCell(scoreColors[1], "Partly Complied"),
+                    _legendColorCell(scoreColors[2], "Partly Complied"),
+                    _legendColorCell(scoreColors[3], "Partly Complied"),
+                    _legendColorCell(scoreColors[4], "Complied"),
                     _legendTextCell("Not Applicable"),
                   ],
                 ),
@@ -302,11 +289,11 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
                 TableRow(
                   children: [
                     _legendHeaderCell("Score"),
-                    _legendScoreCell("0", _scoreColors[0]),
-                    _legendScoreCell("1", _scoreColors[1]),
-                    _legendScoreCell("2", _scoreColors[2]),
-                    _legendScoreCell("3", _scoreColors[3]),
-                    _legendScoreCell("4", _scoreColors[4]),
+                    _legendScoreCell("0", scoreColors[0]),
+                    _legendScoreCell("1", scoreColors[1]),
+                    _legendScoreCell("2", scoreColors[2]),
+                    _legendScoreCell("3", scoreColors[3]),
+                    _legendScoreCell("4", scoreColors[4]),
                     _legendTextCell("N/A"),
                   ],
                 ),

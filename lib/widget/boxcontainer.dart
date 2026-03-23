@@ -74,7 +74,6 @@ class BoxContainer extends StatelessWidget {
         padding: EdgeInsets.all(padding! ),
         decoration: isBGTransparent! ? null : BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.grey.shade300, width: 1),
         ),
         child: Column(

@@ -25,7 +25,9 @@ class _SideMenuState extends State<SideMenu> {
   /// This ensures the sidebar always reflects the actual page —
   /// even on direct URL entry, deep links, or back/forward navigation.
   static const _routeMenuKeys = <String, List<String>>{
-    '/dashboard': ['dashboard', 'reports-published'],
+    '/dashboard': ['dashboard'],
+    '/published-report': ['reports-published'],
+    '/summary-report': ['reports-published'],
     '/heatmap-region': ['heatmap-region'],
     '/heatmap-activity-wise': ['heatmap-allindia'],
     '/scheduledaudit': ['scheduled'],
@@ -327,10 +329,7 @@ class _SideMenuState extends State<SideMenu> {
                               press: () {
                                 if (widget.enableAction!) {
                                   usercontroller.selectedMenuKey = 'reports-published';
-                                  Navigator.pushNamed(context, "/dashboard",
-                                      arguments: ScreenArgument(
-                                          argument: ArgumentData.USER,
-                                          mapData: {}));
+                                  Navigator.pushNamed(context, "/published-report");
                                 } else {
                                   widget.onCallback!(6);
                                 }

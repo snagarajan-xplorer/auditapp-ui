@@ -5,6 +5,7 @@ import '../../controllers/usercontroller.dart';
 import '../../constants.dart';
 import '../../widget/financial_year_dropdown.dart';
 import '../../widget/reusable_table.dart';
+import '../../widget/zone_dropdown.dart';
 import '../main/layoutscreen.dart';
 
 class RegionWiseHeatmapScreen extends StatefulWidget {
@@ -23,9 +24,7 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
   bool isLoading = true;
 
   // Zone selection
-  List<String> zones = [];
   String selectedZone = "";
-  bool isZoneLoading = true;
 
   // API response data
   List<dynamic> states = [];
@@ -34,26 +33,14 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
   int currentPage = 1;
   static const int pageSize = 10;
 
-  // Score-to-color mapping
-  static const List<Color> _scoreColors = [
-    Color(0xFFEA4032), // 0  — Not Complied (Red)
-    Color(0xFFFFB552), // 1  — Partly Complied (Orange)
-    Color(0xFFFFFD55), // 2  — Partly Complied (Yellow)
-    Color(0xFFA4DD5A), // 3  — Partly Complied (Green)
-    Color(0xFF5EC2FF), // 4  — Complied (Blue)
-  ];
-  static const Color _naColor = Color(0xFFD1D1D1); // N/A (Gray)
+
 
   @override
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
     _initFinancialYears();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _fetchZones();
-      }
-    });
+
   }
 
   void _initFinancialYears() {
@@ -65,22 +52,6 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
       financialYears.add({"label": label, "value": label});
     }
     selectedFinancialYear = financialYears.first["value"];
-  }
-
-  void _fetchZones() {
-    usercontroller.getZone(context, callback: (zoneList) {
-      if (!mounted) return;
-      setState(() {
-        zones = List<String>.from(zoneList);
-        if (zones.isNotEmpty) {
-          selectedZone = zones.first;
-        }
-        isZoneLoading = false;
-      });
-      if (selectedZone.isNotEmpty) {
-        _fetchHeatmapData();
-      }
-    });
   }
 
   void _fetchHeatmapData() {
@@ -109,12 +80,7 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
     });
   }
 
-  Color _colorForScore(dynamic score) {
-    if (score == null) return _naColor;
-    int s = (score is int) ? score : int.tryParse(score.toString()) ?? -1;
-    if (s >= 0 && s < _scoreColors.length) return _scoreColors[s];
-    return _naColor;
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -185,49 +151,20 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
   }
 
   Widget _buildZoneDropdown() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          "Zone : ",
-          style: TextStyle(
-            fontSize: 13,
-            color: Color(0xFF505050),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: const Color(0xFFC9C9C9)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: selectedZone.isNotEmpty ? selectedZone : null,
-              icon: const Icon(Icons.arrow_drop_down, size: 20),
-              style: const TextStyle(fontSize: 13, color: Color(0xFF505050)),
-              items: zones.map((String zone) {
-                return DropdownMenuItem<String>(
-                  value: zone,
-                  child: Text(zone),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null && newValue != selectedZone) {
-                  setState(() {
-                    selectedZone = newValue;
-                    currentPage = 1;
-                  });
-                  _fetchHeatmapData();
-                }
-              },
-            ),
-          ),
-        ),
-      ],
+    return ZoneDropdown(
+      label: "Zone:",
+      fromApi: true,
+      includeAll: false,
+      value: selectedZone,
+      onChanged: (val) {
+        if (val != null && val != selectedZone) {
+          setState(() {
+            selectedZone = val;
+            currentPage = 1;
+          });
+          _fetchHeatmapData();
+        }
+      },
     );
   }
 
@@ -293,7 +230,7 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
         ),
       ],
       rows: tableRows,
-      isLoading: isLoading || isZoneLoading,
+      isLoading: isLoading,
       currentPage: currentPage,
       pageSize: pageSize,
       onPageChanged: (page) => setState(() => currentPage = page),
@@ -325,7 +262,7 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
   }
 
   Widget _scoreBadgeCell(dynamic score) {
-    final color = _colorForScore(score);
+    final color = colorForScore(score);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       alignment: Alignment.center,
@@ -363,22 +300,22 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
               TableRow(
                 children: [
                   _legendHeaderCell("Color Badge"),
-                  _legendColorCell(_scoreColors[0], "Not Complied"),
-                  _legendColorCell(_scoreColors[1], "Partly Complied"),
-                  _legendColorCell(_scoreColors[2], "Partly Complied"),
-                  _legendColorCell(_scoreColors[3], "Partly Complied"),
-                  _legendColorCell(_scoreColors[4], "Complied"),
+                  _legendColorCell(scoreColors[0], "Not Complied"),
+                  _legendColorCell(scoreColors[1], "Partly Complied"),
+                  _legendColorCell(scoreColors[2], "Partly Complied"),
+                  _legendColorCell(scoreColors[3], "Partly Complied"),
+                  _legendColorCell(scoreColors[4], "Complied"),
                   _legendTextCell("Not Applicable"),
                 ],
               ),
               TableRow(
                 children: [
                   _legendHeaderCell("Score"),
-                  _legendScoreCell("0", _scoreColors[0]),
-                  _legendScoreCell("1", _scoreColors[1]),
-                  _legendScoreCell("2", _scoreColors[2]),
-                  _legendScoreCell("3", _scoreColors[3]),
-                  _legendScoreCell("4", _scoreColors[4]),
+                  _legendScoreCell("0", scoreColors[0]),
+                  _legendScoreCell("1", scoreColors[1]),
+                  _legendScoreCell("2", scoreColors[2]),
+                  _legendScoreCell("3", scoreColors[3]),
+                  _legendScoreCell("4", scoreColors[4]),
                   _legendTextCell("N/A"),
                 ],
               ),

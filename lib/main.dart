@@ -47,6 +47,8 @@ import 'package:audit_app/screens/2.0/audit_category_screen.dart';
 import 'package:audit_app/screens/2.0/assigned_audit_screen.dart';
 import 'package:audit_app/screens/2.0/activity_wise_heatmap_screen.dart';
 import 'package:audit_app/screens/2.0/region_wise_heatmap_screen.dart';
+import 'package:audit_app/screens/2.0/published_report_screen.dart';
+import 'package:audit_app/screens/2.0/summary_report_screen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -122,6 +124,8 @@ class _MainAppState extends State<MainApp> {
             GetPage(name: "/assignedaudit", page: () => AssignedAuditScreen()),
             GetPage(name: "/heatmap-activity-wise", page: () => ActivityWiseHeatmapScreen()),
             GetPage(name: "/heatmap-region", page: () => RegionWiseHeatmapScreen()),
+            GetPage(name: "/published-report", page: () => PublishedReportScreen()),
+            GetPage(name: "/summary-report", page: () => SummaryReportScreen()),
           ],
           //   routes: <String, WidgetBuilder>{
           //     "/login": (context) => Loginscreen(),

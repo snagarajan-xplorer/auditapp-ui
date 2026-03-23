@@ -87,6 +87,22 @@ const double kDialogWidth = 460.0;
 const double kFieldWidth = 800.0;
 const buttonHeight = 40.0;
 
+const List<Color> scoreColors = [
+  Color(0xFFEA4032),
+  Color(0xFFFFB552),
+  Color(0xFFFFFD55),
+  Color(0xFFA4DD5A),
+  Color(0xFF5EC2FF),
+];
+const Color naColor = Color(0xFFD1D1D1);
+
+Color colorForScore(dynamic score) {
+  if (score == null) return naColor;
+  int s = (score is int) ? score : int.tryParse(score.toString()) ?? -1;
+  if (s >= 0 && s < scoreColors.length) return scoreColors[s];
+  return naColor;
+}
+
 // ============================================================================
 // API CONFIGURATION
 // ============================================================================

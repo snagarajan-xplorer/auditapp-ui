@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import '../../widget/reusable_table.dart';
+import '../../widget/zone_dropdown.dart';
 
 // ── Pre-built constants ─────────────────────────────────────────────────────
 const _kTitleStyle = TextStyle(
@@ -59,7 +60,6 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
 
   // Cached filter options — rebuilt only when allAudits changes
   List<String> _cachedStateOptions = const ["All"];
-  List<String> _cachedZoneOptions = const ["All"];
 
   void _rebuildStateOptions() {
     final states = allAudits
@@ -71,17 +71,6 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
     _cachedStateOptions = ["All", ...states];
   }
 
-  void _rebuildZoneOptions() {
-    final zoneSet = allAudits
-        .where((a) => selectedState == "All" || (a["state"] ?? "") == selectedState)
-        .map((a) => (a["zone"] ?? "") as String)
-        .where((z) => z.isNotEmpty && z != "-")
-        .toSet()
-        .toList()
-      ..sort();
-    _cachedZoneOptions = ["All", ...zoneSet];
-  }
-
   // Data state
   bool isLoading = false;
   List<dynamic> allAudits = [];
@@ -91,6 +80,7 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
 
   // Tab status mapping
   static const List<String?> _tabStatuses = [null, "P", "IP", "S", "CL"];
+  static const Set<String> _scheduledStatusSet = {"P", "IP", "S", "CL"};
 
   // FY regex — compiled once
   static final _fyRegex = RegExp(r'^FY(\d{4})-(\d{2,4})$', caseSensitive: false);
@@ -119,7 +109,6 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
 
   void _onTabChanged() {
     if (!_tabController.indexIsChanging) {
-      _rebuildZoneOptions();
       _applyFilter();
     }
   }
@@ -159,7 +148,6 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
         callback: (list, total) {
       allAudits = list;
       _rebuildStateOptions();
-      _rebuildZoneOptions();
       _applyFilterAndStopLoading();
     });
     if (mounted && isLoading) setState(() => isLoading = false);
@@ -171,9 +159,9 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
 
     List<dynamic> result = allAudits;
 
+    result = result.where((a) => _scheduledStatusSet.contains(_statusCodeOf(a))).toList();
     if (status != null) {
-      final label = _labelForStatus(status);
-      result = result.where((a) => a["status"]["label"] == label).toList();
+      result = result.where((a) => _statusCodeOf(a) == status).toList();
     }
     if (selectedState != "All") {
       result = result.where((a) => (a["state"] ?? "") == selectedState).toList();
@@ -197,9 +185,9 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
 
     List<dynamic> result = allAudits;
 
+    result = result.where((a) => _scheduledStatusSet.contains(_statusCodeOf(a))).toList();
     if (status != null) {
-      final label = _labelForStatus(status);
-      result = result.where((a) => a["status"]["label"] == label).toList();
+      result = result.where((a) => _statusCodeOf(a) == status).toList();
     }
     if (selectedState != "All") {
       result = result.where((a) => (a["state"] ?? "") == selectedState).toList();
@@ -214,14 +202,10 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
     });
   }
 
-  static String _labelForStatus(String status) {
-    switch (status) {
-      case "P": return "Published";
-      case "IP": return "In Progress";
-      case "S": return "Upcoming";
-      case "CL": return "Cancelled";
-      default: return "";
-    }
+  String _statusCodeOf(dynamic audit) {
+    return UserController.normalizeStatusCode(
+      audit["status_code"] ?? audit["status"],
+    );
   }
 
   @override
@@ -273,12 +257,14 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
                       selectedState = val!;
                       selectedZone = "All";
                     });
-                    _rebuildZoneOptions();
                     _applyFilter();
                   }),
                   const SizedBox(width: 12),
-                  TableFilterDropdown(
-                      label: "Zone:", items: _cachedZoneOptions, value: selectedZone,
+                  ZoneDropdown(
+                      label: "Zone:",
+                      allData: allAudits,
+                      stateFilter: selectedState,
+                      value: selectedZone,
                       onChanged: (val) {
                     setState(() => selectedZone = val!);
                     _applyFilter();

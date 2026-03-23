@@ -1,8 +1,10 @@
+import 'dart:typed_data';
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/statuscomp.dart';
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../constants.dart';
 
 class AuditActivityStep extends StatelessWidget {
@@ -14,6 +16,8 @@ class AuditActivityStep extends StatelessWidget {
   final bool showAudit;
   final void Function(dynamic element, String answeredQuestion,
       String totalQuestion) onCategoryTap;
+  final VoidCallback onFilePick;
+  final void Function(dynamic imageElement) onFileRemove;
 
   const AuditActivityStep({
     super.key,
@@ -24,6 +28,8 @@ class AuditActivityStep extends StatelessWidget {
     required this.isViewMode,
     required this.showAudit,
     required this.onCategoryTap,
+    required this.onFilePick,
+    required this.onFileRemove,
   });
 
   @override
@@ -61,6 +67,8 @@ class AuditActivityStep extends StatelessWidget {
                     (element) => _buildCategoryCard(context, element))
                 .toList(),
           ),
+          SizedBox(height: defaultPadding),
+          _buildEvidenceSection(context),
           SizedBox(height: defaultPadding),
         ],
       ),
@@ -329,6 +337,154 @@ class AuditActivityStep extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEvidenceSection(BuildContext context) {
+    List<dynamic> proofDocs = auditObj["proofdocuments"] ?? [];
+    return BoxContainer(
+      width: 760,
+      height: null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppTranslations.of(context)!.text("key_attach_evidence"),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF505050)),
+              ),
+              if (!isViewMode)
+                SizedBox(
+                  width: 100,
+                  height: buttonHeight,
+                  child: ElevatedButton(
+                    onPressed: onFilePick,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF29B6F6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    child: Text(
+                        AppTranslations.of(context)!.text("key_btn_browse"),
+                        style: const TextStyle(color: Colors.white)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (proofDocs.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text("No evidence attached",
+                    style: TextStyle(
+                        color: Color(0xFF898989), fontSize: 14)),
+              ),
+            )
+          else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: proofDocs
+                  .map<Widget>(
+                      (imgelement) => _buildAttachment(context, imgelement))
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachment(BuildContext context, dynamic imgelement) {
+    bool isLocal = imgelement["_isLocal"] == true;
+    bool isImage = true;
+    String name = imgelement["image"].toString();
+    var index = name.lastIndexOf(".");
+    var ext = name.substring(index, name.length);
+    String img = "assets/images/doc.png";
+    if (ext.contains("doc")) {
+      isImage = false;
+      img = "assets/images/doc.png";
+    } else if (ext.contains("xls")) {
+      isImage = false;
+      img = "assets/images/xls.png";
+    } else if (ext.contains("pdf")) {
+      isImage = false;
+      img = "assets/images/pdf.png";
+    } else if (ext.contains("ppt")) {
+      isImage = false;
+      img = "assets/images/ppt.png";
+    }
+
+    ImageProvider imageProvider;
+    if (isLocal) {
+      imageProvider = isImage
+          ? MemoryImage(imgelement["_localBytes"] as Uint8List)
+          : AssetImage(img);
+    } else {
+      imageProvider = isImage
+          ? NetworkImage(IMG_URL + imgelement["image"])
+          : AssetImage(img);
+    }
+
+    return Container(
+      width: 140,
+      height: 100,
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            child: InkWell(
+              onTap: isLocal
+                  ? null
+                  : () {
+                      launchUrl(Uri.parse(
+                        IMG_URL + imgelement["image"].toString(),
+                      ));
+                    },
+              child: Container(
+                width: 140,
+                height: 100,
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        fit: BoxFit.cover, image: imageProvider),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: const Color(0xFFE0E0E0), width: 1)),
+              ),
+            ),
+          ),
+          if (!isViewMode)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: InkWell(
+                onTap: () {
+                  onFileRemove(imgelement);
+                },
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF8A65),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close,
+                      size: 14, color: Colors.white),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

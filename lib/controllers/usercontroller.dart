@@ -428,6 +428,96 @@ class UserController extends GetxController {
     }).toList();
   }
 
+  static int toIntCount(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static String normalizeStatusCode(dynamic statusRaw) {
+    if (statusRaw is Map) {
+      final code = (statusRaw['code'] ?? statusRaw['status'] ?? '').toString().trim().toUpperCase();
+      if (code.isNotEmpty) {
+        if (code == 'PG' || code == 'IP') return 'IP';
+        return code;
+      }
+      final label = (statusRaw['label'] ?? '').toString().trim().toLowerCase();
+      if (label == 'published' || label == 'complete' || label == 'completed') return 'P';
+      if (label == 'inprogress' || label == 'in progress' || label == 'in-progress') return 'IP';
+      if (label == 'upcoming' || label == 'scheduled') return 'S';
+      if (label == 'cancelled' || label == 'canceled') return 'CL';
+      if (label == 'review') return 'C';
+      return '';
+    }
+
+    final value = (statusRaw ?? '').toString().trim();
+    final upper = value.toUpperCase();
+    if (upper == 'PG' || upper == 'IP') return 'IP';
+    if (upper == 'P' || upper == 'S' || upper == 'CL' || upper == 'C') return upper;
+
+    final lower = value.toLowerCase();
+    if (lower == 'published' || lower == 'complete' || lower == 'completed') return 'P';
+    if (lower == 'inprogress' || lower == 'in progress' || lower == 'in-progress') return 'IP';
+    if (lower == 'upcoming' || lower == 'scheduled') return 'S';
+    if (lower == 'cancelled' || lower == 'canceled') return 'CL';
+    if (lower == 'review') return 'C';
+    return '';
+  }
+
+  static Map<String, int> normalizeAuditSummary(dynamic raw) {
+    final Map source = raw is Map ? raw : const {};
+    final published = toIntCount(source['published'] ?? source['complete']);
+    final inProgress = toIntCount(source['inprogress'] ?? source['in_progress'] ?? source['incomplete']);
+    final upcoming = toIntCount(source['upcoming']);
+    final cancelled = toIntCount(source['cancelled'] ?? source['cancel']);
+    final review = toIntCount(source['review']);
+    final total = published + inProgress + upcoming + cancelled;
+    return {
+      'published': published,
+      'inprogress': inProgress,
+      'upcoming': upcoming,
+      'cancelled': cancelled,
+      'review': review,
+      'total': total,
+    };
+  }
+
+  static Map<String, int> summarizeTrackedAuditStatuses(Iterable<dynamic> audits) {
+    var published = 0;
+    var inProgress = 0;
+    var upcoming = 0;
+    var cancelled = 0;
+
+    for (final audit in audits) {
+      final code = normalizeStatusCode(
+        audit is Map ? (audit['status_code'] ?? audit['status']) : audit,
+      );
+      switch (code) {
+        case 'P':
+          published++;
+          break;
+        case 'IP':
+          inProgress++;
+          break;
+        case 'S':
+          upcoming++;
+          break;
+        case 'CL':
+          cancelled++;
+          break;
+      }
+    }
+
+    return {
+      'published': published,
+      'inprogress': inProgress,
+      'upcoming': upcoming,
+      'cancelled': cancelled,
+      'review': 0,
+      'total': published + inProgress + upcoming + cancelled,
+    };
+  }
+
   // ─── Audit Normalisation ─────────────────────────────────────────────────────
 
   Map<String, dynamic> _normalizeAuditStatusMap(String s) {
@@ -458,9 +548,19 @@ class UserController extends GetxController {
     final statusObj = (statusRaw is Map)
         ? Map<String, dynamic>.from(statusRaw)
         : _normalizeAuditStatusMap(statusRaw?.toString() ?? '');
+    final statusCode = normalizeStatusCode(statusRaw);
+    if (!statusObj.containsKey('code')) {
+      statusObj['code'] = statusCode;
+    }
     return {
+      ...item,
+      'audit_no':         item['audit_no'] ?? item['audit_id'] ?? ('AD-${item['id']?.toString() ?? ''}'),
       'audit_id':         item['audit_no'] ?? item['audit_id'] ?? ('AD-${item['id']?.toString() ?? ''}'),
+      'auditname':        item['auditname'] ?? item['audit_name'] ?? '-',
       'audit_name':       item['audit_name'] ?? item['auditname'] ?? '-',
+      'start_date_raw':   item['start_date'],
+      'start_time_raw':   item['start_time'],
+      'end_date_raw':     item['end_date'],
       'sched_date':       _formatAuditDate(item['sched_date'] ?? item['start_date']),
       'start_date':       _formatAuditDate(item['start_date']),
       'end_date':         _formatAuditDate(item['end_date']),
@@ -469,11 +569,14 @@ class UserController extends GetxController {
       'city':             item['city'] ?? '-',
       'location':         item['location'] ?? item['branch'] ?? '-',
       'type_of_location': item['type_of_location'] ?? '-',
+      'auditorname':      item['auditorname'] ?? item['auditor'] ?? '-',
       'auditor':          item['auditor'] ?? item['auditorname'] ?? '-',
+      'companyname':      item['companyname'] ?? item['company'] ?? '-',
       'company':          item['company'] ?? '-',
       'assigned_by':      item['assigned_by'] ?? '-',
       'id':               item['id'],
       'reporturl':        item['reporturl'] ?? '',
+      'status_code':      statusCode,
       'status':           statusObj,
     };
   }
@@ -489,7 +592,7 @@ class UserController extends GetxController {
       callback(list, list.length);
       return;
     }
-    APIService(context).postData("getUnScheduledAuditDetails", data, true).then((resvalue) {
+    return APIService(context).postData("getUnScheduledAuditDetails", data, true).then((resvalue) {
       try {
         if (resvalue.length != 5) {
           Map<String, dynamic> res = jsonDecode(resvalue);
@@ -556,7 +659,7 @@ class UserController extends GetxController {
       callback(list, list.length);
       return;
     }
-    APIService(context).postData("getScheduledAuditDetails", data, true).then((resvalue) {
+    return APIService(context).postData("getScheduledAuditDetails", data, true).then((resvalue) {
       try {
         if (resvalue.length != 5) {
           Map<String, dynamic> res = jsonDecode(resvalue);
@@ -573,7 +676,6 @@ class UserController extends GetxController {
       } catch (e) {
         debugPrint("getScheduledAuditDetails error: $e");
       }
-      // Error or empty — return empty list so UI can stop loading
       callback([], 0);
     });
   }
@@ -600,7 +702,11 @@ class UserController extends GetxController {
                   return true;
                 }
               }).toList();
-        callback(monthFiltered);
+        callback(
+          monthFiltered
+              .map((e) => _normalizeAuditItem(Map<String, dynamic>.from(e)))
+              .toList(),
+        );
       });
       return;
     }
@@ -609,7 +715,11 @@ class UserController extends GetxController {
         Map<String, dynamic> res = jsonDecode(resvalue);
         if (!res.containsKey("type")) {
           if (res.containsKey("data")) {
-            callback(res["data"]);
+            callback(
+              (res["data"] as List)
+                  .map((e) => _normalizeAuditItem(Map<String, dynamic>.from(e)))
+                  .toList(),
+            );
           } else {
             // API returned e.g. {"message": "No Record found"}
             callback([]);
@@ -804,7 +914,7 @@ class UserController extends GetxController {
       final mockData = json.decode(mockString);
       callback(mockData["data"]);
     } else {
-      APIService(context).postData("getAuditReport", data, true).then((resvalue) {
+      return APIService(context).postData("getAuditReport", data, true).then((resvalue) {
         if (resvalue.length != 5) {
           Map<String, dynamic> res = jsonDecode(resvalue);
           if (!res.containsKey("type")) {
@@ -1445,4 +1555,41 @@ class UserController extends GetxController {
         }
       });
     }
-  }}
+  }
+
+  void getPublishedReportList(context,
+      {required Map<String, dynamic> data,
+      required Function(List<dynamic>) callback}) {
+    APIService(context).postData("getPublishedReportList", data, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (!res.containsKey("type")) {
+          if (res.containsKey("data")) {
+            callback(res["data"]);
+          } else {
+            callback([]);
+          }
+          return;
+        }
+      }
+      callback([]);
+    });
+  }
+
+  void getPublishedSummaryReport(context,
+      {required Map<String, dynamic> data,
+      required Function(Map<String, dynamic>) callback}) {
+    APIService(context).postData("getPublishedSummaryReport", data, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (!res.containsKey("type")) {
+          if (res.containsKey("data")) {
+            callback(Map<String, dynamic>.from(res["data"]));
+            return;
+          }
+        }
+      }
+      callback({});
+    });
+  }
+}
