@@ -822,7 +822,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                               ),
                               SizedBox(height: 18),
-                              Row(
+                              Responsive.isMobile(context)
+                                  ? Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "A clear view of where the audit execution stands.",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w100,
+                                            color: Color(0xFF898989),
+                                          ),
+                                        ),
+                                        SizedBox(height: 12),
+                                        _buildFinancialYearDropdown(),
+                                      ],
+                                    )
+                                  : Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
@@ -840,7 +856,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               SizedBox(height: 31),
 
                               // Top 3 Cards (Total, Scheduled, Unscheduled)
-                              Row(
+                              Responsive.isMobile(context)
+                                  ? Column(
+                                      children: [
+                                        _buildTopCard("Total", totalAll.toString(), Color(0xFF2E77D0)),
+                                        SizedBox(height: defaultPadding),
+                                        _buildTopCard("Scheduled", totalScheduled.toString(), Color(0xFF67AC5B)),
+                                        SizedBox(height: defaultPadding),
+                                        _buildTopCard("Un-scheduled", unscheduledCount.toString(), Color(0xFFFFC422)),
+                                      ],
+                                    )
+                                  : Row(
                                 children: [
                                   Expanded(
                                     child: _buildTopCard(
@@ -879,7 +905,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     width: 1,
                                   ),
                                 ),
-                                child: Row(
+                                child: Responsive.isMobile(context)
+                                    ? Column(
+                                        children: [
+                                          _buildStatusCard(
+                                            "Scheduled", Colors.white, totalScheduled.toString(), Colors.white,
+                                            bgColor: Color(0xFF67AC5B),
+                                            borderRadius: BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+                                            isCompact: true,
+                                          ),
+                                          Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
+                                          _buildStatusCard("Published", Color(0xFF2E77D0), (summary["published"] ?? 0).toString(), Colors.black, isCompact: true),
+                                          Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
+                                          _buildStatusCard("In Progress", Color(0xFFF29500), (summary["inprogress"] ?? 0).toString(), Colors.black, isCompact: true),
+                                          Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
+                                          _buildStatusCard("Upcoming", Color(0xFF9654CE), (summary["upcoming"] ?? 0).toString(), Colors.black, isCompact: true),
+                                          Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
+                                          _buildStatusCard("Cancelled", Color(0xFFDD0000), (summary["cancelled"] ?? 0).toString(), Colors.black, isCompact: true),
+                                        ],
+                                      )
+                                    : Row(
                                   children: [
                                     Expanded(
                                       child: _buildStatusCard(
@@ -1046,7 +1091,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStatusCard(
       String title, Color titleColor, String value, Color valueColor,
-      {Color? bgColor, BorderRadius? borderRadius}) {
+      {Color? bgColor, BorderRadius? borderRadius, bool isCompact = false}) {
+    if (isCompact) {
+      return Container(
+        padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: borderRadius,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (bgColor == null)
+                  Container(
+                    width: 10,
+                    height: 10,
+                    margin: EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: titleColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: bgColor != null ? titleColor : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: bgColor != null ? valueColor : Colors.black,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       height: 152,
       padding: EdgeInsets.symmetric(vertical: 30, horizontal: 8),

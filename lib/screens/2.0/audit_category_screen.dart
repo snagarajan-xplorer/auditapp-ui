@@ -35,7 +35,7 @@ class _AuditCategoryScreenV2State
   ScreenArgument? pageargument;
   late final UserController usercontroller;
 
-  final _controller = PageController(keepPage: false);
+  final _controller = PageController(keepPage: true);
 
   /// True when opened from "View Audit" on a published audit — all fields read-only.
   bool isViewMode = false;
@@ -66,11 +66,6 @@ class _AuditCategoryScreenV2State
 
   Uint8List? _imageBytes;
   String? _imageName;
-  List<Uint8List>? _imageBytesList;
-  List<String>? _imageNameList;
-  int countFile = 0;
-  int totalFile = 0;
-  final List<Map<String, dynamic>> _pendingUploads = [];
   String totalMark = "0";
   String answerMark = "0";
   String totalPer = "0";
@@ -159,6 +154,7 @@ class _AuditCategoryScreenV2State
                 ? element["answer"].toString().trim()
                 : "";
         element["questions"].forEach((eleObj) {
+          eleObj["proofdocuments"] ??= [];
           eleObj["submitAns"] =
               eleObj["answer"].toString().trim().isNotEmpty
                   ? eleObj["answer"].toString().trim()
@@ -212,15 +208,6 @@ class _AuditCategoryScreenV2State
       }
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (activeStep == 0) {
-          if (auditObj["branch"].length != 0) {
-            String date =
-                auditObj["branch"][0]["joining_date"].toString();
-            auditObj["branch"][0]["joining_date"] =
-                Jiffy.parse(date).dateTime;
-            formKey.currentState!.patchValue(auditObj["branch"][0]);
-          }
-        }
         if (activeStep > 0) {
           _controller.jumpToPage(activeStep);
         }
@@ -309,6 +296,18 @@ class _AuditCategoryScreenV2State
     }
   }
 
+  Map<String, dynamic>? _branchInitialValues() {
+    if (auditObj == null || auditObj["branch"] == null || (auditObj["branch"] as List).isEmpty) {
+      return null;
+    }
+    Map<String, dynamic> branch = Map<String, dynamic>.from(auditObj["branch"][0]);
+    var dateVal = branch["joining_date"];
+    if (dateVal != null && dateVal is! DateTime) {
+      branch["joining_date"] = Jiffy.parse(dateVal.toString()).dateTime;
+    }
+    return branch;
+  }
+
   // =====================================================
   //  Navigation
   // =====================================================
@@ -358,42 +357,83 @@ class _AuditCategoryScreenV2State
   //  File Upload
   // =====================================================
 
-  void _uploadPendingFiles({required VoidCallback onComplete}) {
-    if (_pendingUploads.isEmpty) {
-      onComplete();
+  void _handleQuestionFilePick(dynamic question) async {
+    List<dynamic> proofDocs = (question["proofdocuments"] as List? ?? []);
+    if (proofDocs.length >= 10) {
+      APIService(context).showToastMgs(
+          AppTranslations.of(context)!.text("key_error_04"));
       return;
     }
-    List<Map<String, dynamic>> pending = List.from(_pendingUploads);
-    (auditObj["proofdocuments"] as List).removeWhere((e) => e["_isLocal"] == true);
-    _imageBytesList = pending.map((e) => e["bytes"] as Uint8List).toList();
-    _imageNameList = pending.map((e) => e["name"] as String).toList();
-    countFile = 0;
-    totalFile = _imageBytesList!.length;
-    _pendingUploads.clear();
-    setState(() {});
-    _fileUploadProcess(onComplete: onComplete);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      allowMultiple: true,
+    );
+    if (result != null && result.files.isNotEmpty) {
+      for (var file in result.files) {
+        var ext = file.name.substring(file.name.lastIndexOf("."));
+        if (!extension.contains(ext)) {
+          APIService(context).showWindowAlert(
+              title: "",
+              desc: AppTranslations.of(context)!.text("key_message_28"),
+              callback: () {});
+          return;
+        }
+        question["proofdocuments"] ??= [];
+        question["proofdocuments"].add({
+          "image": file.name,
+          "_localBytes": file.bytes!,
+          "_isLocal": true,
+        });
+        setState(() {});
+        _questionFileUploadProcess(
+            question: question, bytes: file.bytes!, filename: file.name);
+      }
+    }
   }
 
-  void _fileUploadProcess({required VoidCallback onComplete}) {
+  void _questionFileUploadProcess(
+      {required dynamic question,
+      required Uint8List bytes,
+      required String filename}) {
     Map<String, dynamic> dataObj = {
       "type": "audit",
-      "audit_id": auditObj["id"],
+      "audit_id": question["audit_id"],
+      "questionid": question["questionid"],
     };
     usercontroller.uploadImage(context,
-        bytes: _imageBytesList![countFile],
-        filename: _imageNameList![countFile],
-        data: dataObj, callback: (res01) {
+        bytes: bytes, filename: filename, data: dataObj, callback: (res01) {
+      question["proofdocuments"] ??= [];
+      (question["proofdocuments"] as List)
+          .removeWhere((e) => e["_isLocal"] == true && e["image"] == filename);
       if (res01.containsKey("data")) {
-        auditObj["proofdocuments"].add(res01["data"]);
+        question["proofdocuments"].add(res01["data"]);
       }
       setState(() {});
-      if (countFile < totalFile - 1) {
-        countFile++;
-        _fileUploadProcess(onComplete: onComplete);
-      } else {
-        onComplete();
-      }
     });
+  }
+
+  void _handleQuestionFileRemove(dynamic imageElement, dynamic question) {
+    if (imageElement["_isLocal"] == true) {
+      (question["proofdocuments"] as List).remove(imageElement);
+      setState(() {});
+      return;
+    }
+    APIService(context).showWindowAlert(
+        title: "",
+        desc: AppTranslations.of(context)!.text("key_are_you"),
+        showCancelBtn: true,
+        callback: () {
+          Map<String, dynamic> obj = {
+            "id": imageElement["id"],
+            "audit_id": imageElement["audit_id"],
+            "questionid": question["questionid"],
+          };
+          usercontroller.removeUploadFile(context, data: obj,
+              callback: (arr) {
+            question["proofdocuments"] = arr;
+            setState(() {});
+          });
+        });
   }
 
   // =====================================================
@@ -588,71 +628,6 @@ class _AuditCategoryScreenV2State
     selectedColor = color;
     enableAction = false;
     setState(() {});
-  }
-
-  void _handleFilePick() async {
-    List<dynamic> proofDocs = auditObj["proofdocuments"] ?? [];
-    if (proofDocs.length >= 10) {
-      APIService(context).showToastMgs(
-          AppTranslations.of(context)!.text("key_error_04"));
-      return;
-    }
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
-      allowMultiple: true,
-    );
-    if (result != null && result.files.isNotEmpty) {
-      for (var kid = 0; kid < result.files.length; kid++) {
-        var file = result.files[kid];
-        var index = file.name.lastIndexOf(".");
-        var ext = file.name.substring(index, file.name.length);
-        if (!extension.contains(ext)) {
-          APIService(context).showWindowAlert(
-              title: "",
-              desc: AppTranslations.of(context)!
-                  .text("key_message_28"),
-              callback: () {});
-          return;
-        }
-        _pendingUploads.add({
-          "bytes": file.bytes!,
-          "name": file.name,
-        });
-        auditObj["proofdocuments"].add({
-          "image": file.name,
-          "_localBytes": file.bytes!,
-          "_isLocal": true,
-        });
-      }
-      _uploadPendingFiles(onComplete: () {
-        setState(() {});
-      });
-    }
-  }
-
-  void _handleFileRemove(dynamic imageElement) {
-    if (imageElement["_isLocal"] == true) {
-      auditObj["proofdocuments"].remove(imageElement);
-      _pendingUploads.removeWhere(
-          (e) => e["name"] == imageElement["image"]);
-      setState(() {});
-      return;
-    }
-    APIService(context).showWindowAlert(
-        title: "",
-        desc: AppTranslations.of(context)!.text("key_are_you"),
-        showCancelBtn: true,
-        callback: () {
-          Map<String, dynamic> obj = {
-            "id": imageElement["id"],
-            "audit_id": imageElement["audit_id"],
-          };
-          usercontroller.removeUploadFile(context, data: obj,
-              callback: (arr) {
-            auditObj["proofdocuments"] = arr;
-            setState(() {});
-          });
-        });
   }
 
   void _handleQuestionPrevious() {
@@ -909,17 +884,7 @@ class _AuditCategoryScreenV2State
     } else if (activeStep == 1) {
       activeStep = 0;
       if (!isViewMode) childs[0] = 1;
-      if (auditObj["branch"].length != 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          var dateVal = auditObj["branch"][0]["joining_date"];
-          if (dateVal is! DateTime) {
-            auditObj["branch"][0]["joining_date"] =
-                Jiffy.parse(dateVal.toString()).dateTime;
-          }
-          formKey.currentState!.patchValue(auditObj["branch"][0]);
-        });
-      }
-      gotoPage();
+      _controller.jumpToPage(0);
     } else if (activeStep == 2) {
       activeStep = 1;
       if (!isViewMode) childs[1] = 1;
@@ -1012,10 +977,12 @@ class _AuditCategoryScreenV2State
   }
 
   Widget _buildStepper() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final lineLen = screenWidth < 500 ? 40.0 : screenWidth < 850 ? 70.0 : 120.0;
     return EasyStepper(
       activeStep: activeStep,
       lineStyle: LineStyle(
-        lineLength: 120,
+        lineLength: lineLen,
         lineSpace: 0,
         lineType: LineType.normal,
         defaultLineColor: Colors.grey.shade400,
@@ -1052,7 +1019,7 @@ class _AuditCategoryScreenV2State
         child: childs[index] == 2
             ? const Icon(CupertinoIcons.check_mark,
                 color: Colors.white, size: 15)
-            : const SizedBox(),
+            : const SizedBox(), 
       ),
       placeTitleAtStart: false,
       title: title,
@@ -1069,16 +1036,10 @@ class _AuditCategoryScreenV2State
     if (isViewMode) {
       showQuestion = false;
       activeStep = index;
-      gotoPage();
-      if (activeStep == 0 && auditObj["branch"].length != 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          var dateVal = auditObj["branch"][0]["joining_date"];
-          if (dateVal is! DateTime) {
-            auditObj["branch"][0]["joining_date"] =
-                Jiffy.parse(dateVal.toString()).dateTime;
-          }
-          formKey.currentState!.patchValue(auditObj["branch"][0]);
-        });
+      if (index == 0) {
+        _controller.jumpToPage(0);
+      } else {
+        gotoPage();
       }
       setState(() {});
       return;
@@ -1088,7 +1049,7 @@ class _AuditCategoryScreenV2State
             .toString()
             .trim()
             .isNotEmpty) {
-      if (questionArray[pageStep]["submitAns"]
+      if (questionArray[pageStep]["submitAns"] 
           .toString()
           .trim()
           .isEmpty) {
@@ -1112,17 +1073,10 @@ class _AuditCategoryScreenV2State
     }
     showQuestion = false;
     activeStep = index;
-    gotoPage();
-    if (activeStep == 0) {
-      if (auditObj["branch"].length != 0) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          String date =
-              auditObj["branch"][0]["joining_date"].toString();
-          auditObj["branch"][0]["joining_date"] =
-              Jiffy.parse(date).dateTime;
-          formKey.currentState!.patchValue(auditObj["branch"][0]);
-        });
-      }
+    if (index == 0) {
+      _controller.jumpToPage(0);
+    } else {
+      gotoPage();
     }
     setState(() {});
   }
@@ -1144,6 +1098,8 @@ class _AuditCategoryScreenV2State
         onPrevious: _handleQuestionPrevious,
         onNext: _handleQuestionNext,
         onScoreTap: _handleScoreTap,
+        onFilePick: _handleQuestionFilePick,
+        onFileRemove: _handleQuestionFileRemove,
         onRefresh: () => setState(() {}),
       );
     }
@@ -1160,6 +1116,7 @@ class _AuditCategoryScreenV2State
               isViewMode: isViewMode,
               autovalidateMode: _autovalidateMode,
               onContinue: _handleBranchContinue,
+              initialValues: _branchInitialValues(),
             );
           case 1:
             return AuditActivityStep(
@@ -1170,8 +1127,6 @@ class _AuditCategoryScreenV2State
               isViewMode: isViewMode,
               showAudit: showAudit,
               onCategoryTap: _openCategory,
-              onFilePick: _handleFilePick,
-              onFileRemove: _handleFileRemove,
             );
           case 2:
             return SubmitReviewStep(

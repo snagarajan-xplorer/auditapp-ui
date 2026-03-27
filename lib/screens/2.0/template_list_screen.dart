@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/usercontroller.dart';
 import '../../models/screenarguments.dart';
+import '../../responsive.dart';
 import 'package:file_picker/file_picker.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
@@ -335,7 +336,47 @@ void _downloadTemplate(String templateId) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Responsive.isMobile(context)
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: AppLabeledField(
+                        label: 'Template Name',
+                        required: true,
+                        child: TextField(
+                          controller: templateNameController,
+                          decoration: AppFormStyles.inputDecoration(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: AppLabeledField(
+                        label: 'Brand',
+                        required: true,
+                        child: DropdownButtonFormField<String>(
+                          initialValue: selectedClientId,
+                          isExpanded: true,
+                          items: clientList
+                              .map<DropdownMenuItem<String>>((client) =>
+                                  DropdownMenuItem(
+                                    value: client['clientid']?.toString(),
+                                    child: Text(client['clientname']?.toString() ?? ''),
+                                  ))
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() { selectedClientId = value; });
+                          },
+                          decoration: AppFormStyles.inputDecoration(),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
@@ -501,7 +542,37 @@ void _downloadTemplate(String templateId) {
             // Header row
             Container(
               padding: const EdgeInsets.all(defaultPadding),
-              child: Row(
+              child: Responsive.isMobile(context)
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Create Template',
+                          style: TextStyle(fontSize: 20, color: Color(0xFF505050), fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            launchUrl(Uri.parse(
+                              '${API_URL}templateexport?id=s2hgpasn0chndggqv0saht48b6lv25d8dkxulj9u8bgcosomappaiezrnc6kh6kgb8vbh2aqjplh78nk7r8caf3pq2f0bzckhf9ukv3y2g493w288e83preg',
+                            ));
+                          },
+                          label: const Text(
+                            'Download Template Format',
+                            style: TextStyle(color: Color(0xFF02B2EB), fontSize: 14, fontWeight: FontWeight.w500),
+                          ),
+                          icon: const Icon(Icons.download, color: Color(0xFF02B2EB)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(color: Color(0xFF02B2EB)),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(

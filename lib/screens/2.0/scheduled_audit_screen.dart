@@ -1,6 +1,7 @@
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../responsive.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import '../../widget/reusable_table.dart';
@@ -233,7 +234,53 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
             // Tabs + Filters Row
             Container(
               padding: _kFilterPadding,
-              child: Row(
+              child: Responsive.isMobile(context)
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TabBar(
+                          controller: _tabController,
+                          isScrollable: true,
+                          labelColor: _kTabLabelColor,
+                          unselectedLabelColor: _kTextColor,
+                          indicatorColor: _kTabLabelColor,
+                          indicatorWeight: 3,
+                          labelStyle: _kTabStyle,
+                          unselectedLabelStyle: _kTabStyle,
+                          tabs: _kTabs,
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: [
+                            TableFilterDropdown(
+                                label: "State:", items: _cachedStateOptions, value: selectedState,
+                                onChanged: (val) {
+                              setState(() { selectedState = val!; selectedZone = "All"; });
+                              _applyFilter();
+                            }),
+                            ZoneDropdown(
+                                label: "Zone:",
+                                allData: allAudits,
+                                stateFilter: selectedState,
+                                value: selectedZone,
+                                onChanged: (val) {
+                              setState(() => selectedZone = val!);
+                              _applyFilter();
+                            }),
+                            TableFilterDropdown(
+                                items: financialYears.map((e) => e["label"] as String).toList(),
+                                value: selectedFinancialYear,
+                                onChanged: (val) {
+                              setState(() { selectedFinancialYear = val!; selectedState = "All"; });
+                              _loadData();
+                            }),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Row(
                 children: [
                   Expanded(
                     flex: 3,

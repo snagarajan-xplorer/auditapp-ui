@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../controllers/usercontroller.dart';
+import '../../responsive.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import '../../widget/app_form_field.dart';
@@ -395,33 +396,27 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF505050))),
           const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _labeledField(
-                  label: 'Client Name',
-                  controller: _clientNameController,
+          Responsive.isMobile(context)
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _labeledField(label: 'Client Name', controller: _clientNameController),
+                    const SizedBox(height: 16),
+                    _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone),
+                    const SizedBox(height: 16),
+                    _labeledField(label: 'Email ID', controller: _emailController, keyboardType: TextInputType.emailAddress),
+                  ],
+                )
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _labeledField(label: 'Client Name', controller: _clientNameController)),
+                    const SizedBox(width: 20),
+                    Expanded(child: _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone)),
+                    const SizedBox(width: 20),
+                    Expanded(child: _labeledField(label: 'Email ID', controller: _emailController, keyboardType: TextInputType.emailAddress)),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _labeledField(
-                  label: 'Mobile No.',
-                  controller: _mobileController,
-                  keyboardType: TextInputType.phone,
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: _labeledField(
-                  label: 'Email ID',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 28),
 
           // Submit button

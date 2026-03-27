@@ -125,7 +125,8 @@ class APIService {
     OverlayLoadingProgress.stop();
   }
   void showToastMgs(message) {
-    showToast(message,context:context,position: StyledToastPosition.center);
+    debugPrint(message.toString());
+    //showToast(message,context:context,position: StyledToastPosition.center);
     // Fluttertoast.showToast(
     //     msg: message,
     //     toastLength: Toast.LENGTH_LONG,

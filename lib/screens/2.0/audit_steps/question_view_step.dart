@@ -5,6 +5,7 @@ import 'package:audit_app/widget/buttoncomp.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../constants.dart';
 
 class QuestionViewStep extends StatelessWidget {
@@ -24,6 +25,9 @@ class QuestionViewStep extends StatelessWidget {
   final VoidCallback onNext;
   final void Function(dynamic question, String value, Color color)
       onScoreTap;
+  final void Function(dynamic question) onFilePick;
+  final void Function(dynamic imageElement, dynamic question)
+      onFileRemove;
   final VoidCallback onRefresh;
 
   const QuestionViewStep({
@@ -41,6 +45,8 @@ class QuestionViewStep extends StatelessWidget {
     required this.onPrevious,
     required this.onNext,
     required this.onScoreTap,
+    required this.onFilePick,
+    required this.onFileRemove,
     required this.onRefresh,
   });
 
@@ -216,14 +222,14 @@ class QuestionViewStep extends StatelessWidget {
               width: double.infinity,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center, 
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(question["question"],
                       style: const TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
                           color: Color(0xFF505050))),
-                  const SizedBox(height: 20), 
+                  const SizedBox(height: 20),
                   // Score circle
                   Container(
                     width: 50,
@@ -394,36 +400,22 @@ class QuestionViewStep extends StatelessWidget {
                               DateTime initial = DateTime.now();
                               if ((question["timeframe"] ?? "").toString().isNotEmpty) {
                                 try {
-                                  initial = DateFormat('dd/MM/yyyy hh:mm a').parse(question["timeframe"]);
+                                  initial = DateFormat('dd/MM/yyyy').parse(question["timeframe"]);
                                 } catch (_) {
                                   try {
-                                    initial = DateFormat('dd/MM/yyyy').parse(question["timeframe"]);
-                                  } catch (_) {
-                                    try {
-                                      initial = DateFormat('yyyy-MM-dd').parse(question["timeframe"]);
-                                    } catch (_) {}
-                                  }
+                                    initial = DateFormat('yyyy-MM-dd').parse(question["timeframe"]);
+                                  } catch (_) {}
                                 }
                               }
-                              final pickedDate = await showDatePicker(
+                              final picked = await showDatePicker(
                                 context: context,
                                 initialDate: initial,
                                 firstDate: DateTime(2020),
                                 lastDate: DateTime(2100),
                               );
-                              if (pickedDate != null) {
-                                final pickedTime = await showTimePicker(
-                                  context: context,
-                                  initialTime: TimeOfDay.fromDateTime(initial),
-                                );
-                                if (pickedTime != null) {
-                                  final dt = DateTime(
-                                    pickedDate.year, pickedDate.month, pickedDate.day,
-                                    pickedTime.hour, pickedTime.minute,
-                                  );
-                                  question["timeframe"] = DateFormat('dd/MM/yyyy hh:mm a').format(dt);
-                                  onRefresh();
-                                }
+                              if (picked != null) {
+                                question["timeframe"] = DateFormat('dd/MM/yyyy').format(picked);
+                                onRefresh();
                               }
                             },
                       child: InputDecorator(
@@ -442,8 +434,139 @@ class QuestionViewStep extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 20),
+            // Attach Audit Evidence
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  AppTranslations.of(context)!
+                      .text("key_attach_evidence"),
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF505050)),
+                ),
+              ),
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isViewMode)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: SizedBox(
+                      width: 100,
+                      height: buttonHeight,
+                      child: ElevatedButton(
+                          onPressed: () {
+                            onFilePick(question);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF29B6F6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: Text(
+                              AppTranslations.of(context)!
+                                  .text("key_btn_browse"),
+                              style: const TextStyle(
+                                  color: Colors.white))),
+                    ),
+                  ),
+                Flexible(
+                  child: Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: (question["proofdocuments"] as List? ?? [])
+                        .map<Widget>((imgelement) {
+                      return _buildAttachment(
+                          context, imgelement, question);
+                    }).toList(),
+                  ),
+                )
+              ],
+            ),
           ],
         ),
+    );
+  }
+
+  Widget _buildAttachment(BuildContext context,
+      dynamic imgelement, dynamic question) {
+    bool image = true;
+    String name = imgelement["image"].toString();
+    var index = name.lastIndexOf(".");
+    var ext = name.substring(index, name.length);
+    String img = "assets/images/doc.png";
+    if (ext.contains("doc")) {
+      image = false;
+      img = "assets/images/doc.png";
+    } else if (ext.contains("xls")) {
+      image = false;
+      img = "assets/images/xls.png";
+    } else if (ext.contains("pdf")) {
+      image = false;
+      img = "assets/images/pdf.png";
+    } else if (ext.contains("ppt")) {
+      image = false;
+      img = "assets/images/ppt.png";
+    }
+    return Container(
+      width: 140,
+      height: 100,
+      margin: const EdgeInsets.only(left: 5, right: 5),
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            top: 0,
+            child: InkWell(
+              onTap: () {
+                launchUrl(Uri.parse(
+                  IMG_URL + imgelement["image"].toString(),
+                ));
+              },
+              child: Container(
+                width: 140,
+                height: 100,
+                decoration: BoxDecoration(
+                    image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: image
+                            ? NetworkImage(
+                                IMG_URL + imgelement["image"])
+                            : AssetImage(img)),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: const Color(0xFFE0E0E0), width: 1)),
+              ),
+            ),
+          ),
+          if (!isViewMode)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: InkWell(
+                onTap: () {
+                  onFileRemove(imgelement, question);
+                },
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF8A65),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close,
+                      size: 14, color: Colors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

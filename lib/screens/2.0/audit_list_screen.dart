@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
@@ -7,6 +8,7 @@ import 'package:audit_app/widget/zone_dropdown.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
+import '../../responsive.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import '../../widget/reusable_table.dart';
@@ -323,7 +325,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
-            width: 500,
+            width: min(500, MediaQuery.of(context).size.width - 40),
             padding: EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -465,7 +467,49 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF505050))),
                   const SizedBox(height: 18),
-                  Row(
+                  Responsive.isMobile(context)
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Detailed overview of all audits",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w100,
+                                    color: Color(0xFF898989))),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              children: [
+                                TableFilterDropdown(
+                                    label: "State:",
+                                    items: _cachedStateOptions,
+                                    value: selectedState,
+                                    onChanged: (val) {
+                                  setState(() { selectedState = val!; selectedZone = "All"; });
+                                  _applyFilter();
+                                }),
+                                ZoneDropdown(
+                                    label: "Zone:",
+                                    allData: allAudits,
+                                    stateFilter: selectedState,
+                                    value: selectedZone,
+                                    onChanged: (val) {
+                                  setState(() => selectedZone = val!);
+                                  _applyFilter();
+                                }),
+                                FinancialYearDropdown(
+                                    value: year,
+                                    items: financialYears,
+                                    onChanged: (val) {
+                                  setState(() { year = val; selectedState = "All"; selectedZone = "All"; });
+                                  _loadData();
+                                }),
+                              ],
+                            ),
+                          ],
+                        )
+                      : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text("Detailed overview of all audits",
@@ -473,7 +517,6 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                               fontSize: 18,
                               fontWeight: FontWeight.w100,
                               color: Color(0xFF898989))),
-                      // Filters row
                       Row(
                         children: [
                           TableFilterDropdown(

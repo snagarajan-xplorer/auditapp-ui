@@ -80,6 +80,8 @@ class ReusableTable extends StatelessWidget {
   /// Horizontal padding inside header/data cells.
   final double cellHorizontalPadding;
 
+  final double minWidth;
+
   const ReusableTable({
     super.key,
     required this.columns,
@@ -93,6 +95,7 @@ class ReusableTable extends StatelessWidget {
     this.cellVerticalPadding = 18,
     this.cellFontSize = 13,
     this.cellHorizontalPadding = 10,
+    this.minWidth = 0,
   });
 
   // ── derived ───────────────────────────────────────────────────────────────
@@ -109,9 +112,38 @@ class ReusableTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double effectiveMinWidth = minWidth > 0
+        ? minWidth
+        : columns.fold<int>(0, (sum, c) => sum + c.flex) * 100.0;
+
+    final bool isDesktop = MediaQuery.of(context).size.width >= 1100;
+
+    Widget tableContent = isLoading
+        ? const SizedBox(
+            height: 300,
+            child: Center(child: CircularProgressIndicator()),
+          )
+        : rows.isEmpty
+            ? const SizedBox(
+                height: 200,
+                child: Center(
+                  child: Text("No records found",
+                      style: TextStyle(
+                          fontSize: 16, color: Color(0xFF898989))),
+                ),
+              )
+            : Column(
+                children: [
+                  _buildTableHeader(),
+                  ..._pagedRows
+                      .asMap()
+                      .entries
+                      .map((e) => _buildTableRow(e.value, e.key)),
+                ],
+              );
+
     return Column(
       children: [
-        // Table container
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -120,32 +152,23 @@ class ReusableTable extends StatelessWidget {
           ),
           margin: const EdgeInsets.symmetric(
               horizontal: defaultPadding, vertical: defaultPadding / 2),
-          child: isLoading
-              ? const SizedBox(
-                  height: 300,
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : rows.isEmpty
-                  ? const SizedBox(
-                      height: 200,
-                      child: Center(
-                        child: Text("No records found",
-                            style: TextStyle(
-                                fontSize: 16, color: Color(0xFF898989))),
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        _buildTableHeader(),
-                        ..._pagedRows
-                            .asMap()
-                            .entries
-                            .map((e) => _buildTableRow(e.value, e.key)),
-                      ],
-                    ),
+          child: ClipRect(
+            child: isDesktop
+                ? tableContent
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final availableWidth = constraints.maxWidth;
+                      if (effectiveMinWidth <= availableWidth) {
+                        return tableContent;
+                      }
+                      return _HorizontalScrollTable(
+                        minWidth: effectiveMinWidth,
+                        child: tableContent,
+                      );
+                    },
+                  ),
+          ),
         ),
-
-        // Pagination
         _buildPagination(),
       ],
     );
@@ -473,6 +496,42 @@ class _HeaderSegment {
   final List<TableColumnDef> columns;
   final String? groupLabel;
   _HeaderSegment({required this.columns, required this.groupLabel});
+}
+
+class _HorizontalScrollTable extends StatefulWidget {
+  final double minWidth;
+  final Widget child;
+
+  const _HorizontalScrollTable({required this.minWidth, required this.child});
+
+  @override
+  State<_HorizontalScrollTable> createState() =>
+      _HorizontalScrollTableState();
+}
+
+class _HorizontalScrollTableState extends State<_HorizontalScrollTable> {
+  final ScrollController _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scrollbar(
+      controller: _controller,
+      child: SingleChildScrollView(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: widget.minWidth,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
 }
 
 // ─── Shared filter dropdown ─────────────────────────────────────────────────

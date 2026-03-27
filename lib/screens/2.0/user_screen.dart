@@ -4,6 +4,7 @@ import 'package:audit_app/services/LocalStorage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
+import '../../responsive.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import '../../widget/reusable_table.dart';
@@ -288,18 +289,52 @@ class _UserScreenV2State extends State<UserScreenV2> {
       previousScreenName: 'Settings',
       showBackbutton: true,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 20, right: 36),
+        padding: EdgeInsets.only(left: Responsive.isMobile(context) ? 8 : 20, right: Responsive.isMobile(context) ? 8 : 36),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title + Create New User button
             Container(
               padding: const EdgeInsets.all(defaultPadding),
-              child: Row(
+              child: Responsive.isMobile(context)
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(pageTitle,
+                            style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF505050))),
+                        const SizedBox(height: 12),
+                        Text(pageSubtitle,
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w100,
+                                color: Color(0xFF898989))),
+                        const SizedBox(height: 12),
+                        if (menuAccessRole.contains(usercontroller.userData.role ?? ''))
+                          SizedBox(
+                            height: 42,
+                            child: ElevatedButton.icon(
+                              onPressed: _onCreateNewUser,
+                              icon: const Icon(Icons.add_box_outlined, size: 18, color: Colors.white),
+                              label: Text(
+                                  isUserMode ? "Create New User" : "Create New Client",
+                                  style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF67AC5B),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                elevation: 0,
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  : Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title area
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -316,27 +351,19 @@ class _UserScreenV2State extends State<UserScreenV2> {
                               color: Color(0xFF898989))),
                     ],
                   ),
-                  // Create New User button
-                  if (menuAccessRole
-                          .contains(usercontroller.userData.role ?? ''))
+                  if (menuAccessRole.contains(usercontroller.userData.role ?? ''))
                     SizedBox(
                       height: 42,
                       child: ElevatedButton.icon(
                         onPressed: _onCreateNewUser,
-                        icon: const Icon(Icons.add_box_outlined,
-                            size: 18, color: Colors.white),
+                        icon: const Icon(Icons.add_box_outlined, size: 18, color: Colors.white),
                         label: Text(
-                            isUserMode
-                                ? "Create New User"
-                                : "Create New Client",
-                            style: const TextStyle(
-                                fontSize: 14, color: Colors.white,fontWeight: FontWeight.w500)),
+                            isUserMode ? "Create New User" : "Create New Client",
+                            style: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF67AC5B),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4)),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 0),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                           elevation: 0,
                         ),
                       ),

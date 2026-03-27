@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
+import '../../responsive.dart';
 import '../../widget/reusable_table.dart';
 
 class PublishedReportScreen extends StatefulWidget {
@@ -121,76 +122,86 @@ class _PublishedReportScreenState extends State<PublishedReportScreen> {
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF505050))),
                   const SizedBox(height: 18),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  const Text("Publish summary & full reports fields",
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w100,
+                          color: Color(0xFF898989))),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.end,
                     children: [
-                      const Text("Publish summary & full reports fields",
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w100,
-                              color: Color(0xFF898989))),
-                      Row(
-                        children: [
-                          TableFilterDropdown(
-                              label: "State:",
-                              items: _cachedStateOptions,
-                              value: selectedState,
-                              onChanged: (val) {
-                            setState(() {
-                              selectedState = val!;
-                              selectedZone = "All";
-                            });
-                            _applyFilter();
-                          }),
-                          const SizedBox(width: 12),
-                          ZoneDropdown(
-                              label: "Zone:",
-                              allData: allAudits,
-                              stateFilter: selectedState,
-                              value: selectedZone,
-                              onChanged: (val) {
-                            setState(() => selectedZone = val!);
-                            _applyFilter();
-                          }),
-                          const SizedBox(width: 12),
-                          FinancialYearDropdown(
-                              value: year,
-                              items: financialYears,
-                              onChanged: (val) {
-                            setState(() {
-                              year = val;
-                              selectedState = "All";
-                              selectedZone = "All";
-                            });
-                            _loadData();
-                          }),
-                        ],
-                      ),
+                      TableFilterDropdown(
+                          label: "State:",
+                          items: _cachedStateOptions,
+                          value: selectedState,
+                          onChanged: (val) {
+                        setState(() {
+                          selectedState = val!;
+                          selectedZone = "All";
+                        });
+                        _applyFilter();
+                      }),
+                      ZoneDropdown(
+                          label: "Zone:",
+                          allData: allAudits,
+                          stateFilter: selectedState,
+                          value: selectedZone,
+                          onChanged: (val) {
+                        setState(() => selectedZone = val!);
+                        _applyFilter();
+                      }),
+                      FinancialYearDropdown(
+                          value: year,
+                          items: financialYears,
+                          onChanged: (val) {
+                        setState(() {
+                          year = val;
+                          selectedState = "All";
+                          selectedZone = "All";
+                        });
+                        _loadData();
+                      }),
                     ],
                   ),
                 ],
               ),
             ),
             ReusableTable(
-              columns: [
-                TableColumnDef(label: "Audit ID", flex: 2, key: "audit_no"),
-                TableColumnDef(label: "Sched. Date", flex: 2, key: "scheduled_date"),
-                TableColumnDef(label: "Start Date", flex: 2, key: "start_date"),
-                TableColumnDef(label: "End Date", flex: 2, key: "end_date"),
-                TableColumnDef(label: "Zone", flex: 2, key: "zone"),
-                TableColumnDef(label: "State", flex: 2, key: "state"),
-                TableColumnDef(label: "City", flex: 2, key: "city"),
-                TableColumnDef(label: "Location", flex: 2, key: "location"),
-                TableColumnDef(label: "Type of Location", flex: 2, key: "type_of_location"),
-                TableColumnDef(label: "Auditor", flex: 2, key: "auditor_name"),
-                TableColumnDef(
-                  label: "Report", flex: 2, isLast: true,
-                  cellBuilder: (row, _) => Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                    child: _buildViewButton(row),
-                  ),
-                ),
-              ],
+              columns: Responsive.isMobile(context)
+                  ? [
+                      TableColumnDef(label: "Audit ID", flex: 2, key: "audit_no"),
+                      TableColumnDef(label: "Location", flex: 3, key: "location"),
+                      TableColumnDef(label: "Auditor", flex: 2, key: "auditor_name"),
+                      TableColumnDef(
+                        label: "Report", flex: 2, isLast: true,
+                        cellBuilder: (row, _) => Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          child: _buildViewButton(row),
+                        ),
+                      ),
+                    ]
+                  : [
+                      TableColumnDef(label: "Audit ID", flex: 2, key: "audit_no"),
+                      TableColumnDef(label: "Sched. Date", flex: 2, key: "scheduled_date"),
+                      TableColumnDef(label: "Start Date", flex: 2, key: "start_date"),
+                      TableColumnDef(label: "End Date", flex: 2, key: "end_date"),
+                      TableColumnDef(label: "Zone", flex: 2, key: "zone"),
+                      TableColumnDef(label: "State", flex: 2, key: "state"),
+                      TableColumnDef(label: "City", flex: 2, key: "city"),
+                      TableColumnDef(label: "Location", flex: 2, key: "location"),
+                      TableColumnDef(label: "Type of Location", flex: 2, key: "type_of_location"),
+                      TableColumnDef(label: "Auditor", flex: 2, key: "auditor_name"),
+                      TableColumnDef(
+                        label: "Report", flex: 2, isLast: true,
+                        cellBuilder: (row, _) => Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          child: _buildViewButton(row),
+                        ),
+                      ),
+                    ],
               rows: filteredAudits,
               isLoading: isLoading,
               currentPage: currentPage,

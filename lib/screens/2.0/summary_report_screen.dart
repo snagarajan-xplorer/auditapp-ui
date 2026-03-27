@@ -115,8 +115,11 @@ class _SummaryReportScreenState extends State<SummaryReportScreen> {
   }
 
   Widget _buildHeader(String auditNo) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Wrap(
+      spacing: 16,
+      runSpacing: 12,
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,32 +176,43 @@ class _SummaryReportScreenState extends State<SummaryReportScreen> {
     final summary = (reportData["summary"] as List?) ?? [];
     if (summary.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          _summaryHeaderRow(),
-          ...summary.asMap().entries.expand((e) {
-            final idx = e.key;
-            final item = e.value;
-            final isExpanded = _expandedCategories.contains(idx);
-            final subItems = (item["sub_items"] as List?) ?? [];
-            return [
-              _summaryDataRow(item, idx, subItems.isNotEmpty),
-              if (isExpanded)
-                ...subItems
-                    .asMap()
-                    .entries
-                    .map((se) => _summarySubRow(se.value, idx, se.key)),
-            ];
-          }),
-          _summaryTotalRow(summary),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double minTableWidth = 900;
+        final tableWidget = Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              _summaryHeaderRow(),
+              ...summary.asMap().entries.expand((e) {
+                final idx = e.key;
+                final item = e.value;
+                final isExpanded = _expandedCategories.contains(idx);
+                final subItems = (item["sub_items"] as List?) ?? [];
+                return [
+                  _summaryDataRow(item, idx, subItems.isNotEmpty),
+                  if (isExpanded)
+                    ...subItems
+                        .asMap()
+                        .entries
+                        .map((se) => _summarySubRow(se.value, idx, se.key)),
+                ];
+              }),
+              _summaryTotalRow(summary),
+            ],
+          ),
+        );
+
+        if (minTableWidth <= constraints.maxWidth) return tableWidget;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(width: minTableWidth, child: tableWidget),
+        );
+      },
     );
   }
 
@@ -469,69 +483,80 @@ class _SummaryReportScreenState extends State<SummaryReportScreen> {
       },
     ];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE0E0E0)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF8D8D8D),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
-            ),
-            child: Row(
-              children: infoItems.map((item) {
-                return Expanded(
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    decoration: item != infoItems.last
-                        ? const BoxDecoration(
-                            border: Border(
-                                right: BorderSide(
-                                    color: Color(0xFFBCBCBC), width: 1)),
-                          )
-                        : null,
-                    child: Text(item["label"]!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double minInfoWidth = 900;
+        final infoWidget = Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE0E0E0)),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFF8D8D8D),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
                   ),
-                );
-              }).toList(),
-            ),
-          ),
-          Row(
-            children: infoItems.map((item) {
-              return Expanded(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-                  decoration: item != infoItems.last
-                      ? const BoxDecoration(
-                          border: Border(
-                              right: BorderSide(
-                                  color: Color(0xFFE0E0E0), width: 0.8)),
-                        )
-                      : null,
-                  child: Text(item["value"]!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 13, color: Color(0xFF505050))),
                 ),
-              );
-            }).toList(),
+                child: Row(
+                  children: infoItems.map((item) {
+                    return Expanded(
+                      child: Container(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                        decoration: item != infoItems.last
+                            ? const BoxDecoration(
+                                border: Border(
+                                    right: BorderSide(
+                                        color: Color(0xFFBCBCBC), width: 1)),
+                              )
+                            : null,
+                        child: Text(item["label"]!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white)),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              Row(
+                children: infoItems.map((item) {
+                  return Expanded(
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                      decoration: item != infoItems.last
+                          ? const BoxDecoration(
+                              border: Border(
+                                  right: BorderSide(
+                                      color: Color(0xFFE0E0E0), width: 0.8)),
+                            )
+                          : null,
+                      child: Text(item["value"]!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 13, color: Color(0xFF505050))),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+
+        if (minInfoWidth <= constraints.maxWidth) return infoWidget;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(width: minInfoWidth, child: infoWidget),
+        );
+      },
     );
   }
 

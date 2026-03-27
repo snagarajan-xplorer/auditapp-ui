@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
@@ -5,6 +6,7 @@ import 'package:audit_app/widget/app_form_field.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:jiffy/jiffy.dart';
+import '../../responsive.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -102,7 +104,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
-            width: 500,
+            width: min(500, MediaQuery.of(context).size.width - 40),
             padding: EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -282,7 +284,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       child: isLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 50, vertical: 16),
+              padding: EdgeInsets.symmetric(horizontal: Responsive.isMobile(context) ? 16 : 50, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -321,66 +323,66 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Color(0xFFC9C9C9), width: 1),
                     ),
-                    padding: EdgeInsets.all(32),
+                    padding: EdgeInsets.all(Responsive.isMobile(context) ? 16 : 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Top row: Logo + Audit Name / ID / Date
-                        Row(
+                        Responsive.isMobile(context)
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  _buildCompanyLogo(),
+                                  const SizedBox(height: 16),
+                                  _buildDownloadButton(),
+                                  const SizedBox(height: 24),
+                                  _buildInfoField("Audit Name", _getField("auditname")),
+                                  const SizedBox(height: 24),
+                                  _buildInfoField("Audit ID", _getField("audit_no")),
+                                  const SizedBox(height: 24),
+                                  _buildInfoField("Audit Date", _getFormattedDate()),
+                                  const SizedBox(height: 24),
+                                  _buildInfoField("Audit assigned by", _getField("assigned_by")),
+                                  const SizedBox(height: 24),
+                                  _buildInfoField("Audit time", _getFormattedTime()),
+                                  const SizedBox(height: 24),
+                                  _buildInfoField("Auditor", _getField("auditor_name")),
+                                  const SizedBox(height: 24),
+                                  _buildStatusField(),
+                                ],
+                              )
+                            : Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Column(
                               children: [
-                                // Company Logo
                                 _buildCompanyLogo(),
                                 SizedBox(height: 26),
                                 _buildDownloadButton(),
                               ],
                             ),SizedBox(width: 40),
-                            // Download Audit Sheet button
-                            // Audit details
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Audit Name
-                                  _buildInfoField(
-                                      "Audit Name", _getField("auditname")),
+                                  _buildInfoField("Audit Name", _getField("auditname")),
                                   SizedBox(height: 40),
-
-                                  // Audit ID + Audit Date
                                   Row(
                                     children: [
-                                      Expanded(
-                                          child: _buildInfoField("Audit ID",
-                                              _getField("audit_no"))),
-                                      Expanded(
-                                          child: _buildInfoField(
-                                              "Audit Date", _getFormattedDate())),
+                                      Expanded(child: _buildInfoField("Audit ID", _getField("audit_no"))),
+                                      Expanded(child: _buildInfoField("Audit Date", _getFormattedDate())),
                                     ],
                                   ),
                                   SizedBox(height: 40),
-
-                                  // Assigned by + Audit time
                                   Row(
                                     children: [
-                                      Expanded(
-                                          child: _buildInfoField(
-                                              "Audit assigned by",
-                                              _getField("assigned_by"))),
-                                      Expanded(
-                                          child: _buildInfoField("Audit time",
-                                              _getFormattedTime())),
+                                      Expanded(child: _buildInfoField("Audit assigned by", _getField("assigned_by"))),
+                                      Expanded(child: _buildInfoField("Audit time", _getFormattedTime())),
                                     ],
                                   ),
                                   SizedBox(height: 40),
-
-                                  // Auditor + Status
                                   Row(
                                     children: [
-                                      Expanded(
-                                          child: _buildInfoField("Auditor",
-                                              _getField("auditor_name"))),
+                                      Expanded(child: _buildInfoField("Auditor", _getField("auditor_name"))),
                                       Expanded(child: _buildStatusField()),
                                     ],
                                   ),
@@ -570,8 +572,10 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
   Widget _buildActionButtons() {
     final statusStr = _resolveStatusCode();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 20,
+      runSpacing: 12,
       children: [
         // Cancel Audit button — for non-cancelled, non-published
         if (statusStr != "CL" && statusStr != "P")
@@ -592,8 +596,6 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                       color: Colors.white)),
             ),
           ),
-
-        if (statusStr != "CL" && statusStr != "P") SizedBox(width: 30),
 
         // Start Audit button — only for Scheduled/Upcoming
         if (statusStr == "S" || statusStr == "PG")
