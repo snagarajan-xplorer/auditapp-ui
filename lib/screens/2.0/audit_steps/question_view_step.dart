@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/widget/app_form_field.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
@@ -514,34 +515,54 @@ class QuestionViewStep extends StatelessWidget {
       image = false;
       img = "assets/images/ppt.png";
     }
+    final Uint8List? localBytes = imgelement["_localBytes"] as Uint8List?;
+
+    Widget imageWidget;
+    if (localBytes != null && image) {
+      imageWidget = Image.memory(
+        localBytes,
+        fit: BoxFit.cover,
+        width: 140,
+        height: 100,
+        errorBuilder: (_, __, ___) => const _AttachmentPlaceholder(icon: Icons.broken_image),
+      );
+    } else if (image) {
+      imageWidget = Image.network(
+        IMG_URL + imgelement["image"].toString(),
+        fit: BoxFit.cover,
+        width: 140,
+        height: 100,
+        loadingBuilder: (_, child, progress) =>
+            progress == null ? child : const _AttachmentPlaceholder(icon: Icons.hourglass_top),
+        errorBuilder: (_, __, ___) => const _AttachmentPlaceholder(icon: Icons.broken_image),
+      );
+    } else {
+      imageWidget = Image.asset(img, fit: BoxFit.contain, width: 60, height: 60);
+    }
+
     return Container(
       width: 140,
       height: 100,
       margin: const EdgeInsets.only(left: 5, right: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+      ),
       child: Stack(
         children: [
-          Positioned(
-            left: 0,
-            top: 0,
+          Positioned.fill(
             child: InkWell(
               onTap: () {
-                launchUrl(Uri.parse(
-                  IMG_URL + imgelement["image"].toString(),
-                ));
+                final String? serverPath = imgelement["id"] != null
+                    ? imgelement["image"].toString()
+                    : null;
+                if (serverPath != null) {
+                  launchUrl(Uri.parse(IMG_URL + serverPath));
+                }
               },
-              child: Container(
-                width: 140,
-                height: 100,
-                decoration: BoxDecoration(
-                    image: DecorationImage(
-                        fit: BoxFit.cover,
-                        image: image
-                            ? NetworkImage(
-                                IMG_URL + imgelement["image"])
-                            : AssetImage(img)),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                        color: const Color(0xFFE0E0E0), width: 1)),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: imageWidget,
               ),
             ),
           ),
@@ -567,6 +588,21 @@ class QuestionViewStep extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _AttachmentPlaceholder extends StatelessWidget {
+  final IconData icon;
+  const _AttachmentPlaceholder({required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 140,
+      height: 100,
+      color: const Color(0xFFF5F5F5),
+      child: Center(child: Icon(icon, size: 36, color: const Color(0xFFBDBDBD))),
     );
   }
 }

@@ -121,20 +121,20 @@ Color colorForScore(dynamic score) {
 //https://audit.webtekie.in/public/api/login
 
 // LOCAL DEVELOPMENT (requires backend running on port 8000)
-// const API_URL = "http://127.0.0.1:8000/api/";
-// const IMG_URL = "http://127.0.0.1:8000/storage/";
+const API_URL = "http://127.0.0.1:8000/api/";
+const IMG_URL = "http://127.0.0.1:8000/storage/";
 
 // DEMO SERVER
 // const API_URL = "https://demo.webtekie.in/restapi/public/api/";
 // const IMG_URL = "https://demo.webtekie.in/restapi/public/storage/";
 
 // CURRENTLY ACTIVE (LOCAL - REQUIRES BACKEND RUNNING!)
-final String API_URL = "http://$_apiHost:8000/api/";
-final String IMG_URL = "http://$_apiHost:8000/api/img/";
+// final String API_URL = "http://$_apiHost:8000/api/";
+// final String IMG_URL = "http://$_apiHost:8000/api/img/";
 
 // PRODUCTION SERVER
-// const API_URL = "https://auditondgo.com/restapi/public/api/";
-// const IMG_URL = "https://auditondgo.com/restapi/public/storage/";
+// const API_URL = "https://auditondgo.com/api/";
+// const IMG_URL = "https://auditondgo.com/storage/";
 
 
 

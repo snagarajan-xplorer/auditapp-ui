@@ -35,14 +35,31 @@ class _BranchDetailsStepState extends State<BranchDetailsStep>
   @override
   bool get wantKeepAlive => true;
 
+  Map<String, dynamic>? _appliedValues;
+
+  void _applyInitialValues(Map<String, dynamic>? values) {
+    if (values == null || values.isEmpty) return;
+    _appliedValues = values;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.formKey.currentState?.patchValue(values);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
-    if (widget.initialValues != null && widget.initialValues!.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        widget.formKey.currentState?.patchValue(widget.initialValues!);
-      });
+    _applyInitialValues(widget.initialValues);
+  }
+
+  @override
+  void didUpdateWidget(covariant BranchDetailsStep oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newValues = widget.initialValues;
+    if (newValues != null &&
+        newValues.isNotEmpty &&
+        newValues != _appliedValues) {
+      _applyInitialValues(newValues);
     }
   }
 

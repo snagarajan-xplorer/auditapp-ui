@@ -345,6 +345,8 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                                   const SizedBox(height: 24),
                                   _buildInfoField("Audit time", _getFormattedTime()),
                                   const SizedBox(height: 24),
+                                  _buildInfoField("Assigned to", _getField("assigned_to")),
+                                  const SizedBox(height: 24),
                                   _buildInfoField("Auditor", _getField("auditor_name")),
                                   const SizedBox(height: 24),
                                   _buildStatusField(),
@@ -382,8 +384,15 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                                   SizedBox(height: 40),
                                   Row(
                                     children: [
+                                      Expanded(child: _buildInfoField("Assigned to", _getField("assigned_to"))),
                                       Expanded(child: _buildInfoField("Auditor", _getField("auditor_name"))),
+                                    ],
+                                  ),
+                                  SizedBox(height: 40),
+                                  Row(
+                                    children: [
                                       Expanded(child: _buildStatusField()),
+                                      Expanded(child: SizedBox()),
                                     ],
                                   ),
                                 ],

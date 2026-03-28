@@ -367,9 +367,12 @@ class _AuditCategoryScreenV2State
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       allowMultiple: true,
+      withData: true,
     );
     if (result != null && result.files.isNotEmpty) {
       for (var file in result.files) {
+        final Uint8List? fileBytes = file.bytes;
+        if (fileBytes == null) continue;
         var ext = file.name.substring(file.name.lastIndexOf("."));
         if (!extension.contains(ext)) {
           APIService(context).showWindowAlert(
@@ -381,12 +384,12 @@ class _AuditCategoryScreenV2State
         question["proofdocuments"] ??= [];
         question["proofdocuments"].add({
           "image": file.name,
-          "_localBytes": file.bytes!,
+          "_localBytes": fileBytes,
           "_isLocal": true,
         });
         setState(() {});
         _questionFileUploadProcess(
-            question: question, bytes: file.bytes!, filename: file.name);
+            question: question, bytes: fileBytes, filename: file.name);
       }
     }
   }
@@ -403,10 +406,20 @@ class _AuditCategoryScreenV2State
     usercontroller.uploadImage(context,
         bytes: bytes, filename: filename, data: dataObj, callback: (res01) {
       question["proofdocuments"] ??= [];
-      (question["proofdocuments"] as List)
-          .removeWhere((e) => e["_isLocal"] == true && e["image"] == filename);
+      final List docs = question["proofdocuments"] as List;
+      final int localIndex =
+          docs.indexWhere((e) => e["_isLocal"] == true && e["image"] == filename);
       if (res01.containsKey("data")) {
-        question["proofdocuments"].add(res01["data"]);
+        final Map<String, dynamic> serverEntry =
+            Map<String, dynamic>.from(res01["data"] as Map);
+        serverEntry["_localBytes"] = bytes;
+        if (localIndex != -1) {
+          docs[localIndex] = serverEntry;
+        } else {
+          docs.add(serverEntry);
+        }
+      } else if (localIndex != -1) {
+        docs.removeAt(localIndex);
       }
       setState(() {});
     });
@@ -941,7 +954,7 @@ class _AuditCategoryScreenV2State
           Align(
             alignment: Alignment.centerLeft,
             child: Padding(
-              padding: const EdgeInsets.only(left: 80, top: 12),
+              padding: const EdgeInsets.only(left: 34, top: 12),
               child: InkWell(
                 onTap: _handleBack,
                 child: const Row(
