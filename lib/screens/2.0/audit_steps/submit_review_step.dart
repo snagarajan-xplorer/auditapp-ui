@@ -7,6 +7,7 @@ import '../../../constants.dart';
 class SubmitReviewStep extends StatelessWidget {
   final dynamic auditObj;
   final bool isViewMode;
+  final bool isAuditorRole;
   final double wdt;
   final bool reviewAcknowledged;
   final bool acknowlodgeImage;
@@ -15,11 +16,13 @@ class SubmitReviewStep extends StatelessWidget {
   final ValueChanged<bool> onAcknowledgeChanged;
   final VoidCallback onBrowse;
   final VoidCallback onSubmit;
+  final VoidCallback? onNext;
 
   const SubmitReviewStep({
     super.key,
     required this.auditObj,
     required this.isViewMode,
+    required this.isAuditorRole,
     required this.wdt,
     required this.reviewAcknowledged,
     required this.acknowlodgeImage,
@@ -28,6 +31,7 @@ class SubmitReviewStep extends StatelessWidget {
     required this.onAcknowledgeChanged,
     required this.onBrowse,
     required this.onSubmit,
+    this.onNext,
   });
 
   @override
@@ -37,6 +41,7 @@ class SubmitReviewStep extends StatelessWidget {
     String auditDate = "";
     String auditTime = "";
     String assignedBy = "";
+    String assignedTo = "";
     String reviewSubmitted = "";
 
     try {
@@ -47,8 +52,8 @@ class SubmitReviewStep extends StatelessWidget {
       auditTime = Jiffy.parse(auditObj["start_time"])
           .format(pattern: "hh:mm a");
     } catch (_) {}
-    assignedBy =
-        auditObj["assigned_by"] ?? auditObj["auditorname"] ?? "";
+    assignedBy = auditObj["assigned_by"] ?? "";
+    assignedTo = auditObj["auditorname"] ?? auditObj["completeby"] ?? "";
     reviewSubmitted = Jiffy.now().format(pattern: "dd/MM/yyyy");
 
     return SingleChildScrollView(
@@ -100,18 +105,22 @@ class SubmitReviewStep extends StatelessWidget {
                       _infoRow("Audit assigned by", assignedBy,
                           "Audit time", auditTime),
                       SizedBox(height: defaultPadding * 1.5),
-                      _infoRow("Auditor", userName,
+                      _infoRow("Assigned To", assignedTo,
                           "Review Submitted", reviewSubmitted),
+                      if (isViewMode) ...[                        SizedBox(height: defaultPadding * 1.5),
+                        _infoRow("Reviewed by", userName, "", ""),
+                      ],
                       SizedBox(height: defaultPadding * 2),
                       // Acknowledgment checkbox
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Checkbox(
-                            value:
-                                isViewMode ? true : reviewAcknowledged,
+                            value: (!isAuditorRole || isViewMode)
+                                ? true
+                                : reviewAcknowledged,
                             activeColor: const Color(0xFF505050),
-                            onChanged: isViewMode
+                            onChanged: (!isAuditorRole || isViewMode)
                                 ? null
                                 : (val) {
                                     onAcknowledgeChanged(
@@ -139,7 +148,7 @@ class SubmitReviewStep extends StatelessWidget {
                               color: Colors.grey.shade700)),
                       SizedBox(height: defaultPadding),
                       // Browse button + image preview
-                      if (!isViewMode)
+                      if (isAuditorRole && !isViewMode) ...[
                         Row(
                           crossAxisAlignment:
                               CrossAxisAlignment.start,
@@ -168,32 +177,40 @@ class SubmitReviewStep extends StatelessWidget {
                             const SizedBox(width: 16),
                             if (acknowlodgeImage &&
                                 imageBytes != null)
-                              Container(
-                                width: 150,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: Colors.grey.shade300),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(8),
-                                  child: Image.memory(imageBytes!,
-                                      fit: BoxFit.cover),
-                                ),
+                              _proofImageContainer(
+                                Image.memory(imageBytes!,
+                                    fit: BoxFit.cover),
                               ),
                           ],
                         ),
+                      ] else if ((auditObj["image"] ?? "")
+                          .toString()
+                          .isNotEmpty) ...[
+                        _proofImageContainer(
+                          Image.network(
+                            '$IMG_URL${auditObj["image"]}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                const SizedBox(),
+                          ),
+                        ),
+                      ],
                       SizedBox(height: defaultPadding * 2),
-                      // Submit button (hidden in view mode)
-                      if (!isViewMode)
+                      // Submit button (hidden in view mode or for non-auditor)
+                      if (isAuditorRole && !isViewMode)
                         Center(
                           child: ButtonComp(
                             width: 300,
                             label: "Submit to Review",
                             onPressed: onSubmit,
+                          ),
+                        ),
+                      if (!isAuditorRole)
+                        Center(
+                          child: ButtonComp(
+                            width: 300,
+                            label: "Next",
+                            onPressed: onNext ?? () {},
                           ),
                         ),
                     ],
@@ -203,6 +220,21 @@ class SubmitReviewStep extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _proofImageContainer(Widget child) {
+    return Container(
+      width: 150,
+      height: 120,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: child,
       ),
     );
   }

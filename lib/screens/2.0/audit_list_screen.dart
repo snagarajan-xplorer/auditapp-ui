@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
@@ -58,6 +59,9 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
   List<Map<String, dynamic>> filteredAudits = [];
   int currentPage = 1;
   static const int pageSize = 10;
+  Timer? _refreshTimer;
+
+  bool _initialized = false;
 
   @override
   void initState() {
@@ -81,10 +85,31 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     });
     year = financialYears[0]["value"]!;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized) {
+      _initialized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+    }
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
     setState(() => isLoading = true);
 
     Map<String, dynamic> data = {
@@ -155,10 +180,34 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
   Map<String, String> _getStatus(Map<String, dynamic> row) {
     final raw = row["status"];
+    String rawStr;
     if (raw is Map) {
-      return {"label": raw["label"]?.toString() ?? "-", "color": raw["color"]?.toString() ?? "grey"};
+      rawStr = const {
+        'Upcoming': 'S', 'Inprogress': 'PG', 'Published': 'P',
+        'Review': 'C', 'Cancelled': 'CL',
+      }[(raw["label"] ?? "").toString()] ?? "";
+      if (rawStr.isEmpty) {
+        return {"label": (raw["label"] ?? "-").toString(), "color": (raw["color"] ?? "grey").toString()};
+      }
+    } else {
+      rawStr = (raw ?? "").toString();
     }
-    return _statusMap[raw?.toString()] ?? {"label": raw?.toString() ?? "-", "color": "grey"};
+    if (rawStr == "S" && _isAuditExpired(row)) {
+      return {"label": "Expired", "color": "red"};
+    }
+    return _statusMap[rawStr] ?? {"label": rawStr, "color": "grey"};
+  }
+
+  bool _isAuditExpired(Map<String, dynamic> row) {
+    try {
+      final rawDate = row['start_date_raw'] ?? row['start_date'];
+      if (rawDate == null) return false;
+      final date = DateTime.parse(rawDate.toString());
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      return DateTime.now().isAfter(endOfDay);
+    } catch (_) {
+      return false;
+    }
   }
 
   // ─── Action Buttons per status ──────────────────────────────────────────────
@@ -185,6 +234,8 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       }
 
       final now = DateTime.now();
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      if (now.isAfter(endOfDay)) return false;
       return now.isAfter(scheduled.subtract(const Duration(minutes: 2))) ||
              now.isAtSameMomentAs(scheduled.subtract(const Duration(minutes: 2)));
     } catch (_) {
@@ -212,12 +263,11 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
         children: [
           Expanded(
             child: _actionButton("Edit", const Color(0xFF535353), () {
-              Navigator.pushNamed(context, "/createaudit",
+              Navigator.pushNamed(context, "/auditcategorylist-v2",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
                       mode: "Edit",
-                      mapData: allAudits,
-                      editData: row));
+                      mapData: row)).then((_) => _loadData());
             }, flexible: true),
           ),
           SizedBox(width: 5),
@@ -255,6 +305,18 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       );
     }
 
+    // Expired upcoming audit → Edit only
+    if (statusLabel == "Expired") {
+      return _actionButton("Edit", const Color(0xFF535353), () {
+        Navigator.pushNamed(context, "/createaudit",
+            arguments: ScreenArgument(
+                argument: ArgumentData.USER,
+                mode: "Edit",
+                mapData: allAudits,
+                editData: row)).then((_) => _loadData());
+      });
+    }
+
     // Upcoming → Edit + Start (Start only shows 2 mins before scheduled time)
     if (statusLabel == "Upcoming" || rawStatus == "S") {
       final showStart = _canStartAudit(row);
@@ -267,7 +329,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                       argument: ArgumentData.USER,
                       mode: "Edit",
                       mapData: allAudits,
-                      editData: row));
+                      editData: row)).then((_) => _loadData());
             }, flexible: true),
           ),
           if (showStart) ...[
@@ -277,6 +339,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                 Navigator.pushNamed(context, "/auditcategorylist-v2",
                     arguments: ScreenArgument(
                         argument: ArgumentData.USER,
+                        mode: "Start",
                         mapData: row));
               }, flexible: true),
             ),

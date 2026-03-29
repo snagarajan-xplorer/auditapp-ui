@@ -809,7 +809,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
       }
 
       _uc.saveAudit(context, data: raw, callback: () {
-        Navigator.pushNamed(context, '/auditlist');
+        Get.back();
       });
     }
   }
@@ -830,7 +830,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
     return LayoutScreen(
       previousScreenName: 'Audit',
       showBackbutton: true,
-      backEvent: () => Navigator.pop(context),
+      backEvent: () => Get.back(),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(defaultPadding),
@@ -849,7 +849,7 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           InkWell(
-                            onTap: () => Navigator.pop(context),
+                            onTap: () => Get.back(),
                             child: const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [

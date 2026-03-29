@@ -127,7 +127,7 @@ class _AuditCategoryScreenV2State
       if (!isViewMode && status == "S") {
         usercontroller.startAudit(context,
             data: {"audit_id": auditId}, callback: (success) {
-          _loadAuditData(auditId);
+          _loadAuditData(auditId, freshStart: true);
         });
       } else {
         _loadAuditData(auditId);
@@ -139,7 +139,26 @@ class _AuditCategoryScreenV2State
   //  Data Loading
   // =====================================================
 
-  void _loadAuditData(String auditId) {
+  void _clearAllAnswers() {
+    if (auditObj["categorys"] == null) return;
+    for (var cat in auditObj["categorys"]) {
+      cat["answer"] = "";
+      cat["total"] = "";
+      cat["submitAns"] = "";
+      cat["complete"] = false;
+      for (var q in (cat["questions"] as List? ?? [])) {
+        q["answer"] = "";
+        q["submitAns"] = "";
+        q["proofdocuments"] = [];
+        q["selecteddropdown"] = q["selecteddropdown"] is List ? [] : q["selecteddropdown"];
+      }
+    }
+    totalMark = "0";
+    answerMark = "0";
+    totalPer = "0";
+  }
+
+  void _loadAuditData(String auditId, {bool freshStart = false}) {
     Map<String, dynamic> data = {"id": auditId};
     usercontroller.getAuditQuestion(context, data: data, callback: (res) {
       auditObj = res;
@@ -190,11 +209,19 @@ class _AuditCategoryScreenV2State
       bool hasBranch =
           auditObj["branch"] != null && auditObj["branch"].length != 0;
       bool allCatsDone = _allCategoriesComplete();
-      if (auditStatus == "P") {
+
+      if (freshStart) {
+        _clearAllAnswers();
+        childs = [1, 0, 0, 0];
+        activeStep = 0;
+      } else if (auditStatus == "P") {
         childs = [2, 2, 2, 2];
         activeStep = 3;
         publishReviewed = true;
         _loadClientUsers();
+      } else if (auditStatus == "C" && pageargument?.mode == "Edit") {
+        childs = [1, 0, 0, 0];
+        activeStep = 0;
       } else if (auditStatus == "C") {
         childs = [2, 2, 2, 1];
         activeStep = 3;
@@ -500,10 +527,17 @@ class _AuditCategoryScreenV2State
             .where((obj) => obj["complete"] == true)
             .toList();
         if (auditObj["categorys"].length == catearr.length) {
-          // ALL categories complete → advance to Submit Review
+          final isAdminEditReview = pageargument?.mode == "Edit" &&
+              (auditObj["status"] ?? "").toString() == "C";
           childs[0] = 2;
           childs[1] = 2;
-          childs[2] = 1;
+          if (isAdminEditReview) {
+            childs[2] = 2;
+            childs[3] = 1;
+            _loadClientUsers();
+          } else {
+            childs[2] = 1;
+          }
           APIService(context).showWindowAlert(
               title: "",
               hideTitle: true,
@@ -512,7 +546,7 @@ class _AuditCategoryScreenV2State
                   AppTranslations.of(context)!.text("key_message_13"),
               callback: () {
                 showQuestion = false;
-                activeStep = 2;
+                activeStep = isAdminEditReview ? 3 : 2;
                 setState(() {});
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   _controller.jumpToPage(activeStep);
@@ -792,6 +826,15 @@ class _AuditCategoryScreenV2State
         gotoPage();
       });
     });
+  }
+
+  void _handleAdminNextFromReview() {
+    childs[2] = 2;
+    childs[3] = 1;
+    activeStep = 3;
+    _loadClientUsers();
+    setState(() {});
+    gotoPage();
   }
 
   void _handleClientEmailChanged(String? val) {
@@ -1145,6 +1188,8 @@ class _AuditCategoryScreenV2State
             return SubmitReviewStep(
               auditObj: auditObj,
               isViewMode: isViewMode,
+              isAuditorRole: !['SA', 'AD'].contains(
+                  usercontroller.userData.role ?? ''),
               wdt: wdt,
               reviewAcknowledged: reviewAcknowledged,
               acknowlodgeImage: acknowlodgeImage,
@@ -1153,6 +1198,7 @@ class _AuditCategoryScreenV2State
               onAcknowledgeChanged: _handleAcknowledgeChanged,
               onBrowse: _handleBrowseAcknowledgeImage,
               onSubmit: _handleSubmitReview,
+              onNext: _handleAdminNextFromReview,
             );
           case 3:
             return PublishedStep(
