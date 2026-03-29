@@ -1,15 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
-
-/// Set to true to use mock data for API responses
-const String env = 'prod';
-
-// Android emulator uses 10.0.2.2 to reach host machine's localhost
-String get _apiHost {
-  if (kIsWeb) return '127.0.0.1';
-  if (defaultTargetPlatform == TargetPlatform.android) return '10.0.2.2';
-  return '127.0.0.1';
-}
 
 const primaryColor = Color(0xFF2697FF);
 const secondaryColor = Color(0xFF2A2D3E);
@@ -104,37 +93,16 @@ Color colorForScore(dynamic score) {
 }
 
 // ============================================================================
-// API CONFIGURATION
-// ============================================================================
-// IMPORTANT: Make sure your backend server is running before using local URLs
-//
-// For LOCAL DEVELOPMENT:
-// - Uncomment the 127.0.0.1:8000 URLs below
-// - Start your backend server on port 8000
-// - If using Docker: use 'host.docker.internal' instead of '127.0.0.1'
-//
-// For PRODUCTION:
-// - Uncomment one of the production URLs (demo.webtekie.in or auditondgo.com)
-// - Ensure CORS is properly configured on the backend
+// API CONFIGURATION — injected at build time via --dart-define-from-file
+// Local:      flutter run --dart-define-from-file=env.local.json
+// Android:    flutter run --dart-define-from-file=env.local.android.json
+// Production: flutter build web --release  (defaults apply)
+//             flutter build web --release --dart-define-from-file=env.prod.json
 // ============================================================================
 
-//https://audit.webtekie.in/public/api/login
-
-// LOCAL DEVELOPMENT (requires backend running on port 8000)
-const API_URL = "http://127.0.0.1:8000/api/";
-const IMG_URL = "http://127.0.0.1:8000/storage/";
-
-// DEMO SERVER
-// const API_URL = "https://demo.webtekie.in/restapi/public/api/";
-// const IMG_URL = "https://demo.webtekie.in/restapi/public/storage/";
-
-// CURRENTLY ACTIVE (LOCAL - REQUIRES BACKEND RUNNING!)
-// final String API_URL = "http://$_apiHost:8000/api/";
-// final String IMG_URL = "http://$_apiHost:8000/api/img/";
-
-// PRODUCTION SERVER
-// const API_URL = "https://auditondgo.com/api/";
-// const IMG_URL = "https://auditondgo.com/storage/";
+const String env = String.fromEnvironment('ENV', defaultValue: 'prod');
+const String API_URL = String.fromEnvironment('API_URL', defaultValue: 'https://api.auditondgo.com/api/');
+const String IMG_URL = String.fromEnvironment('IMG_URL', defaultValue: 'https://api.auditondgo.com/api/img/');
 
 
 
