@@ -5,7 +5,8 @@ import 'package:audit_app/screens/addtemplatescreen.dart';
 import 'package:audit_app/screens/auditcategoryscreen.dart';
 import 'package:audit_app/screens/auditinfoscreen.dart';
 import 'package:audit_app/screens/auditlistscreen.dart';
-import 'package:audit_app/screens/changepassword_screen.dart';
+import 'package:audit_app/screens/2.0/change_password_screen.dart';
+import 'package:audit_app/screens/2.0/forgot_password_screen.dart';
 import 'package:audit_app/screens/questionscreen.dart';
 
 // import 'package:audit_app/screens/templatelistscreen.dart';
@@ -82,7 +83,10 @@ class _MainAppState extends State<MainApp> {
           getPages: [
             GetPage(
                 name: "/changepassword/:token",
-                page: () => ChangepasswordScreen()),
+                page: () => ChangePasswordScreen()),
+            GetPage(
+                name: "/forgotpassword",
+                page: () => ForgotPasswordScreen()),
             //GetPage(name: "/login", page: () => Loginscreen()),
             GetPage(name: "/dashboard", page: () => DashboardScreen()),
             GetPage(name: "/user", page: () => UserScreenV2()),

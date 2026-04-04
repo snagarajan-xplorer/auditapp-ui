@@ -61,6 +61,7 @@ class _SideMenuState extends State<SideMenu> {
   @override
   Widget build(BuildContext context) {
     final menuKey = _resolveMenuKey();
+    final isAuditor = usercontroller.userData.role == 'JrA';
 
     // Dynamically determine which sections should be expanded based on selected menu key
     const auditStatusKeys = ['dashboard', 'scheduled', 'unscheduled', 'assigned-audit'];
@@ -120,6 +121,7 @@ class _SideMenuState extends State<SideMenu> {
                     backgroundColor: Color(0xFF505050),
                     collapsedBackgroundColor: Color(0xFF505050),
                     children: [
+                      if (!isAuditor)
                       DrawerListTile(
                         menuKey: 'dashboard',
                         selectedMenuKey: menuKey,
@@ -133,6 +135,7 @@ class _SideMenuState extends State<SideMenu> {
                           }
                         },
                       ),
+                      if (!isAuditor)
                       DrawerListTile(
                         menuKey: 'scheduled',
                         selectedMenuKey: menuKey,
@@ -148,6 +151,7 @@ class _SideMenuState extends State<SideMenu> {
                           }
                         },
                       ),
+                      if (!isAuditor)
                       DrawerListTile(
                         menuKey: 'unscheduled',
                         selectedMenuKey: menuKey,
@@ -182,6 +186,7 @@ class _SideMenuState extends State<SideMenu> {
                         ),
                     ],
                   ),
+                if (!isAuditor)
                 // Reports Section
                   ExpansionTile(
                     initiallyExpanded: isReportsExpanded,
@@ -372,6 +377,7 @@ class _SideMenuState extends State<SideMenu> {
                     ],
                   ),
 
+                  if (!isAuditor)
                   // Settings Section
                   ExpansionTile(
                     initiallyExpanded: isSettingsExpanded,
@@ -445,6 +451,7 @@ class _SideMenuState extends State<SideMenu> {
                     ],
                   ),
 
+                  if (!isAuditor)
                   // Audit Section
                   ExpansionTile(
                     initiallyExpanded: isAuditExpanded,

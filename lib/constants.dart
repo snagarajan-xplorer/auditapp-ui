@@ -103,11 +103,6 @@ Color colorForScore(dynamic score) {
   return naColor;
 }
 
-//https://audit.webtekie.in/public/api/login
-
-// LOCAL DEVELOPMENT (requires backend running on port 8000)
-const API_URL = "http://127.0.0.1:8000/api/";
-const IMG_URL = "http://127.0.0.1:8000/storage/";
 
 // DEMO SERVER
 // const API_URL = "https://demo.webtekie.in/restapi/public/api/";
@@ -117,9 +112,13 @@ const IMG_URL = "http://127.0.0.1:8000/storage/";
 // final String API_URL = "http://$_apiHost:8000/api/";
 // final String IMG_URL = "http://$_apiHost:8000/api/img/";
 
+// LOCAL DEVELOPMENT
+// const API_URL = "http://127.0.0.1:8000/api/";
+// const IMG_URL = "http://127.0.0.1:8000/storage/";
+
 // PRODUCTION SERVER
-// const API_URL = "https://auditondgo.com/api/";
-// const IMG_URL = "https://auditondgo.com/storage/";
+const API_URL = "https://api.auditondgo.com/api/";
+const IMG_URL = "https://api.auditondgo.com/storage/";
 
 
 class StorageKeys {
