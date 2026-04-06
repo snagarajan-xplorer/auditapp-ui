@@ -211,7 +211,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
               ),
               child: logoPath.isNotEmpty
                   ? Image.network(
-                      '$IMG_URL$logoPath',
+                      imgUrl(logoPath),
                       height: 36,
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
@@ -373,7 +373,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: Image.network(
-                      '$IMG_URL$_existingLogoPath',
+                      imgUrl(_existingLogoPath!),
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
                           const Icon(Icons.image_not_supported),

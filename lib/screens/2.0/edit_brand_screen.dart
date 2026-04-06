@@ -260,11 +260,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: Image.network(
-                      Uri.encodeFull(
-                        _existingLogoPath!.startsWith('http')
-                            ? _existingLogoPath!
-                            : '$IMG_URL$_existingLogoPath',
-                      ),
+                      imgUrl(_existingLogoPath!),
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
                           const Icon(Icons.image_not_supported),

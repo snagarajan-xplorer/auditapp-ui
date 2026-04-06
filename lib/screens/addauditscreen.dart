@@ -716,7 +716,7 @@ class _AddAuditScreenState extends State<AddAuditScreen> {
                                               onChanged: (value){
                                                 List<dynamic> selectCompany = clientlist.where((element)=>element["clientid"].toString() == value.toString()).toList();
                                                 if(selectCompany.isNotEmpty){
-                                                  _image = IMG_URL+selectCompany[0]["logo"];
+                                                  _image = imgUrl(selectCompany[0]["logo"]);
                                                   loadImage = true;
                                                   setState(() {
 

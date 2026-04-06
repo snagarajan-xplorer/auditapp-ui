@@ -188,7 +188,7 @@ class SubmitReviewStep extends StatelessWidget {
                           .isNotEmpty) ...[
                         _proofImageContainer(
                           Image.network(
-                            '$IMG_URL${auditObj["image"]}',
+                            imgUrl(auditObj["image"]),
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) =>
                                 const SizedBox(),

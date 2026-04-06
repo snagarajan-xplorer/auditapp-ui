@@ -68,7 +68,7 @@ DataRow recentFileDataRow(dynamic fileInfo,context,role) {
               height: 30,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                    image: NetworkImage(IMG_URL+fileInfo["image"]),
+                    image: NetworkImage(imgUrl(fileInfo["image"])),
                   fit: BoxFit.cover
                 )
               ),

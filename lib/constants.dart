@@ -114,7 +114,9 @@ Color colorForScore(dynamic score) {
 
 // LOCAL DEVELOPMENT
 const API_URL = "http://127.0.0.1:8000/api/";
-const IMG_URL = "http://127.0.0.1:8000/api/img/";
+const IMG_URL = "http://127.0.0.1:8000/storage/";
+
+String imgUrl(String path) => Uri.encodeFull('${API_URL}img/$path');
 
 // PRODUCTION SERVER
 // const API_URL = "https://api.auditondgo.com/api/";

@@ -845,7 +845,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                   top:0,
                                   child: InkWell(
                                     onTap: (){
-                                      launchUrl(Uri.parse(IMG_URL+imgelement["image"].toString()));
+                                      launchUrl(Uri.parse(imgUrl(imgelement["image"].toString())));
                                     },
                                     child: Container(
                                       width: 90,
@@ -853,7 +853,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                                       decoration: BoxDecoration(
                                           image: DecorationImage(
                                               fit: BoxFit.cover,
-                                              image: image ? NetworkImage(IMG_URL+imgelement["image"],):AssetImage(img)
+                                              image: image ? NetworkImage(imgUrl(imgelement["image"].toString()),):AssetImage(img)
                                           ),
                                           borderRadius: BorderRadius.circular(8)
                                       ),

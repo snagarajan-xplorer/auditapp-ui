@@ -208,7 +208,7 @@ class _AddDataScreenState extends State<AddDataScreen> {
                                                 decoration: BoxDecoration(
                                                     border: Border.all(width: 2,color: bgColor),
                                                     borderRadius: BorderRadius.all(Radius.circular(50)),
-                                                    image: DecorationImage(image: mode == "Add" ? loadImage == false ? AssetImage("assets/images/person.jpeg") : MemoryImage(_imageBytes!):_imageName != null ? NetworkImage(IMG_URL+_imageName!):AssetImage("assets/images/person.jpeg"))
+                                                    image: DecorationImage(image: mode == "Add" ? loadImage == false ? AssetImage("assets/images/person.jpeg") : MemoryImage(_imageBytes!):_imageName != null ? NetworkImage(imgUrl(_imageName!)):AssetImage("assets/images/person.jpeg"))
                                                 ),
                                               )
                                           ),

@@ -278,7 +278,7 @@ class ProfileCard extends StatelessWidget {
                 : ClipRRect(
                     borderRadius: BorderRadius.circular(21.0),
                     child: Image.network(
-                      IMG_URL + usercontroller.userData.image!,
+                      imgUrl(usercontroller.userData.image!),
                       fit: BoxFit.cover,
                       width: 40,
                       height: 40,

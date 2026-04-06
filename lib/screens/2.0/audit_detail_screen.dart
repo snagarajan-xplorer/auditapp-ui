@@ -419,8 +419,8 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
 
   Widget _buildCompanyLogo() {
     final logo = _getField("company_logo", "");
-    final imgUrl = _getField("image", "");
-    final logoPath = logo.isNotEmpty ? logo : imgUrl;
+    final imagePath = _getField("image", "");
+    final logoPath = logo.isNotEmpty ? logo : imagePath;
 
     return Container(
       width: 225,
@@ -433,7 +433,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
           ? ClipRRect(
               borderRadius: BorderRadius.circular(13),
               child: Image.network(
-                "$IMG_URL$logoPath",
+                imgUrl(logoPath),
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => _logoPlaceholder(),
               ),

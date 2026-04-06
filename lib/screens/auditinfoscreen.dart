@@ -78,7 +78,7 @@ class _AuditInfoScreenState extends State<AuditInfoScreen> {
     return ContainerBgImage(
       height: 240,
       width: 350,
-      imgPath: IMG_URL+img,
+      imgPath: imgUrl(img),
     );
   }
   Widget sideContent(element){

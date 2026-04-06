@@ -193,7 +193,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                           margin: EdgeInsets.only(left: 5,right: 5),
                           child: InkWell(
                             onTap: (){
-                              launchUrl(Uri.parse(IMG_URL+imgelement["image"]));
+                              launchUrl(Uri.parse(imgUrl(imgelement["image"])));
                             },
                             child: Container(
                               width: 90,
@@ -201,7 +201,7 @@ class _AuditDetailsState extends State<AuditDetails> {
                               decoration: BoxDecoration(
                                   image: DecorationImage(
                                       fit: BoxFit.cover,
-                                      image: image ? NetworkImage(IMG_URL+imgelement["image"],):AssetImage(img)
+                                      image: image ? NetworkImage(imgUrl(imgelement["image"]),):AssetImage(img)
                                   ),
                                   borderRadius: BorderRadius.circular(8)
                               ),

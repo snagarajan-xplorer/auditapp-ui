@@ -528,7 +528,7 @@ class QuestionViewStep extends StatelessWidget {
       );
     } else if (image) {
       imageWidget = Image.network(
-        IMG_URL + imgelement["image"].toString(),
+        imgUrl(imgelement["image"].toString()),
         fit: BoxFit.cover,
         width: 140,
         height: 100,
@@ -557,7 +557,7 @@ class QuestionViewStep extends StatelessWidget {
                     ? imgelement["image"].toString()
                     : null;
                 if (serverPath != null) {
-                  launchUrl(Uri.parse(IMG_URL + serverPath));
+                  launchUrl(Uri.parse(imgUrl(serverPath)));
                 }
               },
               child: ClipRRect(

@@ -152,7 +152,8 @@ class _TemplateEditScreenState extends State<TemplateEditScreen> {
                           decoration: BoxDecoration(
                               image: DecorationImage(
                                   fit: BoxFit.cover,
-                                  image: NetworkImage(IMG_URL+imgelement["image"],
+                                  image: NetworkImage(imgUrl(imgelement["image"]),
+
 
 
                                   )),
