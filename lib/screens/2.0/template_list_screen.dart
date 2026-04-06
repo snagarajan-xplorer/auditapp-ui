@@ -204,7 +204,7 @@ class _TemplateScreenState extends State<TemplateScreen> {
           );  
         }),
         TableColumnDef(label: 'Template Name', flex: 2, key: 'templatename'),
-        TableColumnDef(label: 'Brand', flex: 2, key: 'clientname'),
+        TableColumnDef(label: 'Client', flex: 2, key: 'clientname'),
         TableColumnDef(label: 'Created Date', flex: 2, key: 'displayDate'),
         TableColumnDef(label: 'Template created by', flex: 2, key: 'created_by'),
         TableColumnDef(
@@ -355,7 +355,7 @@ void _downloadTemplate(String templateId) {
                     SizedBox(
                       width: double.infinity,
                       child: AppLabeledField(
-                        label: 'Brand',
+                        label: 'Client',
                         required: true,
                         child: DropdownButtonFormField<String>(
                           initialValue: selectedClientId,
@@ -394,7 +394,7 @@ void _downloadTemplate(String templateId) {
               SizedBox(
                 width: 320,
                 child: AppLabeledField(
-                  label: 'Brand',
+                  label: 'Client',
                   required: true,
                   child: DropdownButtonFormField<String>(
                     initialValue: selectedClientId,

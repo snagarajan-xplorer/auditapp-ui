@@ -98,7 +98,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
   void _submit() {
     if (_brandNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Brand name is required')));
+          .showSnackBar(const SnackBar(content: Text('Client name is required')));
       return;
     }
 
@@ -181,7 +181,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Brand Name',
+                const Text('Client Name',
                     style: TextStyle(
                         fontSize: 14, color: Color(0xFF505050))),
                 const SizedBox(height: 8),
@@ -234,8 +234,8 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
               // Show logo preview
               if (_logoFile != null)
                 Container(
-                  width: 95,
-                  height: 40,
+                  width: 150,
+                  height: 60,
                   decoration: BoxDecoration(
                     border: Border.all(color: const Color(0xFFDDDDDD)),
                     borderRadius: BorderRadius.circular(4),
@@ -251,8 +251,8 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
               else if (_existingLogoPath != null &&
                   _existingLogoPath!.isNotEmpty)
                 Container(
-                  width: 95,
-                  height: 40,
+                  width: 150,
+                  height: 60,
                   decoration: BoxDecoration(
                     border: Border.all(color: const Color(0xFFDDDDDD)),
                     borderRadius: BorderRadius.circular(4),
@@ -260,7 +260,11 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: Image.network(
-                      '$IMG_URL$_existingLogoPath',
+                      Uri.encodeFull(
+                        _existingLogoPath!.startsWith('http')
+                            ? _existingLogoPath!
+                            : '$IMG_URL$_existingLogoPath',
+                      ),
                       fit: BoxFit.contain,
                       errorBuilder: (_, __, ___) =>
                           const Icon(Icons.image_not_supported),
@@ -287,7 +291,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _labeledField(label: 'Client Name', controller: _clientNameController),
+                    _labeledField(label: 'Contact Name', controller: _clientNameController),
                     const SizedBox(height: 16),
                     _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone),
                     const SizedBox(height: 16),
@@ -297,7 +301,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _labeledField(label: 'Client Name', controller: _clientNameController)),
+                    Expanded(child: _labeledField(label: 'Contact Name', controller: _clientNameController)),
                     const SizedBox(width: 20),
                     Expanded(child: _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone)),
                     const SizedBox(width: 20),
@@ -393,7 +397,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
                       borderRadius: BorderRadius.circular(4)),
                 ),
                 child: Text(
-                  _isEditMode ? 'Update Brand' : 'Create Brand',
+                  _isEditMode ? 'Update Client' : 'Create Client',
                   style: const TextStyle(
                       fontSize: 14, color: Colors.white), 
                 ),

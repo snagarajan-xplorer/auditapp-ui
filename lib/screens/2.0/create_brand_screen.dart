@@ -100,7 +100,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
   void _submit() {
     if (_brandNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Brand name is required')));
+          .showSnackBar(const SnackBar(content: Text('Client name is required')));
       return;
     }
 
@@ -175,7 +175,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
 
   List<TableColumnDef> get _brandColumns => [
         TableColumnDef(
-          label: 'Brand',
+          label: 'Client',
           flex: 1,
           cellBuilder: (row, index) {
             final pageIndex = (_currentPage - 1) * _pageSize + index + 1;
@@ -223,15 +223,15 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
             );
           },
         ),
-        TableColumnDef(label: 'Brand Name', flex: 2, key: 'clientname'),
+        TableColumnDef(label: 'Client Name', flex: 2, key: 'clientname'),
         TableColumnDef(
-          label: 'Client Name',
+          label: 'Contact Name',
           flex: 2,
           key: 'contactname',
         ),
         TableColumnDef(label: 'Mobile', flex: 2, key: 'clientmobile'),
         TableColumnDef(label: 'Email', flex: 3, key: 'clientemail'),
-        TableColumnDef(label: 'Brand created by', flex: 2, key: 'created_by'),
+        TableColumnDef(label: 'Client created by', flex: 2, key: 'created_by'),
         TableColumnDef(
           label: 'Status',
           flex: 2,
@@ -298,7 +298,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
           SizedBox(
             width: double.infinity,
             child: AppLabeledField(
-              label: 'Brand Name',
+              label: 'Client Name',
               child: TextField(
                 controller: _brandNameController,
                 decoration: AppFormStyles.inputDecoration(),
@@ -400,7 +400,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _labeledField(label: 'Client Name', controller: _clientNameController),
+                    _labeledField(label: 'Contact Name', controller: _clientNameController),
                     const SizedBox(height: 16),
                     _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone),
                     const SizedBox(height: 16),
@@ -410,7 +410,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
               : Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _labeledField(label: 'Client Name', controller: _clientNameController)),
+                    Expanded(child: _labeledField(label: 'Contact Name', controller: _clientNameController)),
                     const SizedBox(width: 20),
                     Expanded(child: _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone)),
                     const SizedBox(width: 20),
@@ -432,7 +432,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
                       borderRadius: BorderRadius.circular(4)),
                 ),
                 child: Text(
-                  _isEditMode ? 'Update Brand' : 'Create Brand',
+                  _isEditMode ? 'Update Client' : 'Create Client',
                   style: const TextStyle(
                       fontSize: 14, color: Colors.white),
                 ),
@@ -518,7 +518,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
             Container(
               padding: const EdgeInsets.all(defaultPadding),
               child: const Text(
-                'Create Brand',
+                'Create Client',
                 style: TextStyle(
                     fontSize: 20,
                     color: Color(0xFF505050),

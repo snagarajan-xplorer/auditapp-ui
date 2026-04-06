@@ -227,7 +227,7 @@ class _TemplateEditScreenV2State extends State<TemplateEditScreenV2> {
               SizedBox(
                 width: 320,
                 child: AppLabeledField(
-                  label: 'Brand',
+                  label: 'Client',
                   child: DropdownButtonFormField<String>(
                     initialValue: selectedClientId,
                     isExpanded: true,

@@ -440,7 +440,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppFormStyles.fieldLabel('Brand'),
+        AppFormStyles.fieldLabel('Client'),
         Container(
           width: Responsive.isDesktop(context)
               ? MediaQuery.of(context).size.width * 0.45

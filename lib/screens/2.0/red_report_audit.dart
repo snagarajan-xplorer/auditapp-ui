@@ -338,16 +338,19 @@ class _RedReportScreenState extends State<RedReportScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "See the Risk. Strengthen the Control",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w100,
-                          color: Color(0xFF898989),
+                      Flexible(
+                        child: Text(
+                          "See the Risk. Strengthen the Control",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w100,
+                            color: Color(0xFF898989),
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Financial Year and Zone Dropdowns
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildZoneDropdown(),
                           SizedBox(width: 12),

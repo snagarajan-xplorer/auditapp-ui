@@ -35,7 +35,9 @@ class _SideMenuState extends State<SideMenu> {
     '/assignedaudit': ['assigned-audit'],
     '/all-india-state-wise-audit': ['map-allindia-state'],
     '/red-report': ['map-red-report'],
-    '/user': ['settings-users', 'reports-red', 'reports-ncc'],
+    '/user': ['settings-users'],
+    '/red-report-list': ['reports-red'],
+    '/nc-report-list': ['reports-ncc'],
     '/templatelist': ['settings-template'],
     '/createbrand': ['settings-brand'],
     '/createaudit': ['audit-create'],
@@ -347,10 +349,7 @@ class _SideMenuState extends State<SideMenu> {
                             press: () {
                               if (widget.enableAction!) {
                                 usercontroller.selectedMenuKey = 'reports-red';
-                                Navigator.pushNamed(context, "/user",
-                                    arguments: ScreenArgument(
-                                        argument: ArgumentData.USER,
-                                        mapData: {}));
+                                Navigator.pushNamed(context, "/red-report-list");
                               } else {
                                 widget.onCallback!(7);
                               }
@@ -363,10 +362,7 @@ class _SideMenuState extends State<SideMenu> {
                             press: () {
                               if (widget.enableAction!) {
                                 usercontroller.selectedMenuKey = 'reports-ncc';
-                                Navigator.pushNamed(context, "/user",
-                                    arguments: ScreenArgument(
-                                        argument: ArgumentData.USER,
-                                        mapData: {}));
+                                Navigator.pushNamed(context, "/nc-report-list");
                               } else {
                                 widget.onCallback!(8);
                               }

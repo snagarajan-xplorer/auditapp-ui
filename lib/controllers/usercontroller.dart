@@ -1576,6 +1576,44 @@ class UserController extends GetxController {
     });
   }
 
+  void getRedReportList(context,
+      {required Map<String, dynamic> data,
+      required Function(List<dynamic>) callback}) {
+    APIService(context).postData("getRedReportList", data, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (!res.containsKey("type")) {
+          if (res.containsKey("data")) {
+            callback(res["data"]);
+          } else {
+            callback([]);
+          }
+          return;
+        }
+      }
+      callback([]);
+    });
+  }
+
+  void getNCReportList(context,
+      {required Map<String, dynamic> data,
+      required Function(List<dynamic>) callback}) {
+    APIService(context).postData("getNCReportList", data, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (!res.containsKey("type")) {
+          if (res.containsKey("data")) {
+            callback(res["data"]);
+          } else {
+            callback([]);
+          }
+          return;
+        }
+      }
+      callback([]);
+    });
+  }
+
   void getPublishedSummaryReport(context,
       {required Map<String, dynamic> data,
       required Function(Map<String, dynamic>) callback}) {
