@@ -109,6 +109,8 @@ class _SideMenuState extends State<SideMenu> {
                   // Audit Status Section
                   ExpansionTile(
                     initiallyExpanded: isAuditStatusExpanded,
+                    shape: Border(bottom: BorderSide(color: Color(0xFF777777))),
+                    collapsedShape: Border(bottom: BorderSide(color: Color(0xFF777777))),
                     title: Text(
                       "Audit Status",
                       style: TextStyle(
@@ -192,6 +194,8 @@ class _SideMenuState extends State<SideMenu> {
                 // Reports Section
                   ExpansionTile(
                     initiallyExpanded: isReportsExpanded,
+                    shape: Border(bottom: BorderSide(color: Color(0xFF777777))),
+                    collapsedShape: Border(bottom: BorderSide(color: Color(0xFF777777))),
                     title: Text(
                       "Reports",
                       style: TextStyle(
@@ -377,6 +381,8 @@ class _SideMenuState extends State<SideMenu> {
                   // Settings Section
                   ExpansionTile(
                     initiallyExpanded: isSettingsExpanded,
+                    shape: Border(bottom: BorderSide(color: Color(0xFF777777))),
+                    collapsedShape: Border(bottom: BorderSide(color: Color(0xFF777777))),
                     title: Text(
                       "Settings",
                       style: TextStyle(
@@ -451,6 +457,8 @@ class _SideMenuState extends State<SideMenu> {
                   // Audit Section
                   ExpansionTile(
                     initiallyExpanded: isAuditExpanded,
+                    shape: Border(bottom: BorderSide(color: Color(0xFF777777))),
+                    collapsedShape: Border(bottom: BorderSide(color: Color(0xFF777777))),
                     title: Text(
                       "Audit",
                       style: TextStyle(
@@ -502,6 +510,18 @@ class _SideMenuState extends State<SideMenu> {
                 ],
               ),
             ),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              alignment: Alignment.center,
+              child: Text(
+                "Powered by Profaids Consulting",
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -531,12 +551,21 @@ class DrawerListTile extends StatefulWidget {
 }
 
 class _DrawerListTileState extends State<DrawerListTile> {
+  bool _isHovered = false;
+
   @override
   Widget build(BuildContext context) {
     final isSelected = widget.menuKey == widget.selectedMenuKey;
-    return Container(
-      color: isSelected ? Color(0xFF02B2EB) : Colors.transparent,
-      child: ListTile(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: Container(
+        color: isSelected
+            ? Color(0xFF02B2EB)
+            : _isHovered
+                ? Color(0xFF626262)
+                : Colors.transparent,
+        child: ListTile(
         onTap: widget.press,
         horizontalTitleGap: 0.0,
         contentPadding:
@@ -559,6 +588,7 @@ class _DrawerListTileState extends State<DrawerListTile> {
               ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

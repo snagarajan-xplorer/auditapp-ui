@@ -480,7 +480,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
           child: const Text(
-            'Template list',
+            'Client list', 
             style: TextStyle(
                 fontSize: 20,color: Color(0xFF505050), fontWeight: FontWeight.w600),
           ),

@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String email = "";
   String password = "";
   String selectedRole = "AD";
+  bool showPassword = false;
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   static final RegExp _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
@@ -106,8 +107,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: AppLabeledField(
                         label: 'Password',
                         child: TextFormField(
-                          obscureText: true,
-                          decoration: AppFormStyles.inputDecoration(),
+                          obscureText: !showPassword,
+                          decoration: AppFormStyles.inputDecoration(
+                            suffixIcon: IconButton(
+                              icon: Icon(showPassword ? Icons.visibility : Icons.visibility_off),
+                              onPressed: () {
+                                setState(() {
+                                  showPassword = !showPassword;
+                                });
+                              },
+                            ),
+                          ),
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF505050),
@@ -214,6 +224,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white,
                           ),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text(
+                      'Powered by Profaids Consulting',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF999999),
                       ),
                     ),
                   ],

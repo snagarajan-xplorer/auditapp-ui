@@ -123,8 +123,6 @@ const IMG_URL = "http://127.0.0.1:8000/storage/";
 String imgUrl(String path) => Uri.encodeFull('${API_URL}img/$path');
 
 
-
-
 class StorageKeys {
   static const String appLanguageCode = 'APP_LANGUAGE_CODE';
   static const String appThemeMode = 'APP_THEME_MODE';

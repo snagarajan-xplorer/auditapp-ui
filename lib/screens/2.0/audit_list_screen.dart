@@ -36,7 +36,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     'P':  {'label': 'Published',   'color': 'green'},
     'IP': {'label': 'Inprogress',  'color': 'orange'},
     'PG': {'label': 'Inprogress',  'color': 'orange'},
-    'C':  {'label': 'Review',      'color': 'pink'},
+    'C':  {'label': 'Completed',   'color': 'green'},
     'S':  {'label': 'Upcoming',    'color': 'purple'},
     'CL': {'label': 'Cancelled',   'color': 'red'},
   };
@@ -184,7 +184,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     if (raw is Map) {
       rawStr = const {
         'Upcoming': 'S', 'Inprogress': 'PG', 'Published': 'P',
-        'Review': 'C', 'Cancelled': 'CL',
+        'Review': 'C', 'Completed': 'C', 'Cancelled': 'CL',
       }[(raw["label"] ?? "").toString()] ?? "";
       if (rawStr.isEmpty) {
         return {"label": (raw["label"] ?? "-").toString(), "color": (raw["color"] ?? "grey").toString()};
@@ -257,26 +257,25 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       });
     }
 
-    // Review → Edit + Publish
-    if (statusLabel == "Review" || rawStatus == "C") {
+    // Review (Completed by JrA) → View Audit Details first
+    if (statusLabel == "Completed" || statusLabel == "Review" || rawStatus == "C") {
       return Row(
         children: [
           Expanded(
             child: _actionButton("Edit", const Color(0xFF535353), () {
-              Navigator.pushNamed(context, "/auditcategorylist-v2",
+              Navigator.pushNamed(context, "/auditdetails",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
-                      mode: "Edit",
                       mapData: row)).then((_) => _loadData());
             }, flexible: true),
           ),
           SizedBox(width: 5),
           Expanded(
             child: _actionButton("Publish", const Color(0xFF67AC5B), () {
-              Navigator.pushNamed(context, "/auditcategorylist-v2",
+              Navigator.pushNamed(context, "/auditdetails",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
-                      mapData: row));
+                      mapData: row)).then((_) => _loadData());
             }, flexible: true),
           ),
         ],
@@ -657,7 +656,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
                   },
                 ),
                 TableColumnDef(
-                  label: "Report", flex: 3, isLast: true,
+                  label: "Action", flex: 3, isLast: true,
                   cellBuilder: (row, _) => Container(
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     child: _buildActionButtons(row),

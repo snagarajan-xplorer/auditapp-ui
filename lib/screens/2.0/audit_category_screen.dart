@@ -16,6 +16,7 @@ import 'audit_steps/audit_activity_step.dart';
 import 'audit_steps/question_view_step.dart';
 import 'audit_steps/submit_review_step.dart';
 import 'audit_steps/published_step.dart';
+import 'audit_steps/audit_completed_step.dart';
 
 /// V2.0 Audit Execution Screen
 /// 4-step stepper: Branch Details → Audit Activity → Submit Review → Published
@@ -214,18 +215,23 @@ class _AuditCategoryScreenV2State
         _clearAllAnswers();
         childs = [1, 0, 0, 0];
         activeStep = 0;
+      } else if (auditStatus == "P" && isViewMode) {
+        childs = [2, 2, 2, 2];
+        activeStep = 0;
+        publishReviewed = true;
+        if (!_isJrA) _loadClientUsers();
       } else if (auditStatus == "P") {
         childs = [2, 2, 2, 2];
         activeStep = 3;
         publishReviewed = true;
-        _loadClientUsers();
+        if (!_isJrA) _loadClientUsers();
       } else if (auditStatus == "C" && pageargument?.mode == "Edit") {
         childs = [1, 0, 0, 0];
         activeStep = 0;
       } else if (auditStatus == "C") {
-        childs = [2, 2, 2, 1];
+        childs = [2, 2, 2, _isJrA ? 2 : 1];
         activeStep = 3;
-        _loadClientUsers();
+        if (!_isJrA) _loadClientUsers();
       } else if (hasBranch && allCatsDone) {
         childs = [2, 2, 1, 0];
         activeStep = 2;
@@ -303,6 +309,8 @@ class _AuditCategoryScreenV2State
       setState(() {});
     }
   }
+
+  bool get _isJrA => usercontroller.userData.role == 'JrA';
 
   bool _allCategoriesComplete() {
     if (auditObj["categorys"] == null ||
@@ -520,59 +528,9 @@ class _AuditCategoryScreenV2State
           .toList();
       answerQuest = ansList.length;
       if (ansList.length == questionArray.length) {
-        showNextBtn = false;
-        setState(() {});
         setCategoryStatus(categoryObj);
-        List<dynamic> catearr = auditObj["categorys"]
-            .where((obj) => obj["complete"] == true)
-            .toList();
-        if (auditObj["categorys"].length == catearr.length) {
-          final isAdminEditReview = pageargument?.mode == "Edit" &&
-              (auditObj["status"] ?? "").toString() == "C";
-          childs[0] = 2;
-          childs[1] = 2;
-          if (isAdminEditReview) {
-            childs[2] = 2;
-            childs[3] = 1;
-            _loadClientUsers();
-          } else {
-            childs[2] = 1;
-          }
-          APIService(context).showWindowAlert(
-              title: "",
-              hideTitle: true,
-              okButtonColor: const Color(0xFF67AC5B),
-              desc:
-                  AppTranslations.of(context)!.text("key_message_13"),
-              callback: () {
-                showQuestion = false;
-                activeStep = isAdminEditReview ? 3 : 2;
-                setState(() {});
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _controller.jumpToPage(activeStep);
-                });
-              });
-        } else {
-          // Current category complete, others remain
-          APIService(context).showWindowAlert(
-              title: "",
-              hideTitle: true,
-              okButtonColor: const Color(0xFF67AC5B),
-              desc:
-                  AppTranslations.of(context)!.text("key_message_13"),
-              callback: () {
-                showQuestion = false;
-                activeStep = 1;
-                _syncAuditActivityStepState();
-                setState(() {});
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _controller.jumpToPage(activeStep);
-                });
-              });
-        }
-      } else {
-        onCallback(1);
       }
+      onCallback(1);
       setState(() {});
     });
   }
@@ -695,6 +653,58 @@ class _AuditCategoryScreenV2State
     }
   }
 
+  void _showCategoryCompletePopup() {
+    List ansList = questionArray
+        .where((ele) => ele["submitAns"].toString().trim().isNotEmpty)
+        .toList();
+    if (ansList.length != questionArray.length) return;
+    setCategoryStatus(categoryObj);
+    List<dynamic> catearr = auditObj["categorys"]
+        .where((obj) => obj["complete"] == true)
+        .toList();
+    if (auditObj["categorys"].length == catearr.length) {
+      final isAdminEditReview = pageargument?.mode == "Edit" &&
+          (auditObj["status"] ?? "").toString() == "C";
+      childs[0] = 2;
+      childs[1] = 2;
+      if (isAdminEditReview) {
+        childs[2] = 2;
+        childs[3] = 1;
+        _loadClientUsers();
+      } else {
+        childs[2] = 1;
+      }
+      APIService(context).showWindowAlert(
+          title: "",
+          hideTitle: true,
+          okButtonColor: const Color(0xFF67AC5B),
+          desc: AppTranslations.of(context)!.text("key_message_13"),
+          callback: () {
+            showQuestion = false;
+            activeStep = isAdminEditReview ? 3 : 2;
+            setState(() {});
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _controller.jumpToPage(activeStep);
+            });
+          });
+    } else {
+      APIService(context).showWindowAlert(
+          title: "",
+          hideTitle: true,
+          okButtonColor: const Color(0xFF67AC5B),
+          desc: AppTranslations.of(context)!.text("key_message_13"),
+          callback: () {
+            showQuestion = false;
+            activeStep = 1;
+            _syncAuditActivityStepState();
+            setState(() {});
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _controller.jumpToPage(activeStep);
+            });
+          });
+    }
+  }
+
   void _handleQuestionNext() {
     if (isViewMode) {
       if (pageStep < questionArray.length - 1) {
@@ -710,56 +720,14 @@ class _AuditCategoryScreenV2State
       saveAnswerQuestion(onCallback: (id) {
         if (pageStep < questionArray.length - 1) {
           _navigateToQuestion(pageStep + 1);
+        } else {
+          _showCategoryCompletePopup();
         }
       });
     } else if (pageStep < questionArray.length - 1) {
       _navigateToQuestion(pageStep + 1);
     } else {
-      List ansList = questionArray
-          .where(
-              (ele) => ele["submitAns"].toString().trim().isNotEmpty)
-          .toList();
-      if (ansList.length == questionArray.length) {
-        setCategoryStatus(categoryObj);
-        List<dynamic> catearr = auditObj["categorys"]
-            .where((obj) => obj["complete"] == true)
-            .toList();
-        if (auditObj["categorys"].length == catearr.length) {
-          childs[0] = 2;
-          childs[1] = 2;
-          childs[2] = 1;
-          APIService(context).showWindowAlert(
-              title: "",
-              hideTitle: true,
-              okButtonColor: const Color(0xFF67AC5B),
-              desc:
-                  AppTranslations.of(context)!.text("key_message_13"),
-              callback: () {
-                showQuestion = false;
-                activeStep = 2;
-                setState(() {});
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _controller.jumpToPage(activeStep);
-                });
-              });
-        } else {
-          APIService(context).showWindowAlert(
-              title: "",
-              hideTitle: true,
-              okButtonColor: const Color(0xFF67AC5B),
-              desc:
-                  AppTranslations.of(context)!.text("key_message_13"),
-              callback: () {
-                showQuestion = false;
-                activeStep = 1;
-                _syncAuditActivityStepState();
-                setState(() {});
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  _controller.jumpToPage(activeStep);
-                });
-              });
-        }
-      }
+      _showCategoryCompletePopup();
     }
   }
 
@@ -819,9 +787,9 @@ class _AuditCategoryScreenV2State
           filename: _imageName ?? "",
           data: dataObj, callback: (res01) {
         childs[2] = 2;
-        childs[3] = 1;
+        childs[3] = _isJrA ? 2 : 1;
         activeStep = 3;
-        _loadClientUsers();
+        if (!_isJrA) _loadClientUsers();
         setState(() {});
         gotoPage();
       });
@@ -1017,11 +985,13 @@ class _AuditCategoryScreenV2State
             ),
           ),
           // Stepper
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 80,
-            child: _buildStepper(),
-          ),
+          if (!(_isJrA && activeStep == 3)) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 80,
+              child: _buildStepper(),
+            ),
+          ],
           // Page content
           Expanded(
             flex: 12,
@@ -1201,6 +1171,16 @@ class _AuditCategoryScreenV2State
               onNext: _handleAdminNextFromReview,
             );
           case 3:
+            if (_isJrA) {
+              return AuditCompletedStep(
+                auditObj: auditObj,
+                onStartNewAudit: () {
+                  Navigator.pushNamed(context, "/auditlist",
+                      arguments: ScreenArgument(
+                          argument: ArgumentData.USER, mapData: {}));
+                },
+              );
+            }
             return PublishedStep(
               auditObj: auditObj,
               isViewMode: isViewMode,

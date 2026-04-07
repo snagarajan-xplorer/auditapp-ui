@@ -218,13 +218,19 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     );
   } */
 
+  bool get _isAuditCompleted {
+    final status = _resolveStatusCode();
+    return status == "C" || status == "P";
+  }
+
   void _downloadAuditSheet() {
     final reportUrl = auditData["reporturl"] ?? rowData["reporturl"] ?? "";
     if (reportUrl.toString().isEmpty) {
-      APIService(context).showToastMgs("No audit sheet available");
+      APIService(context).showToastMgs(_isAuditCompleted ? "No audit report available" : "No audit sheet available");
       return;
     }
-    launchUrl(Uri.parse("${API_URL}export?type=1&id=$reportUrl"));
+    final type = _isAuditCompleted ? 2 : 1;
+    launchUrl(Uri.parse("${API_URL}export?type=$type&id=$reportUrl"));
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -511,7 +517,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       'S': 'Upcoming',
       'PG': 'Inprogress',
       'IP': 'Inprogress',
-      'C': 'Review',
+      'C': 'Completed',
       'P': 'Published',
       'CL': 'Cancelled',
     };
@@ -523,7 +529,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       'S': 'purple',
       'PG': 'orange',
       'IP': 'orange',
-      'C': 'pink',
+      'C': 'green',
       'P': 'green',
       'CL': 'red',
     };
@@ -531,6 +537,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
   }
 
   Widget _buildDownloadButton() {
+    final label = _isAuditCompleted ? "Download Audit Report" : "Download Audit Sheet";
     return GestureDetector(
       onTap: _downloadAuditSheet,
       child: Container(
@@ -542,7 +549,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("Download Audit Sheet",
+            Text(label,
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -572,6 +579,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
         'Inprogress': 'PG',
         'Published': 'P',
         'Review': 'C',
+        'Completed': 'C',
         'Cancelled': 'CL',
       }[label] ?? 'S';
     }
@@ -619,6 +627,57 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
               ),
               alignment: Alignment.center,
               child: Text("Start Audit",
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white)),
+            ),
+          ),
+
+        // Edit + Publish buttons — for Review/Completed (admin only)
+        if (statusStr == "C" && menuAccessRole.contains(usercontroller.userData.role))
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, "/auditcategorylist-v2",
+                  arguments: ScreenArgument(
+                      argument: ArgumentData.USER,
+                      mode: "Edit",
+                      mapData: rowData)).then((_) {
+                _loadAuditDetail();
+              });
+            },
+            child: Container(
+              width: 200,
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Color(0xFF535353),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text("Edit",
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white)),
+            ),
+          ),
+
+        if (statusStr == "C" && menuAccessRole.contains(usercontroller.userData.role))
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, "/auditcategorylist-v2",
+                  arguments: ScreenArgument(
+                      argument: ArgumentData.USER, mapData: rowData));
+            },
+            child: Container(
+              width: 200,
+              padding: EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Color(0xFF67AC5B),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Text("Publish",
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
