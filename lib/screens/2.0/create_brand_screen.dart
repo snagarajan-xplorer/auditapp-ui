@@ -197,7 +197,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
         ),
         TableColumnDef(
           label: 'Client Logo',
-          flex: 2,
+          flex: 2, 
           cellBuilder: (row, _) {
             final logoPath = row['clientlogo']?.toString() ?? '';
             return Container(

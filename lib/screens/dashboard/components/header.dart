@@ -211,100 +211,103 @@ class ProfileCard extends StatelessWidget {
     super.key,
   });
 
+  Widget _buildAvatar(UserController usercontroller) {
+    final name = (usercontroller.userData.name ?? "").toUpperCase();
+    final initials = name.length >= 2 ? name.substring(0, 2) : name;
+    final initialsWidget = Center(
+      child: Text(
+        initials,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+    );
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.all(Radius.circular(21.0)),
+        color: Colors.red,
+      ),
+      child: (usercontroller.userData.image == null ||
+              usercontroller.userData.image!.trim().isEmpty)
+          ? initialsWidget
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(21.0),
+              child: Image.network(
+                imgUrl(usercontroller.userData.image!),
+                fit: BoxFit.cover,
+                width: 40,
+                height: 40,
+                errorBuilder: (context, error, stackTrace) => initialsWidget,
+              ),
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final UserController usercontroller = Get.put(UserController());
 
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: defaultPadding / 2,
-        vertical: defaultPadding / 4,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Company name and role
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
+    return PopupMenuButton<String>(
+      offset: Offset(0, 50),
+      onSelected: (value) {
+        if (value == 'logout') {
+          usercontroller.logout(context, data: {}, callback: () {
+            Get.offAllNamed("/login");
+          });
+        }
+      },
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'logout',
+          child: Row(
             children: [
-              Text(
-                usercontroller.userData.name ?? "",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF000000),
-                ),
-              ),
-              SizedBox(height: 1),
-              Text(
-                usercontroller.userData.rolename ?? "",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w300,
-                  color: Color(0xFF898989),
-                ),
-              ),
+              Icon(Icons.logout, size: 20, color: Colors.red),
+              SizedBox(width: 8),
+              Text("Logout", style: TextStyle(fontSize: 14)),
             ],
           ),
-          SizedBox(width: 12),
-          // Profile image
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(21.0)),
-              color: Colors.red,
-            ),
-            child: (usercontroller.userData.image == null ||
-                    usercontroller.userData.image!.trim().isEmpty)
-                ? Center(
-                    child: Text(
-                      (usercontroller.userData.name ?? "")
-                          .toUpperCase()
-                          .length >= 2
-                          ? (usercontroller.userData.name ?? "")
-                              .toUpperCase()
-                              .substring(0, 2)
-                          : (usercontroller.userData.name ?? "")
-                              .toUpperCase(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(21.0),
-                    child: Image.network(
-                      imgUrl(usercontroller.userData.image!),
-                      fit: BoxFit.cover,
-                      width: 40,
-                      height: 40,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Text(
-                            (usercontroller.userData.name ?? "")
-                                .toUpperCase()
-                                .length >= 2
-                                ? (usercontroller.userData.name ?? "")
-                                    .toUpperCase()
-                                    .substring(0, 2)
-                                : (usercontroller.userData.name ?? "")
-                                    .toUpperCase(),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
+        ),
+      ],
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: defaultPadding / 2,
+          vertical: defaultPadding / 4,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  usercontroller.userData.name ?? "",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF000000),
                   ),
-          ),
-        ],
+                ),
+                SizedBox(height: 1),
+                Text(
+                  usercontroller.userData.rolename ?? "",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                    color: Color(0xFF898989),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(width: 12),
+            _buildAvatar(usercontroller),
+          ],
+        ),
       ),
     );
   }
