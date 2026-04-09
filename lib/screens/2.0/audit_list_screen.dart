@@ -36,7 +36,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     'P':  {'label': 'Published',   'color': 'green'},
     'IP': {'label': 'Inprogress',  'color': 'orange'},
     'PG': {'label': 'Inprogress',  'color': 'orange'},
-    'C':  {'label': 'Completed',   'color': 'green'},
+    'C':  {'label': 'Review',      'color': 'pink'},
     'S':  {'label': 'Upcoming',    'color': 'purple'},
     'CL': {'label': 'Cancelled',   'color': 'red'},
   };
@@ -202,7 +202,13 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     try {
       final rawDate = row['start_date_raw'] ?? row['start_date'];
       if (rawDate == null) return false;
-      final date = DateTime.parse(rawDate.toString());
+      final dateStr = rawDate.toString();
+      DateTime date;
+      try {
+        date = DateTime.parse(dateStr);
+      } catch (_) {
+        date = Jiffy.parse(dateStr, pattern: "dd MMM yyyy").dateTime;
+      }
       final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
       return DateTime.now().isAfter(endOfDay);
     } catch (_) {
@@ -214,21 +220,23 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
   bool _canStartAudit(Map<String, dynamic> row) {
     try {
-      final rawDate = row['start_date_raw'];
-      final rawTime = row['start_time_raw'];
+      final rawDate = row['start_date_raw'] ?? row['start_date'];
       if (rawDate == null) return false;
 
-      final date = DateTime.parse(rawDate.toString());
+      final dateStr = rawDate.toString();
+      DateTime date;
+      try {
+        date = DateTime.parse(dateStr);
+      } catch (_) {
+        date = Jiffy.parse(dateStr, pattern: "dd MMM yyyy").dateTime;
+      }
+
+      final rawTime = _parseTimeOfDay(row['start_time_raw'])
+          ?? _parseTimeOfDay(row['start_time'])
+          ?? _parseTimeOfDay(row['timevalue']);
       DateTime scheduled;
-      if (rawTime != null && rawTime.toString().isNotEmpty) {
-        final timeStr = rawTime.toString();
-        if (timeStr.contains('T') || timeStr.contains('-')) {
-          final t = DateTime.parse(timeStr);
-          scheduled = DateTime(date.year, date.month, date.day, t.hour, t.minute);
-        } else {
-          final parts = timeStr.split(':');
-          scheduled = DateTime(date.year, date.month, date.day, int.parse(parts[0]), int.parse(parts[1]));
-        }
+      if (rawTime != null) {
+        scheduled = DateTime(date.year, date.month, date.day, rawTime.hour, rawTime.minute);
       } else {
         scheduled = DateTime(date.year, date.month, date.day);
       }
@@ -241,6 +249,31 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
     } catch (_) {
       return false;
     }
+  }
+
+  TimeOfDay? _parseTimeOfDay(dynamic value) {
+    if (value == null || value.toString().trim().isEmpty) return null;
+    final s = value.toString().trim();
+    final amPm = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)', caseSensitive: false).firstMatch(s);
+    if (amPm != null) {
+      int h = int.parse(amPm.group(1)!);
+      int m = int.parse(amPm.group(2)!);
+      final period = amPm.group(3)!.toUpperCase();
+      if (period == 'PM' && h != 12) h += 12;
+      if (period == 'AM' && h == 12) h = 0;
+      return TimeOfDay(hour: h, minute: m);
+    }
+    if (s.contains('T') || s.contains('-')) {
+      final t = DateTime.parse(s);
+      return TimeOfDay(hour: t.hour, minute: t.minute);
+    }
+    final parts = s.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h != null && m != null) return TimeOfDay(hour: h, minute: m);
+    }
+    return null;
   }
 
   Widget _buildActionButtons(Map<String, dynamic> row) {
@@ -294,7 +327,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
           SizedBox(width: 5),
           Expanded(
             child: _actionButton("Continue", const Color(0xFF2E77D0), () {
-              Navigator.pushNamed(context, "/auditcategorylist-v2",
+              Navigator.pushNamed(context, "/auditcategorylist",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER,
                       mapData: row));
@@ -335,7 +368,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
             SizedBox(width: 5),
             Expanded(
               child: _actionButton("Start", const Color(0xFF67AC5B), () {
-                Navigator.pushNamed(context, "/auditcategorylist-v2",
+                Navigator.pushNamed(context, "/auditcategorylist",
                     arguments: ScreenArgument(
                         argument: ArgumentData.USER,
                         mode: "Start",

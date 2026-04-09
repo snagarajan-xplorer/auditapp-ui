@@ -9,9 +9,9 @@ class PublishedStep extends StatelessWidget {
   final bool isViewMode;
   final double wdt;
   final List<dynamic> clientUsers;
-  final String? selectedClientEmail;
+  final List<String> selectedClientEmails;
   final bool publishReviewed;
-  final ValueChanged<String?> onClientEmailChanged;
+  final ValueChanged<List<String>> onClientEmailsChanged;
   final ValueChanged<bool> onReviewedChanged;
   final VoidCallback onPublish;
 
@@ -21,9 +21,9 @@ class PublishedStep extends StatelessWidget {
     required this.isViewMode,
     required this.wdt,
     required this.clientUsers,
-    required this.selectedClientEmail,
+    required this.selectedClientEmails,
     required this.publishReviewed,
-    required this.onClientEmailChanged,
+    required this.onClientEmailsChanged,
     required this.onReviewedChanged,
     required this.onPublish,
   });
@@ -78,34 +78,42 @@ class PublishedStep extends StatelessWidget {
                       fontSize: 14, color: Color(0xFF505050))),
               const SizedBox(height: 8),
               SizedBox(
-                width: 340,
-                height: 40,
-                child: DropdownButtonFormField<String>(
-                  initialValue: selectedClientEmail,
-                  items: clientUsers
-                      .map<DropdownMenuItem<String>>((user) {
-                    return DropdownMenuItem<String>(
-                      value: user["email"],
-                      child: Text(user["email"] ?? ""),
-                    );
-                  }).toList(),
-                  onChanged: isAlreadyPublished
-                      ? null
-                      : (val) {
-                          onClientEmailChanged(val);
-                        },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    hoverColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5)),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                        borderSide: BorderSide(
-                            color: Colors.grey.shade400)),
+                width: 400,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: Colors.grey.shade400),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: clientUsers.map<Widget>((user) {
+                      final email = user["email"] ?? "";
+                      final isSelected = selectedClientEmails.contains(email);
+                      return CheckboxListTile(
+                        value: isSelected,
+                        activeColor: const Color(0xFF67AC5B),
+                        title: Text(email,
+                            style: const TextStyle(
+                                fontSize: 14, color: Color(0xFF505050))),
+                        dense: true,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        onChanged: isAlreadyPublished
+                            ? null
+                            : (val) {
+                                final updated =
+                                    List<String>.from(selectedClientEmails);
+                                if (val == true) {
+                                  if (!updated.contains(email)) {
+                                    updated.add(email);
+                                  }
+                                } else {
+                                  updated.remove(email);
+                                }
+                                onClientEmailsChanged(updated);
+                              },
+                      );
+                    }).toList(),
                   ),
                 ),
               ),

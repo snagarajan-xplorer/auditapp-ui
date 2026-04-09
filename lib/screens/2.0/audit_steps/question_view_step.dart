@@ -307,6 +307,7 @@ class QuestionViewStep extends StatelessWidget {
                 readOnly: isViewMode,
                 keyboardType: TextInputType.multiline,
                 maxLines: 3,
+                maxLength: 500,
                 initialValue: question["reviews"],
                 style: Theme.of(context).textTheme.bodyMedium,
                 onChanged: (value) {
@@ -327,6 +328,7 @@ class QuestionViewStep extends StatelessWidget {
                 readOnly: isViewMode,
                 keyboardType: TextInputType.multiline,
                 maxLines: 3,
+                maxLength: 500,
                 initialValue: question["clientremarks"],
                 style: Theme.of(context).textTheme.bodyMedium,
                 onChanged: (value) {

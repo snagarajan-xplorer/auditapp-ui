@@ -1669,7 +1669,7 @@ class _AuditCategoryScreenState extends State<AuditCategoryScreen> {
                       headingRowHeight: 35,
                       columnSpacing: 12,
                       horizontalMargin: 12,
-                      minWidth: 600,
+                      minWidth: 700,
 
                       columns: [
                         DataColumn(label: Center(child: Text(AppTranslations.of(context)!.text("key_message_15"),style: headingTextStyle,)),),

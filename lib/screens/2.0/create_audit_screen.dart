@@ -644,10 +644,21 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               inputType: InputType.date,
               style: Theme.of(context).textTheme.bodyMedium,
               validator: _selectedAuditType == 'Scheduled'
-                  ? FormBuilderValidators.required(
-                      errorText:
-                          AppTranslations.of(context)!.text('key_error_01'),
-                    )
+                  ? FormBuilderValidators.compose([
+                      FormBuilderValidators.required(
+                        errorText:
+                            AppTranslations.of(context)!.text('key_error_01'),
+                      ),
+                      (value) {
+                        if (value != null) {
+                          final today = DateTime.now();
+                          final sel = DateTime(value.year, value.month, value.day);
+                          final tod = DateTime(today.year, today.month, today.day);
+                          if (sel.isBefore(tod)) return 'Past date is not allowed';
+                        }
+                        return null;
+                      },
+                    ])
                   : null,
               decoration: AppFormStyles.inputDecoration(
                 suffixIcon: const Icon(CupertinoIcons.calendar, size: 20),
@@ -669,10 +680,28 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
               timePickerInitialEntryMode: TimePickerEntryMode.dialOnly,
               style: Theme.of(context).textTheme.bodyMedium,
               validator: _selectedAuditType == 'Scheduled'
-                  ? FormBuilderValidators.required(
-                      errorText:
-                          AppTranslations.of(context)!.text('key_error_01'),
-                    )
+                  ? FormBuilderValidators.compose([
+                      FormBuilderValidators.required(
+                        errorText:
+                            AppTranslations.of(context)!.text('key_error_01'),
+                      ),
+                      (value) {
+                        if (value != null) {
+                          final now = DateTime.now();
+                          final selDate = _formKey.currentState?.fields['start_date']?.value as DateTime?;
+                          if (selDate != null) {
+                            final todayDate = DateTime(now.year, now.month, now.day);
+                            final pickedDate = DateTime(selDate.year, selDate.month, selDate.day);
+                            if (pickedDate.isAtSameMomentAs(todayDate)) {
+                              final selMinutes = value.hour * 60 + value.minute;
+                              final nowMinutes = now.hour * 60 + now.minute;
+                              if (selMinutes <= nowMinutes) return 'Past time is not allowed';
+                            }
+                          }
+                        }
+                        return null;
+                      },
+                    ])
                   : null,
               decoration: AppFormStyles.inputDecoration(
                 suffixIcon: const Icon(CupertinoIcons.clock, size: 20),
@@ -809,7 +838,9 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
       }
 
       _uc.saveAudit(context, data: raw, callback: () {
-        Get.back();
+        Navigator.pushNamed(context, "/auditlist",
+            arguments: ScreenArgument(
+                argument: ArgumentData.USER, mapData: {}));
       });
     }
   }
@@ -817,7 +848,10 @@ class _CreateAuditScreenState extends State<CreateAuditScreen> {
   // ── build helper: responsive row/column ──────────────────────────────────
   Widget _responsiveRow(List<Widget> children) {
     return Responsive.isDesktop(context)
-        ? Row(children: children)
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          )
         : Column(
             mainAxisSize: MainAxisSize.min,
             children: children,

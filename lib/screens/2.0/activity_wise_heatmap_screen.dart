@@ -38,7 +38,17 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
     _initFinancialYears();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _fetchActivitiesList();
         _fetchHeatmapData();
+      }
+    });
+  }
+
+  void _fetchActivitiesList() {
+    usercontroller.getActivitiesList(context, callback: (list) {
+      if (!mounted || list.isEmpty) return;
+      if (activities.isEmpty) {
+        setState(() => activities = list);
       }
     });
   }
@@ -62,18 +72,17 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
     }, callback: (res) {
       if (!mounted) return;
       if (res != null && res is Map<String, dynamic>) {
+        final newActivities = List<String>.from(res['activities'] ?? []);
         setState(() {
           zones = res['zones'] ?? [];
           allIndia = res['all_india'] ?? {};
-          activities =
-              List<String>.from(res['activities'] ?? []);
+          if (newActivities.isNotEmpty) activities = newActivities;
           isLoading = false;
         });
       } else {
         setState(() {
           zones = [];
           allIndia = {};
-          activities = [];
           isLoading = false;
         });
       }
@@ -282,7 +291,7 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
                     _legendColorCell(scoreColors[2], "Partly Complied"),
                     _legendColorCell(scoreColors[3], "Partly Complied"),
                     _legendColorCell(scoreColors[4], "Complied"),
-                    _legendTextCell("Not Applicable"),
+                    _legendColorCell(const Color(0xFFC9C9C9), "Not Applicable"),
                   ],
                 ),
                 // Score row
@@ -350,7 +359,7 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
   Widget _legendScoreCell(String score, Color bg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: bg,
+      color: const Color(0xFFFFFFFF),
       alignment: Alignment.center,
       child: Text(
         score,

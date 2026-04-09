@@ -216,7 +216,7 @@ class _RedReportScreenState extends State<RedReportScreen>
                       position: LatLng(lat, lng),
                       icon: icon,
                       infoWindow: InfoWindow(
-                        title: item['audit_name'] ?? 'Unknown Audit',
+                        title: '${item['audit_name'] ?? 'Unknown Audit'} ${item['audit_no'] ?? ''}',
                         snippet: '${item['city'] ?? ''}, ${item['branch'] ?? ''}',
                       ),
                     ),

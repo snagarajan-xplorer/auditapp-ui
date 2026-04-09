@@ -1124,6 +1124,28 @@ class UserController extends GetxController {
     });
   }
 
+  void getActivitiesList(context,
+      {required Function(List<String>) callback}) async {
+    APIService(context).getData("getActivitiesList", true).then((resvalue) {
+      if (resvalue.length != 5) {
+        try {
+          Map<String, dynamic> res = jsonDecode(resvalue);
+          if (res.containsKey("data") && res["data"]["activities"] != null) {
+            callback(List<String>.from(res["data"]["activities"]));
+          } else {
+            callback([]);
+          }
+        } catch (e) {
+          callback([]);
+        }
+      } else {
+        callback([]);
+      }
+    }).catchError((error) {
+      callback([]);
+    });
+  }
+
   Future<void> getAuditCount(context,
       {required Map<String, dynamic> data,
       required Function(dynamic) callback}) async {

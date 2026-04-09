@@ -241,7 +241,10 @@ class _RedReportListScreenState extends State<RedReportListScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        border: Border(left: BorderSide(color: color, width: 4)),
+        border: Border(
+          left: BorderSide(color: color, width: 4),
+          right: const BorderSide(color: Color(0xFFE0E0E0), width: 0.8),
+        ),
       ),
       child: Text(
         (row[key] ?? '-').toString(),

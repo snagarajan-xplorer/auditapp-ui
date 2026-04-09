@@ -133,7 +133,7 @@ class SubmitReviewStep extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 8),
                               child: const Text(
-                                "I acknowledge the audit's conclusion, with all activities performed as per established protocol",
+                                "I declare that audit was performed in accordance with internal standards of risk and control assessment, evidence collections, physical checks as appropriate.",
                                 style: TextStyle(fontSize: 14),
                               ),
                             ),

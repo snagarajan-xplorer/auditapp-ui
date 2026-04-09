@@ -40,7 +40,18 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
     super.initState();
     usercontroller = Get.find<UserController>();
     _initFinancialYears();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fetchActivitiesList();
+    });
+  }
 
+  void _fetchActivitiesList() {
+    usercontroller.getActivitiesList(context, callback: (list) {
+      if (!mounted || list.isEmpty) return;
+      if (activities.isEmpty) {
+        setState(() => activities = list);
+      }
+    });
   }
 
   void _initFinancialYears() {
@@ -63,17 +74,17 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
     }, callback: (res) {
       if (!mounted) return;
       if (res != null && res is Map<String, dynamic>) {
+        final newActivities = List<String>.from(res['activities'] ?? []);
         setState(() {
           states = res['states'] ?? [];
           zoneTotal = res['zone_total'] ?? {};
-          activities = List<String>.from(res['activities'] ?? []);
+          if (newActivities.isNotEmpty) activities = newActivities;
           isLoading = false;
         });
       } else {
         setState(() {
           states = [];
           zoneTotal = {};
-          activities = [];
           isLoading = false;
         });
       }
@@ -172,9 +183,12 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
     final List<Map<String, dynamic>> tableRows = states
         .map<Map<String, dynamic>>((s) => Map<String, dynamic>.from(s))
         .toList();
-    if (zoneTotal.isNotEmpty) {
-      final totalRow = Map<String, dynamic>.from(zoneTotal);
+    if (zoneTotal.isNotEmpty || (selectedZone.isNotEmpty && tableRows.isEmpty)) {
+      final totalRow = zoneTotal.isNotEmpty
+          ? Map<String, dynamic>.from(zoneTotal)
+          : <String, dynamic>{};
       totalRow['state'] = '$selectedZone Total';
+      totalRow['total_locations'] = totalRow['total_locations'] ?? '-';
       totalRow['_isZoneTotal'] = true;
       tableRows.add(totalRow);
     }
@@ -305,7 +319,7 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
                   _legendColorCell(scoreColors[2], "Partly Complied"),
                   _legendColorCell(scoreColors[3], "Partly Complied"),
                   _legendColorCell(scoreColors[4], "Complied"),
-                  _legendTextCell("Not Applicable"),
+                  _legendColorCell(const Color(0xFFC9C9C9), "Not Applicable"),
                 ],
               ),
               TableRow(
@@ -371,7 +385,7 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
   Widget _legendScoreCell(String score, Color bg) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: bg,
+      color:const Color(0xFFFFFFFF),
       alignment: Alignment.center,
       child: Text(
         score,
@@ -390,7 +404,7 @@ class _RegionWiseHeatmapScreenState extends State<RegionWiseHeatmapScreen> {
       alignment: Alignment.center,
       color: Color(0xFFFFFFFF),
       child: Text(
-        text,
+        text, 
         style: const TextStyle(fontSize: 12, color: Color(0xFF000000)),
       ),
     );

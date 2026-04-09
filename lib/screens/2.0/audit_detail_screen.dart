@@ -82,7 +82,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
         usercontroller.startAudit(context, data: data, callback: (success) {
           if (success) {
             // Navigate to v2 stepper audit flow
-            Navigator.pushNamed(context, "/auditcategorylist-v2",
+            Navigator.pushNamed(context, "/auditcategorylist",
                 arguments: ScreenArgument(
                     argument: ArgumentData.USER, mapData: rowData));
           }
@@ -408,8 +408,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                         ),
                         SizedBox(height: 44),
 
-                        // Action buttons
-                        _buildActionButtons(),
+                        Center(child: _buildActionButtons()),
                       ],
                     ),
                   ),
@@ -517,7 +516,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       'S': 'Upcoming',
       'PG': 'Inprogress',
       'IP': 'Inprogress',
-      'C': 'Completed',
+      'C': 'Review',
       'P': 'Published',
       'CL': 'Cancelled',
     };
@@ -529,7 +528,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       'S': 'purple',
       'PG': 'orange',
       'IP': 'orange',
-      'C': 'green',
+      'C': 'pink',
       'P': 'green',
       'CL': 'red',
     };
@@ -586,15 +585,52 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     return "S";
   }
 
+  bool get _isAdmin => menuAccessRoleAdmin.contains(usercontroller.userData.role);
+
   Widget _buildActionButtons() {
     final statusStr = _resolveStatusCode();
+
+    if (_isAdmin) {
+      return Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 20,
+        runSpacing: 12,
+        children: [
+          if (statusStr != "CL" && statusStr != "P")
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, "/auditcategorylist",
+                    arguments: ScreenArgument(
+                        argument: ArgumentData.USER,
+                        mode: "Edit",
+                        mapData: rowData)).then((_) {
+                  _loadAuditDetail();
+                });
+              },
+              child: Container(
+                width: 200,
+                padding: EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: Color(0xFF535353),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text("Edit",
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white)),
+              ),
+            ),
+        ],
+      );
+    }
 
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 20,
       runSpacing: 12,
       children: [
-        // Cancel Audit button — for non-cancelled, non-published
         if (statusStr != "CL" && statusStr != "P")
           GestureDetector(
             onTap: _cancelAudit,
@@ -614,7 +650,6 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
             ),
           ),
 
-        // Start Audit button — only for Scheduled/Upcoming
         if (statusStr == "S" || statusStr == "PG")
           GestureDetector(
             onTap: _startAudit,
@@ -634,62 +669,10 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
             ),
           ),
 
-        // Edit + Publish buttons — for Review/Completed (admin only)
-        if (statusStr == "C" && menuAccessRole.contains(usercontroller.userData.role))
-          GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, "/auditcategorylist-v2",
-                  arguments: ScreenArgument(
-                      argument: ArgumentData.USER,
-                      mode: "Edit",
-                      mapData: rowData)).then((_) {
-                _loadAuditDetail();
-              });
-            },
-            child: Container(
-              width: 200,
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Color(0xFF535353),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Text("Edit",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white)),
-            ),
-          ),
-
-        if (statusStr == "C" && menuAccessRole.contains(usercontroller.userData.role))
-          GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, "/auditcategorylist-v2",
-                  arguments: ScreenArgument(
-                      argument: ArgumentData.USER, mapData: rowData));
-            },
-            child: Container(
-              width: 200,
-              padding: EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Color(0xFF67AC5B),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              alignment: Alignment.center,
-              child: Text("Publish",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white)),
-            ),
-          ),
-
-        // View Audit button — for Published
         if (statusStr == "P")
           GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, "/auditcategorylist-v2",
+              Navigator.pushNamed(context, "/auditcategorylist",
                   arguments: ScreenArgument(
                       argument: ArgumentData.USER, mode: "View", mapData: rowData));
             },

@@ -2,6 +2,7 @@ import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:jiffy/jiffy.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 import '../../widget/reusable_table.dart';
@@ -228,6 +229,84 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     );
   }
 
+  bool _canStartAudit(dynamic row) {
+    try {
+      final Map<String, dynamic> r = Map<String, dynamic>.from(row);
+      final rawDate = r['start_date_raw'] ?? r['start_date'];
+      if (rawDate == null) return false;
+
+      final dateStr = rawDate.toString();
+      DateTime date;
+      try {
+        date = DateTime.parse(dateStr);
+      } catch (_) {
+        date = Jiffy.parse(dateStr, pattern: "dd MMM yyyy").dateTime;
+      }
+
+      final rawTime = _parseTimeOfDay(r['start_time_raw'])
+          ?? _parseTimeOfDay(r['start_time'])
+          ?? _parseTimeOfDay(r['timevalue']);
+      DateTime scheduled;
+      if (rawTime != null) {
+        scheduled = DateTime(date.year, date.month, date.day, rawTime.hour, rawTime.minute);
+      } else {
+        scheduled = DateTime(date.year, date.month, date.day);
+      }
+
+      final now = DateTime.now();
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      if (now.isAfter(endOfDay)) return false;
+      return now.isAfter(scheduled.subtract(const Duration(minutes: 2))) ||
+             now.isAtSameMomentAs(scheduled.subtract(const Duration(minutes: 2)));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  TimeOfDay? _parseTimeOfDay(dynamic value) {
+    if (value == null || value.toString().trim().isEmpty) return null;
+    final s = value.toString().trim();
+    final amPm = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)', caseSensitive: false).firstMatch(s);
+    if (amPm != null) {
+      int h = int.parse(amPm.group(1)!);
+      int m = int.parse(amPm.group(2)!);
+      final period = amPm.group(3)!.toUpperCase();
+      if (period == 'PM' && h != 12) h += 12;
+      if (period == 'AM' && h == 12) h = 0;
+      return TimeOfDay(hour: h, minute: m);
+    }
+    if (s.contains('T') || s.contains('-')) {
+      final t = DateTime.parse(s);
+      return TimeOfDay(hour: t.hour, minute: t.minute);
+    }
+    final parts = s.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      if (h != null && m != null) return TimeOfDay(hour: h, minute: m);
+    }
+    return null;
+  }
+
+  bool _isAuditExpired(dynamic row) {
+    try {
+      final Map<String, dynamic> r = Map<String, dynamic>.from(row);
+      final rawDate = r['start_date_raw'] ?? r['start_date'];
+      if (rawDate == null) return false;
+      final dateStr = rawDate.toString();
+      DateTime date;
+      try {
+        date = DateTime.parse(dateStr);
+      } catch (_) {
+        date = Jiffy.parse(dateStr, pattern: "dd MMM yyyy").dateTime;
+      }
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+      return DateTime.now().isAfter(endOfDay);
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ── Columns that depend on instance state — built once per build ──────────
 
   List<TableColumnDef> _buildColumns() {
@@ -241,8 +320,10 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
           String label = s["label"] ?? "-";
           String color = s["color"] ?? "grey";
           final code = _statusCodeOf(row);
-          // For JrA, show Review/Published as "Completed"
-          if (_userRole == "JrA" && (code == "C" || code == "P")) {
+          if (code == "S" && _isAuditExpired(row)) {
+            label = "Expired";
+            color = "red";
+          } else if (_userRole == "JrA" && (code == "C" || code == "P")) {
             label = "Completed";
             color = "green";
           }
@@ -375,16 +456,22 @@ class _AssignedAuditScreenState extends State<AssignedAuditScreen>
     // Inprogress → Continue (navigate to audit form)
     if (code == "IP") {
       return _actionButton("Continue", _kActionBlue, () {
-        Navigator.pushNamed(context, "/auditcategorylist-v2",
+        Navigator.pushNamed(context, "/auditcategorylist",
             arguments:
                 ScreenArgument(argument: ArgumentData.USER, mapData: row));
       });
     }
 
-    // Upcoming → Start (navigate to audit form; it handles startAudit API internally)
+    // Upcoming → Expired if day passed, else Start (only 2 mins before scheduled time)
     if (code == "S") {
+      if (_isAuditExpired(row)) {
+        return _actionButton("Expired", _kActionDisabled, null);
+      }
+      if (!_canStartAudit(row)) {
+        return _actionButton("Start", _kActionDisabled, null);
+      }
       return _actionButton("Start", _kActionGreen, () {
-        Navigator.pushNamed(context, "/auditcategorylist-v2",
+        Navigator.pushNamed(context, "/auditcategorylist",
             arguments:
                 ScreenArgument(argument: ArgumentData.USER, mapData: row));
       });

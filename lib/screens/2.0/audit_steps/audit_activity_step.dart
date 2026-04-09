@@ -13,6 +13,8 @@ class AuditActivityStep extends StatelessWidget {
   final String totalPer;
   final bool isViewMode;
   final bool showAudit;
+  final bool isAdminEditMode;
+  final VoidCallback? onContinue;
   final void Function(dynamic element, String answeredQuestion,
       String totalQuestion) onCategoryTap;
 
@@ -24,6 +26,8 @@ class AuditActivityStep extends StatelessWidget {
     required this.totalPer,
     required this.isViewMode,
     required this.showAudit,
+    this.isAdminEditMode = false,
+    this.onContinue,
     required this.onCategoryTap,
   });
 
@@ -64,6 +68,31 @@ class AuditActivityStep extends StatelessWidget {
                     (element) => _buildCategoryCard(context, element))
                 .toList(),
           ),
+          if (isAdminEditMode && onContinue != null) ...[            const SizedBox(height: 32),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: SizedBox(
+                  width: 180,
+                  height: 44,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF67AC5B),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: onContinue,
+                    child: const Text("Continue",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ),
+            ),
+          ],
           SizedBox(height: defaultPadding),
         ],
       ),
@@ -173,7 +202,7 @@ class AuditActivityStep extends StatelessWidget {
         : (num.tryParse(element["answer"].toString()) ?? 0);
     num total = (num.tryParse(element["total"].toString()) ?? 0);
     String value = "";
-    if (score != 0 && total != 0) {
+    if (total != 0) {
       int avarge = ((score / total) * 100).round();
       value = avarge.toString();
     }
@@ -235,86 +264,75 @@ class AuditActivityStep extends StatelessWidget {
                   overflow: TextOverflow.ellipsis),
             ),
             const SizedBox(height: 8),
-            // Stats row 1: Average Score | %Secured
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        AppTranslations.of(context)!
-                            .text("key_average"),
-                        style: const TextStyle(
-                            color: Color(0xFF898989), fontSize: 12)),
-                    Row(
-                      children: [
-                        const Text(": ",
-                            style: TextStyle(fontSize: 12)),
-                        Text(avgStr,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12)),
-                      ],
-                    ),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                          AppTranslations.of(context)!
+                              .text("key_average"),
+                          style: const TextStyle(
+                              color: Color(0xFF898989), fontSize: 12)),
+                      Text(": ",
+                          style: const TextStyle(fontSize: 12)),
+                      Text(avgStr,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12)),
+                    ],
+                  ),
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("%Secured",
-                        style: TextStyle(
-                            color: Color(0xFF898989), fontSize: 12)),
-                    Row(
-                      children: [
-                        const Text(": ",
-                            style: TextStyle(fontSize: 12)),
-                        value.toString().trim().isEmpty
-                            ? const Text("",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12))
-                            : SizedBox(
-                                width: 50,
-                                child: StatusComp(
-                                  status: "",
-                                  statusvalue: "$value%",
-                                  percentage: int.tryParse(value),
-                                )),
-                      ],
-                    ),
-                  ],
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Text("%Secured",
+                          style: TextStyle(
+                              color: Color(0xFF898989), fontSize: 12)),
+                      const Text(": ",
+                          style: TextStyle(fontSize: 12)),
+                      value.toString().trim().isEmpty
+                          ? const SizedBox()
+                          : StatusComp(
+                              status: "",
+                              statusvalue: "$value%",
+                              percentage: int.tryParse(value),
+                            ),
+                    ],
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
-            // Stats row 2: Questions | Rating
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        AppTranslations.of(context)!
-                            .text("key_question"),
-                        style: const TextStyle(
-                            color: Color(0xFF898989), fontSize: 12)),
-                    Text(": $answeredQuestion/$totalQuestion",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 12)),
-                  ],
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                          AppTranslations.of(context)!
+                              .text("key_question"),
+                          style: const TextStyle(
+                              color: Color(0xFF898989), fontSize: 12)),
+                      Text(": $answeredQuestion/$totalQuestion",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 12)),
+                    ],
+                  ),
                 ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text("Rating",
-                        style: TextStyle(
-                            color: Color(0xFF898989), fontSize: 12)),
-                    Text(": $ratingStr",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 12)),
-                  ],
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Text("Rating",
+                          style: TextStyle(
+                              color: Color(0xFF898989), fontSize: 12)),
+                      Text(": $ratingStr",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600, fontSize: 12)),
+                    ],
+                  ),
                 ),
               ],
             ),

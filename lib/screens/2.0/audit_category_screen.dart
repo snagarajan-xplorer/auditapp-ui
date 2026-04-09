@@ -77,7 +77,7 @@ class _AuditCategoryScreenV2State
 
   // Published step
   List<dynamic> clientUsers = [];
-  String? selectedClientEmail;
+  List<String> selectedClientEmails = [];
 
   // Validation: starts disabled, switches to onUserInteraction after first submit
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
@@ -259,9 +259,10 @@ class _AuditCategoryScreenV2State
           errorcallback: (res) {},
           callback: (arr) {
         clientUsers = arr;
-        if (clientUsers.isNotEmpty) {
-          selectedClientEmail = clientUsers[0]["email"];
-        }
+        selectedClientEmails = clientUsers
+            .map<String>((u) => (u["email"] ?? "").toString())
+            .where((e) => e.isNotEmpty)
+            .toList();
         setState(() {});
       });
     }
@@ -805,8 +806,19 @@ class _AuditCategoryScreenV2State
     gotoPage();
   }
 
-  void _handleClientEmailChanged(String? val) {
-    selectedClientEmail = val;
+  void _handleAdminContinueFromActivity() {
+    childs[0] = 2;
+    childs[1] = 2;
+    childs[2] = 2;
+    childs[3] = 1;
+    activeStep = 3;
+    _loadClientUsers();
+    setState(() {});
+    gotoPage();
+  }
+
+  void _handleClientEmailsChanged(List<String> vals) {
+    selectedClientEmails = vals;
     setState(() {});
   }
 
@@ -823,32 +835,34 @@ class _AuditCategoryScreenV2State
           callback: () {});
       return;
     }
-    if (selectedClientEmail == null) {
+    if (selectedClientEmails.isEmpty) {
       APIService(context).showWindowAlert(
           title: "",
-          desc: "Please select a client email.",
+          desc: "Please select at least one client email.",
           callback: () {});
       return;
     }
     Map<String, dynamic> data = {
       "audit_id": auditObj["id"],
       "userid": usercontroller.userData.userId,
-      "client_email": selectedClientEmail,
+      "client_email": selectedClientEmails,
     };
     usercontroller.publishAuditStatus(context, data: data,
         callback: () {
-      Map<String, dynamic> emailData = {
-        "email": selectedClientEmail,
-        "name": auditObj["companyname"] ?? "",
-        "type": "publish",
-        "audit_name": auditObj["auditname"] ?? "",
-        "audit_no": auditObj["audit_no"] ?? "",
-        "message":
-            "Your audit report has been published and is ready for review."
-      };
-      APIService(context)
-          .postData("sendEmail", emailData, true)
-          .then((_) {});
+      for (final email in selectedClientEmails) {
+        Map<String, dynamic> emailData = {
+          "email": email,
+          "name": auditObj["companyname"] ?? "",
+          "type": "publish",
+          "audit_name": auditObj["auditname"] ?? "",
+          "audit_no": auditObj["audit_no"] ?? "",
+          "message":
+              "Your audit report has been published and is ready for review."
+        };
+        APIService(context)
+            .postData("sendEmail", emailData, true)
+            .then((_) {});
+      }
       childs[3] = 2;
       setState(() {});
       APIService(context).showWindowAlert(
@@ -873,30 +887,26 @@ class _AuditCategoryScreenV2State
         setState(() {});
         return;
       }
-      if (questionArray[pageStep]["answer"]
-          .toString()
-          .trim()
-          .isNotEmpty) {
-        if (questionArray[pageStep]["submitAns"]
-            .toString()
-            .trim()
-            .isEmpty) {
-          APIService(context).showWindowAlert(
-              title: "",
-              desc: AppTranslations.of(context)!
-                  .text("key_message_24"),
-              callback: () {
-                saveAnswerQuestion(onCallback: (id) {
-                  showQuestion = false;
-                  _syncAuditActivityStepState();
-                  setState(() {});
-                });
-              },
-              showCancelBtn: true,
-              okbutton: AppTranslations.of(context)!
-                  .text("key_btn_save"));
-          return;
-        }
+      String answer =
+          questionArray[pageStep]["answer"].toString().trim();
+      String submitAns =
+          questionArray[pageStep]["submitAns"].toString().trim();
+      if (answer.isNotEmpty && answer != submitAns) {
+        APIService(context).showWindowAlert(
+            title: "",
+            desc: AppTranslations.of(context)!
+                .text("key_message_24"),
+            callback: () {
+              saveAnswerQuestion(onCallback: (id) {
+                showQuestion = false;
+                _syncAuditActivityStepState();
+                setState(() {});
+              });
+            },
+            showCancelBtn: true,
+            okbutton: AppTranslations.of(context)!
+                .text("key_btn_save"));
+        return;
       }
       showQuestion = false;
       _syncAuditActivityStepState();
@@ -1152,6 +1162,8 @@ class _AuditCategoryScreenV2State
               totalPer: totalPer,
               isViewMode: isViewMode,
               showAudit: showAudit,
+              isAdminEditMode: pageargument?.mode == "Edit" && (auditObj["status"] ?? "").toString() == "C",
+              onContinue: _handleAdminContinueFromActivity,
               onCategoryTap: _openCategory,
             );
           case 2:
@@ -1186,9 +1198,9 @@ class _AuditCategoryScreenV2State
               isViewMode: isViewMode,
               wdt: wdt,
               clientUsers: clientUsers,
-              selectedClientEmail: selectedClientEmail,
+              selectedClientEmails: selectedClientEmails,
               publishReviewed: publishReviewed,
-              onClientEmailChanged: _handleClientEmailChanged,
+              onClientEmailsChanged: _handleClientEmailsChanged,
               onReviewedChanged: _handlePublishReviewedChanged,
               onPublish: _handlePublish,
             );
