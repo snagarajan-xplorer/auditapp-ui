@@ -175,7 +175,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
 
   List<TableColumnDef> get _brandColumns => [
         TableColumnDef(
-          label: 'Client',
+          label: 'No.',
           flex: 1,
           cellBuilder: (row, index) {
             final pageIndex = (_currentPage - 1) * _pageSize + index + 1;
@@ -196,8 +196,8 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
           },
         ),
         TableColumnDef(
-          label: 'Logo',
-          flex: 1,
+          label: 'Client Logo',
+          flex: 2,
           cellBuilder: (row, _) {
             final logoPath = row['clientlogo']?.toString() ?? '';
             return Container(
@@ -480,7 +480,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
           child: const Text(
-            'Client list', 
+            'Client list',
             style: TextStyle(
                 fontSize: 20,color: Color(0xFF505050), fontWeight: FontWeight.w600),
           ),

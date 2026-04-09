@@ -96,11 +96,13 @@ class _SideMenuState extends State<SideMenu> {
         ),
         child: Column(
           children: [
-            DrawerHeader(
-              margin: EdgeInsets.zero,
+            Container(
+              height: 158,
+              width: 280,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.onSecondary),
-              child: SvgPicture.asset("assets/images/can-logo.svg", width: 280, height: 158),
+              child: SvgPicture.asset("assets/images/can-logo.svg", width: 160, height: 78),
             ),
             Expanded(
               child: ListView(
