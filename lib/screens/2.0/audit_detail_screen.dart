@@ -598,7 +598,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     return "S";
   }
 
-  bool get _isAdmin => menuAccessRoleAdmin.contains(usercontroller.userData.role);
+  bool get _isAdmin => ['SA', 'AD', 'SrA'].contains(usercontroller.userData.role);
 
   Widget _buildActionButtons() {
     final statusStr = _resolveStatusCode();

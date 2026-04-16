@@ -1186,7 +1186,7 @@ class _AuditCategoryScreenV2State
             return SubmitReviewStep(
               auditObj: auditObj,
               isViewMode: isViewMode,
-              isAuditorRole: !['SA', 'AD'].contains(
+              isAuditorRole: !['SA', 'AD', 'SrA'].contains(
                   usercontroller.userData.role ?? ''),
               wdt: wdt,
               reviewAcknowledged: reviewAcknowledged,
