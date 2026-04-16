@@ -78,6 +78,7 @@ class _AuditCategoryScreenV2State
   // Published step
   List<dynamic> clientUsers = [];
   List<String> selectedClientEmails = [];
+  bool selectAllClients = false;
 
   // Validation: starts disabled, switches to onUserInteraction after first submit
   AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
@@ -147,7 +148,7 @@ class _AuditCategoryScreenV2State
       cat["total"] = "";
       cat["submitAns"] = "";
       cat["complete"] = false;
-      for (var q in (cat["questions"] as List? ?? [])) {
+        for (var q in (cat["questions"] as List? ?? [])) {
         q["answer"] = "";
         q["submitAns"] = "";
         q["proofdocuments"] = [];
@@ -157,6 +158,19 @@ class _AuditCategoryScreenV2State
     totalMark = "0";
     answerMark = "0";
     totalPer = "0";
+  }
+
+  void _handleSelectAllClients(bool? value) {
+    selectAllClients = value ?? false;
+    if (selectAllClients) {
+      selectedClientEmails = clientUsers
+          .map<String>((u) => (u["email"] ?? "").toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    } else {
+      selectedClientEmails = [];
+    }
+    setState(() {});
   }
 
   void _loadAuditData(String auditId, {bool freshStart = false}) {
@@ -215,10 +229,10 @@ class _AuditCategoryScreenV2State
         _clearAllAnswers();
         childs = [1, 0, 0, 0];
         activeStep = 0;
-      } else if (auditStatus == "P" && isViewMode) {
+      } else if (isViewMode) {
         childs = [2, 2, 2, 2];
         activeStep = 0;
-        publishReviewed = true;
+        publishReviewed = (auditStatus == "P");
         if (!_isJrA) _loadClientUsers();
       } else if (auditStatus == "P") {
         childs = [2, 2, 2, 2];
@@ -259,10 +273,8 @@ class _AuditCategoryScreenV2State
           errorcallback: (res) {},
           callback: (arr) {
         clientUsers = arr;
-        selectedClientEmails = clientUsers
-            .map<String>((u) => (u["email"] ?? "").toString())
-            .where((e) => e.isNotEmpty)
-            .toList();
+        // Do not pre-select all
+        if (!selectAllClients) selectedClientEmails = [];
         setState(() {});
       });
     }
@@ -809,16 +821,20 @@ class _AuditCategoryScreenV2State
   void _handleAdminContinueFromActivity() {
     childs[0] = 2;
     childs[1] = 2;
-    childs[2] = 2;
-    childs[3] = 1;
-    activeStep = 3;
-    _loadClientUsers();
+    childs[2] = 1;
+    activeStep = 2;
     setState(() {});
     gotoPage();
   }
 
   void _handleClientEmailsChanged(List<String> vals) {
     selectedClientEmails = vals;
+    final allEmails = clientUsers
+        .map<String>((u) => (u["email"] ?? "").toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    selectAllClients = allEmails.isNotEmpty &&
+        allEmails.every((e) => selectedClientEmails.contains(e));
     setState(() {});
   }
 
@@ -904,8 +920,8 @@ class _AuditCategoryScreenV2State
               });
             },
             showCancelBtn: true,
-            okbutton: AppTranslations.of(context)!
-                .text("key_btn_save"));
+            okbutton:
+                AppTranslations.of(context)!.text("key_btn_save"));
         return;
       }
       showQuestion = false;
@@ -1203,6 +1219,8 @@ class _AuditCategoryScreenV2State
               onClientEmailsChanged: _handleClientEmailsChanged,
               onReviewedChanged: _handlePublishReviewedChanged,
               onPublish: _handlePublish,
+              selectAllClients: selectAllClients == true,
+              onSelectAllChanged: _handleSelectAllClients,
             );
           default:
             return const SizedBox();

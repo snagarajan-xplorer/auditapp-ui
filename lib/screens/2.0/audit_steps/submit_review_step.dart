@@ -60,9 +60,9 @@ class SubmitReviewStep extends StatelessWidget {
       child: Align(
         alignment: Alignment.centerLeft,
         child: Padding(
-          padding: const EdgeInsets.only(left: 80),
+          padding: const EdgeInsets.only(left: 34),
           child: SizedBox(
-            width: wdt,
+            width: wdt*1.2,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

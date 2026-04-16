@@ -223,14 +223,15 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     return status == "C" || status == "P";
   }
 
-  void _downloadAuditSheet() {
+  void _downloadAuditSheet({String copyType = 'admin'}) {
     final reportUrl = auditData["reporturl"] ?? rowData["reporturl"] ?? "";
     if (reportUrl.toString().isEmpty) {
       APIService(context).showToastMgs(_isAuditCompleted ? "No audit report available" : "No audit sheet available");
       return;
     }
     final type = _isAuditCompleted ? 2 : 1;
-    launchUrl(Uri.parse("${API_URL}export?type=$type&id=$reportUrl"));
+    final copyParam = _isAuditCompleted ? "&copy=$copyType" : "";
+    launchUrl(Uri.parse("${API_URL}export?type=$type&id=$reportUrl$copyParam"));
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -535,10 +536,22 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     return map[status?.toString()] ?? 'grey';
   }
 
+  bool get _hasAdminOverride {
+    return auditData["has_admin_override"] == true;
+  }
+
   Widget _buildDownloadButton() {
-    final label = _isAuditCompleted ? "Download Audit Report" : "Download Audit Sheet";
+    if (_isAuditCompleted) {
+      final label = _isAdmin ? "Download Auditor Report" : "Download Audit Report";
+      final copyType = _hasAdminOverride ? 'admin' : 'auditor';
+      return _buildDownloadButtonWidget(label, () => _downloadAuditSheet(copyType: copyType));
+    }
+    return _buildDownloadButtonWidget("Download Audit Sheet", _downloadAuditSheet);
+  }
+
+  Widget _buildDownloadButtonWidget(String label, VoidCallback onTap) {
     return GestureDetector(
-      onTap: _downloadAuditSheet,
+      onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
@@ -631,7 +644,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
       spacing: 20,
       runSpacing: 12,
       children: [
-        if (statusStr != "CL" && statusStr != "P")
+        if (statusStr == "S" || statusStr == "PG" || statusStr == "IP")
           GestureDetector(
             onTap: _cancelAudit,
             child: Container(
@@ -669,7 +682,7 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
             ),
           ),
 
-        if (statusStr == "P")
+        if ((statusStr == "C" || statusStr == "P") && usercontroller.userData.role == "JrA")
           GestureDetector(
             onTap: () {
               Navigator.pushNamed(context, "/auditcategorylist",

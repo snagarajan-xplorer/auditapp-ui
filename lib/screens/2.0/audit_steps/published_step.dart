@@ -14,6 +14,8 @@ class PublishedStep extends StatelessWidget {
   final ValueChanged<List<String>> onClientEmailsChanged;
   final ValueChanged<bool> onReviewedChanged;
   final VoidCallback onPublish;
+  final bool selectAllClients;
+  final ValueChanged<bool?> onSelectAllChanged;
 
   const PublishedStep({
     super.key,
@@ -26,6 +28,8 @@ class PublishedStep extends StatelessWidget {
     required this.onClientEmailsChanged,
     required this.onReviewedChanged,
     required this.onPublish,
+    required this.selectAllClients,
+    required this.onSelectAllChanged,
   });
 
   @override
@@ -87,33 +91,48 @@ class PublishedStep extends StatelessWidget {
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: clientUsers.map<Widget>((user) {
-                      final email = user["email"] ?? "";
-                      final isSelected = selectedClientEmails.contains(email);
-                      return CheckboxListTile(
-                        value: isSelected,
+                    children: [
+                      CheckboxListTile(
+                        value: selectAllClients,
                         activeColor: const Color(0xFF67AC5B),
-                        title: Text(email,
-                            style: const TextStyle(
-                                fontSize: 14, color: Color(0xFF505050))),
+                        title: const Text("Select All",
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF505050))),
                         dense: true,
                         controlAffinity: ListTileControlAffinity.leading,
-                        onChanged: isAlreadyPublished
-                            ? null
-                            : (val) {
-                                final updated =
-                                    List<String>.from(selectedClientEmails);
-                                if (val == true) {
-                                  if (!updated.contains(email)) {
-                                    updated.add(email);
+                        onChanged: isAlreadyPublished ? null : onSelectAllChanged,
+                      ),
+                      const Divider(height: 1),
+                      ...clientUsers.map<Widget>((user) {
+                        final email = user["email"] ?? "";
+                        final isSelected = selectedClientEmails.contains(email);
+                        return CheckboxListTile(
+                          value: isSelected,
+                          activeColor: const Color(0xFF67AC5B),
+                          title: Text(email,
+                              style: const TextStyle(
+                                  fontSize: 14, color: Color(0xFF505050))),
+                          dense: true,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          onChanged: isAlreadyPublished
+                              ? null
+                              : (val) {
+                                  final updated =
+                                      List<String>.from(selectedClientEmails);
+                                  if (val == true) {
+                                    if (!updated.contains(email)) {
+                                      updated.add(email);
+                                    }
+                                  } else {
+                                    updated.remove(email);
                                   }
-                                } else {
-                                  updated.remove(email);
-                                }
-                                onClientEmailsChanged(updated);
-                              },
-                      );
-                    }).toList(),
+                                  onClientEmailsChanged(updated);
+                                },
+                        );
+                      }),
+                    ],
                   ),
                 ),
               ),

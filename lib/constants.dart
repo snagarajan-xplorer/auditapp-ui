@@ -113,12 +113,12 @@ Color colorForScore(dynamic score) {
 // final String IMG_URL = "http://$_apiHost:8000/api/img/";
 
 // LOCAL DEVELOPMENT
-const API_URL = "http://127.0.0.1:8000/api/";
-const IMG_URL = "http://127.0.0.1:8000/storage/";
+// const API_URL = "http://127.0.0.1:8000/api/";
+// const IMG_URL = "http://127.0.0.1:8000/storage/";
 
 // PRODUCTION SERVER
-// const API_URL = "https://api.auditondgo.com/api/";
-// const IMG_URL = "https://api.auditondgo.com/storage/";
+const API_URL = "https://api.auditondgo.com/api/";
+const IMG_URL = "https://api.auditondgo.com/storage/";
 
 String imgUrl(String path) => Uri.encodeFull('${API_URL}img/$path');
 
