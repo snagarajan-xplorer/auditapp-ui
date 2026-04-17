@@ -13,6 +13,7 @@ class SubmitReviewStep extends StatelessWidget {
   final bool acknowlodgeImage;
   final Uint8List? imageBytes;
   final String userName;
+  final String auditStatus;
   final ValueChanged<bool> onAcknowledgeChanged;
   final VoidCallback onBrowse;
   final VoidCallback onSubmit;
@@ -28,6 +29,7 @@ class SubmitReviewStep extends StatelessWidget {
     required this.acknowlodgeImage,
     required this.imageBytes,
     required this.userName,
+    required this.auditStatus,
     required this.onAcknowledgeChanged,
     required this.onBrowse,
     required this.onSubmit,
@@ -141,14 +143,13 @@ class SubmitReviewStep extends StatelessWidget {
                         ],
                       ),
                       SizedBox(height: defaultPadding),
-                      // Proof of location text
-                      Text("Proof of location is included.",
-                          style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade700)),
-                      SizedBox(height: defaultPadding),
-                      // Browse button + image preview
-                      if (isAuditorRole && !isViewMode) ...[
+                      if (_hasImage)
+                        Text("Proof of location is included.",
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade700)),
+                      if (_hasImage) SizedBox(height: defaultPadding),
+                      if (_canEdit) ...[
                         Row(
                           crossAxisAlignment:
                               CrossAxisAlignment.start,
@@ -180,24 +181,32 @@ class SubmitReviewStep extends StatelessWidget {
                               _proofImageContainer(
                                 Image.memory(imageBytes!,
                                     fit: BoxFit.cover),
+                              )
+                            else if (_storedImagePath.isNotEmpty)
+                              _proofImageContainer(
+                                Image.network(
+                                  imgUrl(_storedImagePath),
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      const Icon(Icons.broken_image,
+                                          size: 40, color: Colors.grey),
+                                ),
                               ),
                           ],
                         ),
-                      ] else if ((auditObj["image"] ?? "")
-                          .toString()
-                          .isNotEmpty) ...[
+                      ] else if (_storedImagePath.isNotEmpty) ...[
                         _proofImageContainer(
                           Image.network(
-                            imgUrl(auditObj["image"]),
+                            imgUrl(_storedImagePath),
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) =>
-                                const SizedBox(),
+                                const Icon(Icons.broken_image,
+                                    size: 40, color: Colors.grey),
                           ),
                         ),
                       ],
                       SizedBox(height: defaultPadding * 2),
-                      // Submit button (hidden in view mode or for non-auditor)
-                      if (isAuditorRole && !isViewMode)
+                      if (_canEdit)
                         Center(
                           child: ButtonComp(
                             width: 300,
@@ -223,6 +232,15 @@ class SubmitReviewStep extends StatelessWidget {
       ),
     );
   }
+
+  bool get _canEdit =>
+      isAuditorRole && !isViewMode && !["C", "P"].contains(auditStatus);
+
+  String get _storedImagePath =>
+      (auditObj["image"] ?? "").toString();
+
+  bool get _hasImage =>
+      (imageBytes != null) || _storedImagePath.isNotEmpty;
 
   Widget _proofImageContainer(Widget child) {
     return Container(

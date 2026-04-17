@@ -104,10 +104,25 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
       return;
     }
 
+    final mobile = _mobileController.text.trim();
+    if (mobile.isNotEmpty && !RegExp(r'^\d{10}$').hasMatch(mobile)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid 10-digit mobile number')));
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    if (email.isNotEmpty &&
+        !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid email address')));
+      return;
+    }
+
     final Map<String, dynamic> extraData = {
       'contactname': _clientNameController.text.trim(),
-      'clientmobile': _mobileController.text.trim(),
-      'clientemail': _emailController.text.trim(),
+      'clientmobile': mobile,
+      'clientemail': email,
       'created_by': userController.userData.name ?? '',
     };
 

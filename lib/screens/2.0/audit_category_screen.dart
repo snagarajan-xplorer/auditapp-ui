@@ -1193,6 +1193,7 @@ class _AuditCategoryScreenV2State
               acknowlodgeImage: acknowlodgeImage,
               imageBytes: _imageBytes,
               userName: usercontroller.userData.name ?? "",
+              auditStatus: (auditObj["status"] ?? "").toString(),
               onAcknowledgeChanged: _handleAcknowledgeChanged,
               onBrowse: _handleBrowseAcknowledgeImage,
               onSubmit: _handleSubmitReview,
