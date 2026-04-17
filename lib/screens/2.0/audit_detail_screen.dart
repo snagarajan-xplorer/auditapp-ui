@@ -542,9 +542,9 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
 
   Widget _buildDownloadButton() {
     if (_isAuditCompleted) {
-      final label = _isAdmin ? "Download Auditor Report" : "Download Audit Report";
-      final copyType = _hasAdminOverride ? 'admin' : 'auditor';
-      return _buildDownloadButtonWidget(label, () => _downloadAuditSheet(copyType: copyType));
+      final status = _resolveStatusCode();
+      final copyType = status == "P" ? 'admin' : 'auditor';
+      return _buildDownloadButtonWidget("Download Audit Report", () => _downloadAuditSheet(copyType: copyType));
     }
     return _buildDownloadButtonWidget("Download Audit Sheet", _downloadAuditSheet);
   }
@@ -631,6 +631,30 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                 child: Text("Edit",
                     style: TextStyle(
                         fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white)),
+              ),
+            ),
+          if (statusStr == "P")
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, "/auditcategorylist",
+                    arguments: ScreenArgument(
+                        argument: ArgumentData.USER,
+                        mode: "View",
+                        mapData: rowData));
+              },
+              child: Container(
+                width: 200,
+                padding: EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: Color(0xFF29B6F6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text("View Audit",
+                    style: TextStyle(
+                        fontSize: 15,
                         fontWeight: FontWeight.w500,
                         color: Colors.white)),
               ),

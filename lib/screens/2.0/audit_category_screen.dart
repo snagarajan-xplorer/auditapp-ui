@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:audit_app/localization/app_translations.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/services/api_service.dart';
@@ -273,8 +274,22 @@ class _AuditCategoryScreenV2State
           errorcallback: (res) {},
           callback: (arr) {
         clientUsers = arr;
-        // Do not pre-select all
-        if (!selectAllClients) selectedClientEmails = [];
+        String auditStatus = (auditObj["status"] ?? "").toString();
+        if (auditStatus == "P" && auditObj["client_email"] != null) {
+          dynamic stored = auditObj["client_email"];
+          if (stored is String && stored.isNotEmpty) {
+            try {
+              List<dynamic> parsed = jsonDecode(stored);
+              selectedClientEmails = parsed.cast<String>().toList();
+            } catch (_) {
+              selectedClientEmails = [];
+            }
+          } else if (stored is List) {
+            selectedClientEmails = stored.cast<String>().toList();
+          }
+        } else if (!selectAllClients) {
+          selectedClientEmails = [];
+        }
         setState(() {});
       });
     }

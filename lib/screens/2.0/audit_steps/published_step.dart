@@ -92,19 +92,21 @@ class PublishedStep extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CheckboxListTile(
-                        value: selectAllClients,
-                        activeColor: const Color(0xFF67AC5B),
-                        title: const Text("Select All",
-                            style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF505050))),
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        onChanged: isAlreadyPublished ? null : onSelectAllChanged,
-                      ),
-                      const Divider(height: 1),
+                      if (!isAlreadyPublished)
+                        CheckboxListTile(
+                          value: selectAllClients,
+                          activeColor: const Color(0xFF67AC5B),
+                          title: const Text("Select All",
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF505050))),
+                          dense: true,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          onChanged: onSelectAllChanged,
+                        ),
+                      if (!isAlreadyPublished)
+                        const Divider(height: 1),
                       ...clientUsers.map<Widget>((user) {
                         final email = user["email"] ?? "";
                         final isSelected = selectedClientEmails.contains(email);
