@@ -5,58 +5,27 @@ import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
 import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../main/layoutscreen.dart';
 import '../../constants.dart';
 
-Future<BitmapDescriptor> _getRedCircleWithSvgIcon({int size = 40}) async {
-  final svgString = await rootBundle.loadString('assets/images/can-logo.svg');
-  final pictureInfo = await vg.loadPicture(SvgStringLoader(svgString), null);
-
+Future<BitmapDescriptor> _getRedCircleMarkerIcon({int size = 22}) async {
   final ui.PictureRecorder recorder = ui.PictureRecorder();
   final Canvas canvas = Canvas(recorder);
-  final double center = size / 2;
-  final double radius = size / 2.2;
-
   canvas.drawCircle(
-    Offset(center, center),
-    radius,
+    Offset(size / 2, size / 2),
+    size / 2.2,
     Paint()..color = Color(0xFFF54234),
   );
   canvas.drawCircle(
-    Offset(center, center),
-    radius,
+    Offset(size / 2, size / 2),
+    size / 2.2,
     Paint()
       ..color = Colors.white
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5,
+      ..strokeWidth = 1,
   );
-
-  final double padding = size * 0.2;
-  final double availW = size - padding * 2;
-  final double availH = size - padding * 2;
-  final double svgAspect = pictureInfo.size.width / pictureInfo.size.height;
-  double drawW, drawH;
-  if (svgAspect > 1) {
-    drawW = availW;
-    drawH = availW / svgAspect;
-  } else {
-    drawH = availH;
-    drawW = availH * svgAspect;
-  }
-  final double dx = (size - drawW) / 2;
-  final double dy = (size - drawH) / 2;
-
-  canvas.save();
-  canvas.translate(dx, dy);
-  canvas.scale(drawW / pictureInfo.size.width, drawH / pictureInfo.size.height);
-  canvas.drawPicture(pictureInfo.picture);
-  canvas.restore();
-  pictureInfo.picture.dispose();
-
   final img = await recorder.endRecording().toImage(size, size);
   final data = await img.toByteData(format: ui.ImageByteFormat.png);
   return BitmapDescriptor.bytes(data!.buffer.asUint8List());
@@ -152,7 +121,7 @@ class _RedReportScreenState extends State<RedReportScreen>
       if (mounted && ModalRoute.of(context)!.isCurrent) loadStateWiseData();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      _cachedMarkerIcon = await _getRedCircleWithSvgIcon();
+      _cachedMarkerIcon = await _getRedCircleMarkerIcon();
       await _loadIndiaPolygons();
       await _initializeScreen();
       _addStateMarkers();
