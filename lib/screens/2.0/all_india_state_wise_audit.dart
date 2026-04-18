@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/widget/boxcontainer.dart';
@@ -36,14 +37,24 @@ class _AllIndiaStateWiseAuditState
   Map<String, dynamic> stateDataMap = {};
 
   late final UserController usercontroller;
+  StreamSubscription<String>? _clientSub;
 
   @override
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
+    _clientSub = usercontroller.onClientChanged.listen((_) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) loadStateWiseData();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeScreen();
     });
+  }
+
+  @override
+  void dispose() {
+    _clientSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeScreen() async {
@@ -91,7 +102,9 @@ class _AllIndiaStateWiseAuditState
     var map = {
       "financial_year": fyValue,
       "userid": usercontroller.userData.userId,
-      "role": usercontroller.userData.role
+      "role": usercontroller.userData.role,
+      "client": usercontroller.userData.clientid,
+      "client_id": usercontroller.selectedClientId,
     };
 
     usercontroller.getAllIndiaStateWiseAudit(context, data: map,

@@ -135,9 +135,29 @@ class _BrandDropdownState extends State<BrandDropdown> {
           setState(() {
             clientArr = res;
             if (clientArr.isNotEmpty) {
-              selectedClientId = clientArr[0]["clientid"].toString();
+              final existing = usercontroller.selectedClientId;
+              final hasValid = existing.isNotEmpty &&
+                  res.any((c) => c["clientid"].toString() == existing);
+              selectedClientId = hasValid
+                  ? existing
+                  : clientArr[0]["clientid"].toString();
               usercontroller.selectedClientId = selectedClientId;
             }
+            isLoading = false;
+          });
+        },
+      );
+    } else if (usercontroller.userData.role == 'CL') {
+      usercontroller.getClientList(
+        context,
+        data: {
+          "role": usercontroller.userData.role,
+          "client_id": usercontroller.userData.clientid
+        },
+        loader: false,
+        callback: (res) {
+          setState(() {
+            clientArr = res;
             isLoading = false;
           });
         },
@@ -151,6 +171,33 @@ class _BrandDropdownState extends State<BrandDropdown> {
 
   @override
   Widget build(BuildContext context) {
+    if (usercontroller.userData.role == 'CL') {
+      if (isLoading) {
+        return Text(
+          "Loading...",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: Color(0xFF505050),
+          ),
+        );
+      }
+      final clientName = clientArr.isNotEmpty
+          ? clientArr[0]["clientname"]?.toString() ?? ""
+          : "";
+      if (clientName.isEmpty) return const SizedBox();
+      return Text(
+        clientName,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFF505050),
+        ),
+        overflow: TextOverflow.ellipsis,
+        maxLines: 1,
+      );
+    }
+
     if (!menuAccessRole.contains(usercontroller.userData.role!)) {
       return Container();
     }
@@ -196,7 +243,7 @@ class _BrandDropdownState extends State<BrandDropdown> {
       onChanged: (value) {
         setState(() {
           selectedClientId = value!;
-          usercontroller.selectedClientId = value;
+          usercontroller.setSelectedClient(value);
         });
       },
       icon: Icon(Icons.arrow_drop_down, color: Colors.grey.shade700, size: 24),

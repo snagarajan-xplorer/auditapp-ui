@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
@@ -28,12 +29,20 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
   bool _isActive = true;
   bool _isCheckingStatus = false;
 
-  // Edit mode
   bool _isEditMode = false;
   String? _editClientId;
   String? _existingLogoPath;
 
-  // State
+  List<Map<String, dynamic>> _contacts = [];
+  bool _isLoadingContacts = false;
+
+  final TextEditingController _newContactNameController = TextEditingController();
+  final TextEditingController _newMobileController = TextEditingController();
+  final TextEditingController _newEmailController = TextEditingController();
+  String? _newEmailError;
+  bool _isCheckingNewEmail = false;
+  Timer? _newEmailDebounce;
+  bool _showAddContactForm = false;
 
   @override
   void initState() {
@@ -46,6 +55,7 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args != null && args is ScreenArgument && args.editData != null) {
         _prefillForEdit(args.editData!);
+        _loadContacts(args.editData!['clientid']?.toString());
       }
     });
   }
@@ -56,7 +66,86 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
     _clientNameController.dispose();
     _mobileController.dispose();
     _emailController.dispose();
+    _newContactNameController.dispose();
+    _newMobileController.dispose();
+    _newEmailController.dispose();
+    _newEmailDebounce?.cancel();
     super.dispose();
+  }
+
+  void _loadContacts(String? clientid) {
+    if (clientid == null) return;
+    setState(() => _isLoadingContacts = true);
+    userController.getClientContacts(context, clientid: clientid, callback: (data) {
+      if (mounted) {
+        setState(() {
+          _isLoadingContacts = false;
+          _contacts = List.from(data).map((e) => Map<String, dynamic>.from(e)).toList();
+        });
+      }
+    });
+  }
+
+  void _checkNewEmail(String email) {
+    _newEmailDebounce?.cancel();
+    if (email.isEmpty) {
+      setState(() { _newEmailError = null; _isCheckingNewEmail = false; });
+      return;
+    }
+    if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
+      setState(() { _newEmailError = 'Please enter a valid email address'; _isCheckingNewEmail = false; });
+      return;
+    }
+    setState(() => _isCheckingNewEmail = true);
+    _newEmailDebounce = Timer(const Duration(milliseconds: 500), () {
+      userController.checkClientEmail(context, email: email, callback: (exists, {String? message}) {
+        if (mounted) {
+          setState(() {
+            _isCheckingNewEmail = false;
+            _newEmailError = exists
+                ? (message ?? 'Email already exists for another contact')
+                : null;
+          });
+        }
+      });
+    });
+  }
+
+  void _submitNewContact() {
+    if (_newContactNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contact name is required')));
+      return;
+    }
+    final email = _newEmailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email ID is required')));
+      return;
+    }
+    if (_newEmailError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_newEmailError!)));
+      return;
+    }
+    final mobile = _newMobileController.text.trim();
+    if (mobile.isNotEmpty && !RegExp(r'^\d{10}$').hasMatch(mobile)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid 10-digit mobile number')));
+      return;
+    }
+    userController.addClientContact(context, data: {
+      'clientid': _editClientId,
+      'contactname': _newContactNameController.text.trim(),
+      'contactmobile': mobile,
+      'contactemail': email,
+      'created_by': userController.userData.name ?? '',
+    }, callback: (res) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Contact added successfully'), backgroundColor: Colors.green),
+      );
+      _newContactNameController.clear();
+      _newMobileController.clear();
+      _newEmailController.clear();
+      setState(() { _showAddContactForm = false; _newEmailError = null; });
+      _loadContacts(_editClientId);
+    });
   }
 
   void _loadBrands() {
@@ -437,6 +526,170 @@ class _EditBrandScreenState extends State<EditBrandScreen> {
   }
 
   // ── Build ──────────────────────────────────────────────────────────────
+
+  Widget _buildContactsSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: defaultPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Contacts',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF505050))),
+              if (!_showAddContactForm)
+                ElevatedButton.icon(
+                  onPressed: () => setState(() => _showAddContactForm = true),
+                  icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                  label: const Text('Add Contact', style: TextStyle(fontSize: 13, color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF02B2EB),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    elevation: 0,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_showAddContactForm) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9F9F9),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFDDDDDD)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('New Contact', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF505050))),
+                  const SizedBox(height: 12),
+                  Responsive.isMobile(context)
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _labeledField(label: 'Contact Name', controller: _newContactNameController),
+                            const SizedBox(height: 12),
+                            _labeledField(label: 'Mobile No.', controller: _newMobileController, keyboardType: TextInputType.phone),
+                            const SizedBox(height: 12),
+                            _buildNewEmailField(),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: _labeledField(label: 'Contact Name', controller: _newContactNameController)),
+                            const SizedBox(width: 16),
+                            Expanded(child: _labeledField(label: 'Mobile No.', controller: _newMobileController, keyboardType: TextInputType.phone)),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildNewEmailField()),
+                          ],
+                        ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        onPressed: _submitNewContact,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF535353),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                        child: const Text('Save Contact', style: TextStyle(fontSize: 13, color: Colors.white)),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        onPressed: () {
+                          _newContactNameController.clear();
+                          _newMobileController.clear();
+                          _newEmailController.clear();
+                          setState(() { _showAddContactForm = false; _newEmailError = null; });
+                        },
+                        child: const Text('Cancel', style: TextStyle(color: Color(0xFF2E77D0))),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (_isLoadingContacts)
+            const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()))
+          else if (_contacts.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text('No contacts found', style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+            )
+          else
+            ..._contacts.map((c) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(c['contactname']?.toString() ?? '', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 4),
+                            Text(c['contactemail']?.toString() ?? '', style: const TextStyle(fontSize: 13, color: Color(0xFF777777))),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(c['contactmobile']?.toString() ?? '', style: const TextStyle(fontSize: 13, color: Color(0xFF777777))),
+                      ),
+                    ],
+                  ),
+                )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNewEmailField() {
+    return AppLabeledField(
+      label: 'Email ID',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _newEmailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: AppFormStyles.inputDecoration(
+              suffixIcon: _isCheckingNewEmail
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
+                  : _newEmailError != null
+                      ? const Icon(Icons.error_outline, color: Colors.red, size: 20)
+                      : _newEmailController.text.isNotEmpty
+                          ? const Icon(Icons.check_circle_outline, color: Colors.green, size: 20)
+                          : null,
+            ),
+            style: const TextStyle(height: 1.0),
+            onChanged: _checkNewEmail,
+          ),
+          if (_newEmailError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(_newEmailError!, style: const TextStyle(fontSize: 12, color: Colors.red)),
+            ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

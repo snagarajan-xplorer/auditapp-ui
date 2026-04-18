@@ -263,6 +263,19 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
     return (auditData["timevalue"] ?? rowData["timevalue"] ?? "-").toString();
   }
 
+  String _getFormattedPublishDate() {
+    final val = auditData["publish_date"] ?? rowData["publish_date"];
+    if (val == null || val.toString().isEmpty || val == "-") return "-";
+    final str = val.toString();
+    if (str.contains("/")) return str;
+    try {
+      return Jiffy.parseFromDateTime(DateTime.parse(str))
+          .format(pattern: "dd/MM/yyyy");
+    } catch (_) {
+      return str;
+    }
+  }
+
   Color _statusColor(String colorName) {
     switch (colorName) {
       case "green":
@@ -357,6 +370,12 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                                   _buildInfoField("Auditor", _getField("auditor_name")),
                                   const SizedBox(height: 24),
                                   _buildStatusField(),
+                                  if (_resolveStatusCode() == "P") ...[
+                                    const SizedBox(height: 24),
+                                    _buildInfoField("Published by", _getField("published_by")),
+                                    const SizedBox(height: 24),
+                                    _buildInfoField("Published date", _getFormattedPublishDate()),
+                                  ],
                                 ],
                               )
                             : Row(
@@ -402,6 +421,15 @@ class _AuditDetailsScreenState extends State<AuditDetailsScreen> {
                                       Expanded(child: SizedBox()),
                                     ],
                                   ),
+                                  if (_resolveStatusCode() == "P") ...[
+                                    SizedBox(height: 40),
+                                    Row(
+                                      children: [
+                                        Expanded(child: _buildInfoField("Published by", _getField("published_by"))),
+                                        Expanded(child: _buildInfoField("Published date", _getFormattedPublishDate())),
+                                      ],
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

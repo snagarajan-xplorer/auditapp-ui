@@ -89,7 +89,7 @@ class SubmitReviewStep extends StatelessWidget {
                     border: Border.all(
                         color: Colors.grey.shade300, width: 1),
                   ),
-                  child: Column(
+                  child: Column(   
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

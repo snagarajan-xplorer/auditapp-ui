@@ -432,8 +432,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
     if (selectedRole == null && _isEditMode && _editData != null) {
       selectedRole = _editData!['role']?.toString();
     }
-    // Hide brands for AD and JrA roles
-    if (selectedRole == 'AD' || selectedRole == 'JrA') {
+    if (selectedRole == 'AD') {
       return const SizedBox.shrink();
     }
 
@@ -693,10 +692,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
 
     // Handle brand/client
     final selectedRole = formData['role'];
-    if (selectedRole == 'AD' || selectedRole == 'JrA') {
+    if (selectedRole == 'AD') {
       formData['client'] = '0';
       formData['parentid'] = 0;
-    } else if (selectedRole == 'SrA') {
+    } else if (selectedRole == 'SrA' || selectedRole == 'JrA') {
       formData['parentid'] = 0;
       formData['client'] = _selectedBrandIds.join(', ');
     } else {

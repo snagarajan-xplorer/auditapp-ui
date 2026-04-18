@@ -42,6 +42,7 @@ class _SideMenuState extends State<SideMenu> {
     '/createbrand': ['settings-brand'],
     '/createaudit': ['audit-create'],
     '/auditlist': ['audit-list'],
+    '/client-audit-status': ['client-audit-status'],
   };
 
   String _resolveMenuKey() {
@@ -64,6 +65,7 @@ class _SideMenuState extends State<SideMenu> {
   Widget build(BuildContext context) {
     final menuKey = _resolveMenuKey();
     final isAuditor = usercontroller.userData.role == 'JrA';
+    final isClient = usercontroller.userData.role == 'CL';
 
     // Dynamically determine which sections should be expanded based on selected menu key
     const auditStatusKeys = ['dashboard', 'scheduled', 'unscheduled', 'assigned-audit'];
@@ -108,6 +110,33 @@ class _SideMenuState extends State<SideMenu> {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
+                  if (isClient)
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Color(0xFF777777))),
+                        color: menuKey == 'client-audit-status' ? Color(0xFF02B2EB) : Color(0xFF505050),
+                      ),
+                      child: ListTile(
+                        title: Text(
+                          "Audit Status",
+                          style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 0,
+                              height: 16 / 19),
+                        ),
+                        onTap: () {
+                          if (widget.enableAction!) {
+                            usercontroller.selectedMenuKey = 'client-audit-status';
+                            Navigator.pushNamed(context, "/client-audit-status");
+                          } else {
+                            widget.onCallback!(0);
+                          }
+                        },
+                      ),
+                    ),
+                  if (!isClient)
                   // Audit Status Section
                   ExpansionTile(
                     initiallyExpanded: isAuditStatusExpanded,
@@ -286,7 +315,9 @@ class _SideMenuState extends State<SideMenu> {
                                 var map = {
                                   "financial_year": fy,
                                   "userid": usercontroller.userData.userId,
-                                  "role": usercontroller.userData.role
+                                  "role": usercontroller.userData.role,
+                                  "client": usercontroller.userData.clientid,
+                                  "client_id": usercontroller.selectedClientId,
                                 };
 
                                 Navigator.pop(context);
@@ -379,7 +410,7 @@ class _SideMenuState extends State<SideMenu> {
                     ],
                   ),
 
-                  if (!isAuditor)
+                  if (!isAuditor && !isClient)
                   // Settings Section
                   ExpansionTile(
                     initiallyExpanded: isSettingsExpanded,
@@ -455,7 +486,7 @@ class _SideMenuState extends State<SideMenu> {
                     ],
                   ),
 
-                  if (!isAuditor)
+                  if (!isAuditor && !isClient)
                   // Audit Section
                   ExpansionTile(
                     initiallyExpanded: isAuditExpanded,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:audit_app/widget/financial_year_dropdown.dart';
@@ -19,6 +20,7 @@ class PublishedReportScreen extends StatefulWidget {
 
 class _PublishedReportScreenState extends State<PublishedReportScreen> {
   late final UserController usercontroller;
+  StreamSubscription<String>? _clientSub;
 
   String selectedState = "All";
   String selectedZone = "All";
@@ -37,6 +39,9 @@ class _PublishedReportScreenState extends State<PublishedReportScreen> {
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
+    _clientSub = usercontroller.onClientChanged.listen((_) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) _loadData();
+    });
     if (usercontroller.userData.role == null) {
       usercontroller.loadInitData();
     }
@@ -54,6 +59,12 @@ class _PublishedReportScreenState extends State<PublishedReportScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
+  @override
+  void dispose() {
+    _clientSub?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     setState(() => isLoading = true);
 
@@ -62,6 +73,7 @@ class _PublishedReportScreenState extends State<PublishedReportScreen> {
       "userid": usercontroller.userData.userId,
       "role": usercontroller.userData.role,
       "year": year,
+      "client_id": usercontroller.selectedClientId,
     };
 
     usercontroller.getPublishedReportList(context, data: data, callback: (res) {

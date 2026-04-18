@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:audit_app/widget/zone_dropdown.dart';
@@ -18,6 +19,7 @@ class NCReportListScreen extends StatefulWidget {
 
 class _NCReportListScreenState extends State<NCReportListScreen> {
   late final UserController usercontroller;
+  StreamSubscription<String>? _clientSub;
 
   String selectedCity = "All";
   String selectedState = "All";
@@ -38,6 +40,9 @@ class _NCReportListScreenState extends State<NCReportListScreen> {
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
+    _clientSub = usercontroller.onClientChanged.listen((_) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) _loadData();
+    });
     if (usercontroller.userData.role == null) {
       usercontroller.loadInitData();
     }
@@ -55,6 +60,12 @@ class _NCReportListScreenState extends State<NCReportListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
+  @override
+  void dispose() {
+    _clientSub?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     setState(() => isLoading = true);
 
@@ -63,6 +74,7 @@ class _NCReportListScreenState extends State<NCReportListScreen> {
       "userid": usercontroller.userData.userId,
       "role": usercontroller.userData.role,
       "year": year,
+      "client_id": usercontroller.selectedClientId,
     };
 
     usercontroller.getNCReportList(context, data: data, callback: (res) {

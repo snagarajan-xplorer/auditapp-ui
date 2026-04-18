@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -52,6 +53,7 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final UserController usercontroller;
+  StreamSubscription<String>? _clientSub;
 
   // Filter state
   String selectedZone = "All";
@@ -90,6 +92,9 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
+    _clientSub = usercontroller.onClientChanged.listen((_) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) _loadData();
+    });
 
     _tabController = TabController(length: _kTabs.length, vsync: this);
     _tabController.addListener(_onTabChanged);
@@ -116,6 +121,7 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
 
   @override
   void dispose() {
+    _clientSub?.cancel();
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
@@ -124,9 +130,7 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
   Future<void> _loadData() async {
     setState(() => isLoading = true);
     final role = usercontroller.userData.role ?? '';
-    final isAdminRole = role == 'SA' || role == 'AD';
 
-    // Convert "FY2025-26" label → bare end year "2026" for the API
     String yearParam = selectedFinancialYear;
     final fyMatch = _fyRegex.firstMatch(yearParam);
     if (fyMatch != null) {
@@ -139,11 +143,8 @@ class _ScheduledAuditScreenState extends State<ScheduledAuditScreen>
       "month": "All",
       "userid": usercontroller.userData.userId,
       "role": role,
-      if (!isAdminRole) "client": usercontroller.userData.clientid,
-      if (!isAdminRole)
-        "client_id": usercontroller.userData.clientid?.isNotEmpty == true
-            ? usercontroller.userData.clientid!.first
-            : null,
+      "client": usercontroller.userData.clientid,
+      "client_id": usercontroller.selectedClientId,
     };
     await usercontroller.getScheduledAuditDetails(context, data: data,
         callback: (list, total) {

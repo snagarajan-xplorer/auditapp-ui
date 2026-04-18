@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:audit_app/models/screenarguments.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,20 +20,25 @@ class CreateBrandScreen extends StatefulWidget {
 class _CreateBrandScreenState extends State<CreateBrandScreen> {
   late final UserController userController;
 
-  // Form fields
   final TextEditingController _brandNameController = TextEditingController();
   final TextEditingController _clientNameController = TextEditingController();
   final TextEditingController _mobileController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final FocusNode _brandNameFocusNode = FocusNode();
+  final GlobalKey _brandFieldKey = GlobalKey();
 
   PlatformFile? _logoFile;
 
-  // Edit mode
   bool _isEditMode = false;
   String? _editClientId;
   String? _existingLogoPath;
 
-  // State
+  bool _isAddContactMode = false;
+
+  String? _emailError;
+  bool _isCheckingEmail = false;
+  Timer? _emailDebounce;
+
   List<Map<String, dynamic>> _brandList = [];
   bool _isLoading = false;
   int _currentPage = 1;
@@ -54,6 +60,8 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
     _clientNameController.dispose();
     _mobileController.dispose();
     _emailController.dispose();
+    _brandNameFocusNode.dispose();
+    _emailDebounce?.cancel();
     super.dispose();
   }
 
@@ -61,46 +69,123 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
     setState(() => _isLoading = true);
     userController.getBrandList(context, callback: (data) {
       if (mounted) {
+        final List<Map<String, dynamic>> flatList = [];
+        for (final e in data) {
+          final brand = Map<String, dynamic>.from(e);
+          final contacts = (brand['contacts'] as List?) ?? [];
+          if (contacts.isEmpty) {
+            flatList.add(brand);
+          } else {
+            for (final c in contacts) {
+              final contact = Map<String, dynamic>.from(c);
+              flatList.add({
+                ...brand,
+                'contactname': contact['contactname'] ?? '',
+                'clientmobile': contact['contactmobile'] ?? '',
+                'clientemail': contact['contactemail'] ?? '',
+                'contact_id': contact['id'],
+              });
+            }
+          }
+        }
         setState(() {
           _isLoading = false;
-          _brandList = List.from(data)
-              .map((e) => Map<String, dynamic>.from(e))
-              .toList();
+          _brandList = flatList;
         });
       }
     });
   }
 
   void _clearForm() {
-    _brandNameController.clear();
-    _clientNameController.clear();
-    _mobileController.clear();
-    _emailController.clear();
-    setState(() {
-      _logoFile = null;
-      _isEditMode = false;
-      _editClientId = null;
-      _existingLogoPath = null;
+    _brandNameFocusNode.unfocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _brandNameController.clear();
+      _clientNameController.clear();
+      _mobileController.clear();
+      _emailController.clear();
+      setState(() {
+        _logoFile = null;
+        _isEditMode = false;
+        _editClientId = null;
+        _existingLogoPath = null;
+        _isAddContactMode = false;
+        _editClientId = null;
+        _emailError = null;
+        _isCheckingEmail = false;
+      });
     });
   }
 
-  /* void _prefillForEdit(Map<String, dynamic> row) {
-    _brandNameController.text = row['clientname']?.toString() ?? '';
-    _clientNameController.text = row['contactname']?.toString() ?? '';
-    _mobileController.text = row['clientmobile']?.toString() ?? '';
-    _emailController.text = row['clientemail']?.toString() ?? '';
-    setState(() {
-      _isEditMode = true;
-      _editClientId = row['clientid']?.toString();
-      _existingLogoPath = row['clientlogo']?.toString();
-      _logoFile = null;
+  void _onBrandSelected(Map<String, dynamic> brand) {
+    _brandNameFocusNode.unfocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _isAddContactMode = true;
+        _editClientId = brand['clientid']?.toString();
+        _brandNameController.text = brand['clientname']?.toString() ?? '';
+      });
     });
-  } */
+  }
+
+  void _exitAddContactMode() {
+    _brandNameFocusNode.unfocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _brandNameController.clear();
+      _clientNameController.clear();
+      _mobileController.clear();
+      _emailController.clear();
+      setState(() {
+        _isAddContactMode = false;
+        _editClientId = null;
+        _emailError = null;
+      });
+    });
+  }
+
+  void _checkEmail(String email) {
+    _emailDebounce?.cancel();
+    if (email.isEmpty) {
+      setState(() {
+        _emailError = null;
+        _isCheckingEmail = false;
+      });
+      return;
+    }
+    if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
+      setState(() {
+        _emailError = 'Please enter a valid email address';
+        _isCheckingEmail = false;
+      });
+      return;
+    }
+    setState(() => _isCheckingEmail = true);
+    _emailDebounce = Timer(const Duration(milliseconds: 500), () {
+      userController.checkClientEmail(context, email: email, callback: (exists, {String? message}) {
+        if (mounted) {
+          setState(() {
+            _isCheckingEmail = false;
+            _emailError = exists
+                ? (message ?? 'Email already exists for another contact')
+                : null;
+          });
+        }
+      });
+    });
+  }
 
   void _submit() {
-    if (_brandNameController.text.trim().isEmpty) {
+    if (!_isAddContactMode && _brandNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('Client name is required')));
+      return;
+    }
+
+    if (_clientNameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Contact name is required')));
       return;
     }
 
@@ -112,10 +197,44 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
     }
 
     final email = _emailController.text.trim();
-    if (email.isNotEmpty &&
-        !RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email ID is required')));
+      return;
+    }
+    if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please enter a valid email address')));
+      return;
+    }
+
+    if (_emailError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_emailError!)));
+      return;
+    }
+
+    if (_isAddContactMode && _editClientId != null) {
+      userController.addClientContact(
+        context,
+        data: {
+          'clientid': _editClientId,
+          'contactname': _clientNameController.text.trim(),
+          'contactmobile': mobile,
+          'contactemail': email,
+          'created_by': userController.userData.name ?? '',
+        },
+        callback: (res) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Contact added successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _clearForm();
+          _loadBrands();
+        },
+      );
       return;
     }
 
@@ -309,107 +428,170 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Brand Name
           SizedBox(
             width: double.infinity,
-            child: AppLabeledField(
-              label: 'Client Name',
-              child: TextField(
-                controller: _brandNameController,
-                decoration: AppFormStyles.inputDecoration(),
-                style: const TextStyle(height: 1.0),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Client Name',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
+                const SizedBox(height: 8),
+                RawAutocomplete<Map<String, dynamic>>(
+                  textEditingController: _brandNameController,
+                  focusNode: _brandNameFocusNode,
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.length < 3) {
+                      return const Iterable<Map<String, dynamic>>.empty();
+                    }
+                    if (_isAddContactMode) {
+                      return const Iterable<Map<String, dynamic>>.empty();
+                    }
+                    final query = textEditingValue.text.toLowerCase();
+                    return _brandList.where((b) =>
+                        (b['clientname']?.toString() ?? '').toLowerCase().contains(query));
+                  },
+                  displayStringForOption: (option) => option['clientname']?.toString() ?? '',
+                  fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+                    return TextField(
+                      key: _brandFieldKey,
+                      controller: controller,
+                      focusNode: focusNode,
+                      readOnly: _isAddContactMode,
+                      decoration: AppFormStyles.inputDecoration(
+                        hintText: 'Type to search existing clients or enter new name',
+                        suffixIcon: _isAddContactMode
+                            ? IconButton(
+                                icon: const Icon(Icons.close, size: 18, color: Color(0xFF999999)),
+                                onPressed: _exitAddContactMode,
+                              )
+                            : null,
+                      ),
+                      style: const TextStyle(height: 1.0),
+                      onSubmitted: (_) => onFieldSubmitted(),
+                    );
+                  },
+                  optionsViewBuilder: (context, onSelected, options) {
+                    double fieldWidth = 400;
+                    final keyContext = _brandFieldKey.currentContext;
+                    if (keyContext != null) {
+                      final box = keyContext.findRenderObject() as RenderBox?;
+                      if (box != null) fieldWidth = box.size.width;
+                    }
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(4),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: 220,
+                            maxWidth: fieldWidth,
+                          ),
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (context, index) {
+                              final option = options.elementAt(index);
+                              return InkWell(
+                                onTap: () => onSelected(option),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    border: Border(
+                                      bottom: BorderSide(color: Colors.grey.shade200),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    option['clientname']?.toString() ?? '',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  onSelected: _onBrandSelected,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
 
-          // Upload Logo
-          const Text('Upload Logo',
-              style: TextStyle(
-                  fontSize: 14, color: Color(0xFF505050))),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  FilePickerResult? result =
-                      await FilePicker.platform.pickFiles(
-                    type: FileType.custom,
-                    allowedExtensions: ['png', 'jpg', 'jpeg'],
-                    withData: true,
-                  );
-                  if (result != null && result.files.isNotEmpty) {
-                    setState(() {
-                      _logoFile = result.files.first;
-                    });
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF02B2EB),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 23, vertical: 20),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4)),
-                ),
-                child: const Text('Browse',
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500)),
-              ),
-              const SizedBox(width: 12),
-
-              // Show logo preview
-              if (_logoFile != null)
-                Container(
-                  width: 95,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFDDDDDD)),
-                    borderRadius: BorderRadius.circular(4),
+          if (!_isAddContactMode) ...[
+            const Text('Upload Logo',
+                style: TextStyle(fontSize: 14, color: Color(0xFF505050))),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    FilePickerResult? result =
+                        await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['png', 'jpg', 'jpeg'],
+                      withData: true,
+                    );
+                    if (result != null && result.files.isNotEmpty) {
+                      setState(() {
+                        _logoFile = result.files.first;
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF02B2EB),
+                    padding: const EdgeInsets.symmetric(horizontal: 23, vertical: 20),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: Image.memory(
-                      _logoFile!.bytes!,
-                      fit: BoxFit.contain,
+                  child: const Text('Browse',
+                      style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w500)),
+                ),
+                const SizedBox(width: 12),
+                if (_logoFile != null)
+                  Container(
+                    width: 95,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFDDDDDD)),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Image.memory(_logoFile!.bytes!, fit: BoxFit.contain),
+                    ),
+                  )
+                else if (_existingLogoPath != null && _existingLogoPath!.isNotEmpty)
+                  Container(
+                    width: 95,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFDDDDDD)),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Image.network(
+                        imgUrl(_existingLogoPath!),
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported),
+                      ),
                     ),
                   ),
-                )
-              else if (_existingLogoPath != null &&
-                  _existingLogoPath!.isNotEmpty)
-                Container(
-                  width: 95,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFDDDDDD)),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: Image.network(
-                      imgUrl(_existingLogoPath!),
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.image_not_supported),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '* File supported .png, .jpg, .jpeg  and size maximum  w 700px X h 500px',
-            style: TextStyle(fontSize: 12, color: Color(0xFF535353)),
-          ),
-          const SizedBox(height: 24),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '* File supported .png, .jpg, .jpeg  and size maximum  w 700px X h 500px',
+              style: TextStyle(fontSize: 12, color: Color(0xFF535353)),
+            ),
+            const SizedBox(height: 24),
+          ],
 
-          // Client Info
-          const Text('Client Info',
-              style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF505050))),
+          Text(_isAddContactMode ? 'Contact Info' : 'Client Info',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF505050))),
           const SizedBox(height: 16),
           Responsive.isMobile(context)
               ? Column(
@@ -419,7 +601,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
                     const SizedBox(height: 16),
                     _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone),
                     const SizedBox(height: 16),
-                    _labeledField(label: 'Email ID', controller: _emailController, keyboardType: TextInputType.emailAddress),
+                    _buildEmailField(),
                   ],
                 )
               : Row(
@@ -429,12 +611,11 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
                     const SizedBox(width: 20),
                     Expanded(child: _labeledField(label: 'Mobile No.', controller: _mobileController, keyboardType: TextInputType.phone)),
                     const SizedBox(width: 20),
-                    Expanded(child: _labeledField(label: 'Email ID', controller: _emailController, keyboardType: TextInputType.emailAddress)),
+                    Expanded(child: _buildEmailField()),
                   ],
                 ),
           const SizedBox(height: 28),
 
-          // Submit button
           Center(
             child: SizedBox(
               width: 350,
@@ -443,27 +624,54 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
                 onPressed: _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF535353),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                 ),
                 child: Text(
-                  _isEditMode ? 'Update Client' : 'Create Client',
-                  style: const TextStyle(
-                      fontSize: 14, color: Colors.white),
+                  _isAddContactMode
+                      ? 'Add Contact'
+                      : (_isEditMode ? 'Update Client' : 'Create Client'),
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
                 ),
               ),
             ),
           ),
-          if (_isEditMode) ...[
-            const SizedBox(height: 10),
-            Center(
-              child: TextButton(
-                onPressed: _clearForm,
-                child: const Text('Cancel',
-                    style: TextStyle(color: Color(0xFF2E77D0))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailField() {
+    return AppLabeledField(
+      label: 'Email ID',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: AppFormStyles.inputDecoration(
+              suffixIcon: _isCheckingEmail
+                  ? const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                    )
+                  : _emailError != null
+                      ? const Icon(Icons.error_outline, color: Colors.red, size: 20)
+                      : _emailController.text.isNotEmpty
+                          ? const Icon(Icons.check_circle_outline, color: Colors.green, size: 20)
+                          : null,
+            ),
+            style: const TextStyle(height: 1.0),
+            onChanged: _checkEmail,
+          ),
+          if (_emailError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                _emailError!,
+                style: const TextStyle(fontSize: 12, color: Colors.red),
               ),
             ),
-          ],
         ],
       ),
     );
@@ -532,9 +740,9 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
             // Page header
             Container(
               padding: const EdgeInsets.all(defaultPadding),
-              child: const Text(
-                'Create Client',
-                style: TextStyle(
+              child: Text(
+                _isAddContactMode ? 'Add Contact' : 'Create Client',
+                style: const TextStyle(
                     fontSize: 20,
                     color: Color(0xFF505050),
                     fontWeight: FontWeight.w600),

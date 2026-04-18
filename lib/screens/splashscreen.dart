@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import '../services/LocalStorage.dart';
 
 class Splashscreen extends StatefulWidget {
   const Splashscreen({super.key});
@@ -16,11 +17,8 @@ class _SplashscreenState extends State<Splashscreen>
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     controller = AnimationController(
-      /// [AnimationController]s can be created with `vsync: this` because of
-      /// [TickerProviderStateMixin].
       vsync: this,
       duration: const Duration(seconds: 5),
     )..addListener(() {
@@ -28,16 +26,14 @@ class _SplashscreenState extends State<Splashscreen>
       });
     controller.repeat();
 
-    Timer(
-      const Duration(seconds: 5),
-      () {
-        // Routemaster.of(context).push("/login");
-        Get.offNamed('/login');
+    _checkSessionAndRoute();
+  }
 
-        //Navigator.popAndPushNamed(context, "/login");
-        debugPrint("yes");
-      },
-    );
+  Future<void> _checkSessionAndRoute() async {
+    await LocalStorage.clearData("userdata");
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) Get.offNamed('/login');
+    });
   }
 
   @override

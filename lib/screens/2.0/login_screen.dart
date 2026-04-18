@@ -198,6 +198,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             usercontroller.login(context, data: obj, callback: () {
                               if (usercontroller.userData.changepass == "N") {
                                 Get.offNamed("/changepassword/${usercontroller.userData.mvalue}");
+                              } else if (usercontroller.userData.role == 'CL') {
+                                Get.offNamed("/client-audit-status");
                               } else {
                                 Get.offNamed("/dashboard");
                               }

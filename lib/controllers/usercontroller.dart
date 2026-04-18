@@ -21,6 +21,8 @@ class UserController extends GetxController {
   int selectedIndex = 0;
   String selectedMenuKey = 'dashboard';
   String selectedClientId = "";
+  final _clientChanged = StreamController<String>.broadcast();
+  Stream<String> get onClientChanged => _clientChanged.stream;
   List<DynamicField> formArray = [];
   List<dynamic> role = [];
   List<dynamic> clinetArr = [];
@@ -80,6 +82,18 @@ class UserController extends GetxController {
       defaultPolygonBorderColor: Colors.red,
       defaultPolygonFillColor: Colors.red.withAlpha(10),
       defaultPolylineStroke: 1);
+
+  void setSelectedClient(String id) {
+    selectedClientId = id;
+    _clientChanged.add(id);
+  }
+
+  @override
+  void onClose() {
+    _clientChanged.close();
+    super.onClose();
+  }
+
   Future<void> loadInitData() async {
     String? str = await LocalStorage.getStringData("userdata");
     if (str != null && str.isNotEmpty) {
@@ -1531,6 +1545,54 @@ class UserController extends GetxController {
           APIService(context).showToastMgs(res["message"]);
           callback(res);
         }
+      }
+    });
+  }
+
+  void addClientContact(context,
+      {required Map<String, dynamic> data,
+      required Function(dynamic) callback}) {
+    APIService(context).postData("addClientContact", data, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (res.containsKey("message")) {
+          APIService(context).showToastMgs(res["message"]);
+          callback(res);
+        }
+      }
+    });
+  }
+
+  void checkClientEmail(context,
+      {required String email,
+      required Function(bool, {String? message}) callback}) {
+    APIService(context).postData("checkClientEmail", {"email": email}, true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (res.containsKey("exists")) {
+          callback(res["exists"] == true, message: res["message"]?.toString());
+        } else {
+          callback(false);
+        }
+      } else {
+        callback(false);
+      }
+    });
+  }
+
+  void getClientContacts(context,
+      {required String clientid,
+      required Function(List<dynamic>) callback}) {
+    APIService(context).getData("getClientContacts/$clientid", true).then((resvalue) {
+      if (resvalue.length != 5) {
+        Map<String, dynamic> res = jsonDecode(resvalue);
+        if (res.containsKey("data")) {
+          callback(res["data"]);
+        } else {
+          callback([]);
+        }
+      } else {
+        callback([]);
       }
     });
   }

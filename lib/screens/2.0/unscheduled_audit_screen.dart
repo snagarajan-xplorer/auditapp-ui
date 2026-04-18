@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:audit_app/controllers/usercontroller.dart';
 import 'package:audit_app/widget/financial_year_dropdown.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class UnScheduledAuditScreen extends StatefulWidget {
 
 class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
   late final UserController usercontroller;
+  StreamSubscription<String>? _clientSub;
 
   // Filter state
   String selectedFinancialYear = "";
@@ -34,8 +36,10 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
+    _clientSub = usercontroller.onClientChanged.listen((_) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) _loadData();
+    });
 
-    // Build financial years — Indian FY starts in April
     final now = DateTime.now();
     final fyStartYear = now.month >= 4 ? now.year : now.year - 1;
     financialYears = List.generate(5, (index) {
@@ -49,13 +53,16 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
-  // ── API: load table rows ─────────────────────────────────────────────────
+  @override
+  void dispose() {
+    _clientSub?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadData() async {
     setState(() => isLoading = true);
     final role = usercontroller.userData.role ?? '';
-    final isAdminRole = role == 'SA' || role == 'AD';
 
-    // Convert "FY2025-26" label → bare end year "2026" for the API
     String yearParam = selectedFinancialYear;
     final fyMatch = _fyRegex.firstMatch(yearParam);
     if (fyMatch != null) {
@@ -67,11 +74,8 @@ class _UnScheduledAuditScreenState extends State<UnScheduledAuditScreen> {
       "year": yearParam,
       "userid": usercontroller.userData.userId,
       "role": role,
-      if (!isAdminRole) "client": usercontroller.userData.clientid,
-      if (!isAdminRole)
-        "client_id": usercontroller.userData.clientid?.isNotEmpty == true
-            ? usercontroller.userData.clientid!.first
-            : null,
+      "client": usercontroller.userData.clientid,
+      "client_id": usercontroller.selectedClientId,
     };
     await usercontroller.getUnScheduledAuditDetails(context, data: data,
         callback: (list, total) {

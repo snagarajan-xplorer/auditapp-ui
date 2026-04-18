@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:audit_app/models/reportobj.dart';
@@ -32,6 +33,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  StreamSubscription<String>? _clientSub;
   List<dynamic> clientArr = [];
   List<dynamic> pieChart = [];
   List<LatLng> latandlong = [];
@@ -82,6 +84,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
+    _clientSub = usercontroller.onClientChanged.listen((id) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) {
+        client_id = id;
+        getClientReport(id);
+      }
+    });
 
     // Initialize financial years — Indian FY starts in April
     // If current month < April, current FY start year = last year
@@ -94,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return {"label": fyValue, "value": fyValue};
     });
     selectedFinancialYear = financialYears[0]["value"];
-    year = selectedFinancialYear; // Use FY format directly
+    year = selectedFinancialYear;
 
     Future.delayed(const Duration(milliseconds: 200)).then((onValue) async {
       newloadGeoJson();
@@ -122,7 +130,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         loadData = true;
         if (menuAccessRole.contains(usercontroller.userData.role!)) {
           if (clientArr.isNotEmpty) {
-            client_id = clientArr[0]["clientid"].toString();
+            final existing = usercontroller.selectedClientId;
+            final hasValid = existing.isNotEmpty &&
+                clientArr.any((c) => c["clientid"].toString() == existing);
+            client_id = hasValid
+                ? existing
+                : clientArr[0]["clientid"].toString();
             await getClientReport(client_id);
           }
         } else if (usercontroller.userData.role! == "JrA") {
@@ -137,6 +150,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         setState(() {});
       });
     });
+  }
+
+  @override
+  void dispose() {
+    _clientSub?.cancel();
+    super.dispose();
   }
 
   Future<void> newloadGeoJson() async {
@@ -203,37 +222,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Map<String, dynamic> _buildScheduledPayload(String clientid) {
     final role = usercontroller.userData.role ?? '';
-    final isAdminRole = role == 'SA' || role == 'AD';
     final yearParam = _yearParamForApi();
     return {
       "year": yearParam,
       "month": "All",
       "userid": usercontroller.userData.userId,
       "role": role,
-      if (!isAdminRole) "client": usercontroller.userData.clientid,
-      if (!isAdminRole)
-        "client_id": usercontroller.userData.clientid?.isNotEmpty == true
-            ? usercontroller.userData.clientid!.first
-            : null,
-      if (isAdminRole) "client_id": clientid,
+      "client": usercontroller.userData.clientid,
+      "client_id": clientid,
       "zone": zone,
     };
   }
 
   Map<String, dynamic> _buildUnscheduledPayload(String clientid) {
     final role = usercontroller.userData.role ?? '';
-    final isAdminRole = role == 'SA' || role == 'AD';
     final yearParam = _yearParamForApi();
     return {
       "year": yearParam,
       "userid": usercontroller.userData.userId,
       "role": role,
       "zone": zone,
-      if (!isAdminRole) "client": usercontroller.userData.clientid,
-      if (!isAdminRole)
-        "client_id": usercontroller.userData.clientid?.isNotEmpty == true
-            ? usercontroller.userData.clientid!.first
-            : null,
+      "client": usercontroller.userData.clientid,
+      "client_id": clientid,
     };
   }
 

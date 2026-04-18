@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,12 +18,12 @@ class ActivityWiseHeatmapScreen extends StatefulWidget {
 
 class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
   late final UserController usercontroller;
+  StreamSubscription<String>? _clientSub;
 
   List<Map<String, dynamic>> financialYears = [];
   String selectedFinancialYear = "";
   bool isLoading = true;
 
-  // API response data
   List<dynamic> zones = [];
   Map<String, dynamic> allIndia = {};
   List<String> activities = [];
@@ -36,12 +37,21 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
     super.initState();
     usercontroller = Get.find<UserController>();
     _initFinancialYears();
+    _clientSub = usercontroller.onClientChanged.listen((_) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) _fetchHeatmapData();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _fetchActivitiesList();
         _fetchHeatmapData();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _clientSub?.cancel();
+    super.dispose();
   }
 
   void _fetchActivitiesList() {
@@ -69,6 +79,10 @@ class _ActivityWiseHeatmapScreenState extends State<ActivityWiseHeatmapScreen> {
     setState(() => isLoading = true);
     usercontroller.getActivityWiseHeatmap(context, data: {
       "financial_year": selectedFinancialYear,
+      "userid": usercontroller.userData.userId,
+      "role": usercontroller.userData.role,
+      "client": usercontroller.userData.clientid,
+      "client_id": usercontroller.selectedClientId,
     }, callback: (res) {
       if (!mounted) return;
       if (res != null && res is Map<String, dynamic>) {

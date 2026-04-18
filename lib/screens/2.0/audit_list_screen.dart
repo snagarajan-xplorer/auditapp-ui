@@ -23,6 +23,7 @@ class AuditListV2Screen extends StatefulWidget {
 
 class _AuditListV2ScreenState extends State<AuditListV2Screen> {
   late final UserController usercontroller;
+  StreamSubscription<String>? _clientSub;
 
   // Filter state
   String selectedState = "All";
@@ -67,6 +68,9 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
   void initState() {
     super.initState();
     usercontroller = Get.find<UserController>();
+    _clientSub = usercontroller.onClientChanged.listen((_) {
+      if (mounted && ModalRoute.of(context)!.isCurrent) _loadData();
+    });
     if (usercontroller.userData.role == null) {
       usercontroller.loadInitData();
     }
@@ -101,6 +105,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
 
   @override
   void dispose() {
+    _clientSub?.cancel();
     _refreshTimer?.cancel();
     super.dispose();
   }
@@ -118,6 +123,7 @@ class _AuditListV2ScreenState extends State<AuditListV2Screen> {
       "role": usercontroller.userData.role,
       "month": month,
       "year": year,
+      "client_id": usercontroller.selectedClientId,
     };
 
     usercontroller.getAuditList(context, data: data, callback: (res) {

@@ -52,6 +52,7 @@ import 'package:audit_app/screens/2.0/published_report_screen.dart';
 import 'package:audit_app/screens/2.0/summary_report_screen.dart';
 import 'package:audit_app/screens/2.0/red_report_list_screen.dart';
 import 'package:audit_app/screens/2.0/nc_report_list_screen.dart';
+import 'package:audit_app/screens/2.0/client_audit_status_screen.dart';
 
 void main() {
   setHashUrlStrategy();
@@ -119,6 +120,7 @@ class _MainAppState extends State<MainApp> {
                 page: () => AllIndiaStateWiseAudit()),
             GetPage(name: "/red-report", page: () => RedReportScreen()),
             GetPage(name: "/auditlist", page: () => AuditListV2Screen()),
+            GetPage(name: "/client-audit-status", page: () => ClientAuditStatusScreen()),
             GetPage(name: "/", page: () => Splashscreen()),
             //2.0
             GetPage(name: "/login", page: () => LoginScreen()),
