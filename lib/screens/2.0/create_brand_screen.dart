@@ -40,6 +40,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
   Timer? _emailDebounce;
 
   List<Map<String, dynamic>> _brandList = [];
+  List<Map<String, dynamic>> _brandContactRows = [];
   bool _isLoading = false;
   int _currentPage = 1;
   static const int _pageSize = 10;
@@ -69,9 +70,11 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
     setState(() => _isLoading = true);
     userController.getBrandList(context, callback: (data) {
       if (mounted) {
+        final List<Map<String, dynamic>> uniqueBrands = [];
         final List<Map<String, dynamic>> flatList = [];
         for (final e in data) {
           final brand = Map<String, dynamic>.from(e);
+          uniqueBrands.add(brand);
           final contacts = (brand['contacts'] as List?) ?? [];
           if (contacts.isEmpty) {
             flatList.add(brand);
@@ -90,7 +93,8 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
         }
         setState(() {
           _isLoading = false;
-          _brandList = flatList;
+          _brandList = uniqueBrands;
+          _brandContactRows = flatList;
         });
       }
     });
@@ -711,7 +715,7 @@ class _CreateBrandScreenState extends State<CreateBrandScreen> {
         const SizedBox(height: 8),
         ReusableTable(
           columns: _brandColumns,
-          rows: _brandList,
+          rows: _brandContactRows,
           isLoading: _isLoading,
           currentPage: _currentPage,
           pageSize: _pageSize,
